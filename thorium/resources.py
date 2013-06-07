@@ -1,22 +1,11 @@
-from flask import jsonify, request
-from flask.views import View
-from thorium import fields
+import fields
 
 
-class Resource(View):
+class Resource(object):
 
     def __init__(self):
         self.data = {'error': 'No data'}
         self.engine = self.Meta.engine(self)
-
-    def dispatch_request(self):
-        if request.method == 'GET':
-            self.engine.get()
-        elif request.method == 'POST':
-            self.engine.post()
-
-        dict = self.get_field_dict()
-        return jsonify(**dict)
 
     def get_field_dict(self):
         """
