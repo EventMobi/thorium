@@ -1,9 +1,9 @@
-import router
+import routing
 
 
 class Thorium(object):
 
     def __init__(self, settings):
         self.settings = settings
-        self.routes = router.routes
+        self.routes = routing.get_all_routes()
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Thorium documentation build configuration file, created by
-# sphinx-quickstart on Sun Jun  9 20:55:20 2013.
+# thorium documentation build configuration file, created by
+# sphinx-quickstart on Tue Jun 11 15:37:35 2013.
 #
 # This file is execfile()d with the current directory set to its containing dir.
 #
@@ -25,7 +25,7 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = []
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.ifconfig', 'sphinx.ext.viewcode']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -40,7 +40,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Thorium'
+project = u'thorium'
 copyright = u'2013, Ryan Easterbrook'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -64,7 +64,7 @@ release = '0.1'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = []
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
@@ -167,7 +167,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'Thoriumdoc'
+htmlhelp_basename = 'thoriumdoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -186,7 +186,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'Thorium.tex', u'Thorium Documentation',
+  ('index', 'thorium.tex', u'thorium Documentation',
    u'Ryan Easterbrook', 'manual'),
 ]
 
@@ -216,7 +216,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'thorium', u'Thorium Documentation',
+    ('index', 'thorium', u'thorium Documentation',
      [u'Ryan Easterbrook'], 1)
 ]
 
@@ -230,8 +230,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'Thorium', u'Thorium Documentation',
-   u'Ryan Easterbrook', 'Thorium', 'One line description of project.',
+  ('index', 'thorium', u'thorium Documentation',
+   u'Ryan Easterbrook', 'thorium', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -246,3 +246,7 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+
+# Example configuration for intersphinx: refer to the Python standard library.
+intersphinx_mapping = {'http://docs.python.org/': None}

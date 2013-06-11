@@ -3,9 +3,9 @@ import json
 
 class Engine(object):
 
-    def __init__(self, resource, request):
-        self.resource = resource
-        self.request = request
+    def __init__(self, *args, **kwargs):
+        self.resource = kwargs.pop('resource')
+        self.request = kwargs.pop('request')
 
     def control(self):
         if self.request.method == 'GET':

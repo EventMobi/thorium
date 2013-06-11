@@ -6,7 +6,7 @@ class Dispatcher(object):
 
     def dispatch(self, request):
         res = self.resource()
-        eng = self.engine(res, request)
+        eng = self.engine(resource=res, request=request)
         return eng.control()
 
 

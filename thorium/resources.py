@@ -1,4 +1,14 @@
 import fields
+import routing
+from dispatcher import Dispatcher
+
+
+def endpoint(path):
+    def _register_endpoint(resource):
+        dsp = Dispatcher(resource, resource.Meta.engine)
+        route = routing.Route(resource.__name__, path, dsp)
+        routing.add_route(route)
+    return _register_endpoint
 
 
 class Resource(object):
@@ -24,4 +34,5 @@ class Resource(object):
             if isinstance(attr, fields.ResourceField):
                 field_dict[attr_name] = attr.value
         return field_dict
+
 
