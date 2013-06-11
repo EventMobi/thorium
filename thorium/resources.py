@@ -4,8 +4,14 @@ import fields
 class Resource(object):
 
     def __init__(self):
-        self.data = {'error': 'No data'}
-        self.engine = self.Meta.engine(self)
+        pass
+
+    def __setattr__(self, name, value):
+        field = getattr(self, name)
+        if isinstance(field, fields.ResourceField):
+            field.set(value)
+        else:
+            raise Exception('Can only assign to Fields')
 
     def get_field_dict(self):
         """
@@ -18,3 +24,4 @@ class Resource(object):
             if isinstance(attr, fields.ResourceField):
                 field_dict[attr_name] = attr.value
         return field_dict
+
