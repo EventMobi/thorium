@@ -1,22 +1,29 @@
-import json
-
-
 class Engine(object):
 
-    def __init__(self, *args, **kwargs):
-        self.resource = kwargs.pop('resource')
-        self.request = kwargs.pop('request')
+    def __init__(self, request):
+        self.request = request
 
-    def control(self):
-        if self.request.method == 'GET':
-            self.get()
-            fields = self.resource.get_field_dict()
-            return json.dumps(fields)
-        elif self.request.method == 'POST':
-            self.post()
-        else:
-            raise NotImplementedError
+    def pre_request(self):
+        pass
 
-    def map(self, data_dict):
-        for key, value in data_dict.items():
-            self.resource.__setattr__(key, value)
+    def post_request(self):
+        pass
+
+    def get(self):
+        raise NotImplementedError()
+
+    def post(self):
+        raise NotImplementedError()
+
+    def put(self):
+        raise NotImplementedError()
+
+    def delete(self):
+        raise NotImplementedError()
+
+    def patch(self):
+        raise NotImplementedError()
+
+    def options(self):
+        raise NotImplementedError()
+

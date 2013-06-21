@@ -1,6 +1,8 @@
 API Reference
 *************
 
+.. module:: thorium
+
 Thorium Object
 --------------
 
@@ -11,19 +13,13 @@ Thorium Object
 Routing
 -------
 
-.. automodule:: thorium.routing
-   :members:
-   :inherited-members:
-
-Route
------
-
 .. autoclass:: Route
    :members:
    :inherited-members:
 
-Dispatcher
-----------
+.. autoclass:: RouteManager
+   :members:
+   :inherited-members:
 
 .. autoclass:: Dispatcher
    :members:
@@ -36,12 +32,13 @@ Engine
    :members:
    :inherited-members:
 
-Resource
+ResourceInterface
 --------
 
-.. autoclass:: Resource
+.. autoclass:: ResourceInterface
    :members:
    :inherited-members:
+
 
 Fields
 ------
