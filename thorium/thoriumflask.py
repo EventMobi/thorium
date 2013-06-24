@@ -22,5 +22,7 @@ class FlaskEndpoint(object):
         self.dispatcher = dispatcher
 
     def endpoint(self, **kwargs):
-        request = Request(method=flaskrequest.method, identifiers=kwargs)
+        request = Request(method=flaskrequest.method, identifiers=flaskrequest.view_args,
+                          resource=self.dispatcher.resource, query_string=flaskrequest.query_string)
         return self.dispatcher.dispatch(request)
+

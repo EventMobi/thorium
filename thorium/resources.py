@@ -1,4 +1,4 @@
-from fields import ResourceField
+from fields import ResourceField, ResourceParam
 import copy
 
 
@@ -17,9 +17,18 @@ def _get_fields(bases, attrs):
     return fields
 
 
+def _get_params(attrs):
+    params = {}
+    if 'Params' in attrs:
+        p_attrs = attrs.pop('Params').__dict__
+        params = {name: param for name, param in list(p_attrs.iteritems()) if isinstance(param, ResourceParam)}
+    return params
+
+
 class ResourceInterfaceMetaClass(type):
     def __new__(mcs, name, bases, attrs):
         attrs['fields'] = _get_fields(bases, attrs)
+        attrs['query_parameters'] = _get_params(attrs)
         return super(ResourceInterfaceMetaClass, mcs).__new__(mcs, name, bases, attrs)
 
 
@@ -29,13 +38,6 @@ class ResourceInterfaceBase(object):
     """
     def __init__(self):
         self.fields = copy.deepcopy(self.fields)
-
-    # def __setattr__(self, name, value):
-    #     field = getattr(self, name)
-    #     if isinstance(field, ResourceField):
-    #         field.set(value)
-    #     else:
-    #         raise Exception('Can only assign to Fields')
 
 
 class ResourceInterface(ResourceInterfaceBase):
@@ -67,12 +69,19 @@ class ResourceManager(object):
         self.resource_cls = resource_cls
 
     def detail_from_native(self, data):
-        """ Returns a dictionary of fields with values mapped from data. """
+        """ Returns a :class:`.Resource` with values mapped from data. """
         return self._create_resource(self._map_fields(data))
 
     def collection_from_native(self, data_collection):
-        """ Returns a list of dictionaries of fields with values mapped from data_collection  """
+        """ Returns a list of :class:`.Resource`'s with values mapped from data_collection  """
         return [self._create_resource(self._map_fields(data)) for data in data_collection]
+
+    def get_parameters(self, input_params):
+        """ Returns a name to :class:`.ResourceParam` dictionary. """
+        param_dict = self._get_params()
+        for name, param in param_dict.items():
+            param.set(input_params[name], convert=True) if name in input_params else param.to_default()
+        return param_dict
 
     def _create_resource(self, fields):
         """ Creates a :class:`.Resource` from a dictionary of :class:`.ResourceField`'s """
@@ -81,10 +90,14 @@ class ResourceManager(object):
     def _map_fields(self, data):
         """ Returns a dictionary of fields with values mapped from data. """
         fields = self._get_fields()
-        for key, field in fields.items():
-            field.set(data[key]) #note catch KeyError here and raise expected fields not found error
+        for name, field in fields.items():
+            field.set(data[name]) if name in data else field.to_default()
         return fields
 
     def _get_fields(self):
         """ Creates a new dictionary of fields from the resource. """
         return copy.deepcopy(self.resource_cls.fields)
+
+    def _get_params(self):
+        """ Creates a new dictionary of query parameters from the resource. """
+        return copy.deepcopy(self.resource_cls.query_parameters)

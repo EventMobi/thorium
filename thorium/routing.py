@@ -8,7 +8,6 @@
 """
 
 import json
-from .fields import ResourceField
 from .resources import ResourceManager
 
 
@@ -120,11 +119,11 @@ class Dispatcher(object):
 class Serializer(object):
 
     def serialize_detail(self, resource):
-        data = {name: field.value for (name, field) in resource.fields.items()}
+        data = {name: field.get() for (name, field) in resource.fields.items()}
         return json.dumps(data)
 
     def serialize_collection(self, resource_collection):
         data = []
         for resource in resource_collection:
-            data.append({name: field.value for (name, field) in resource.fields.items()})
+            data.append({name: field.get() for (name, field) in resource.fields.items()})
         return json.dumps(data)
