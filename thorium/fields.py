@@ -23,7 +23,7 @@ class FieldValidator(object):
 
 class CharValidator(FieldValidator):
     def type_validation(self, value, convert):
-        if not isinstance(value, basestring):
+        if not isinstance(value, str):
             if convert:
                 value = str(value)
             else:

@@ -1,10 +1,11 @@
-from fields import ResourceField, ResourceParam
+from .fields import ResourceField, ResourceParam
 import copy
+from itertools import chain
 
 
 #Note: will likely need some sort of sorted dictionary to maintain field order
 def _get_fields(bases, attrs):
-    fields = {name: attrs.pop(name) for name, field in list(attrs.iteritems()) if isinstance(field, ResourceField)}
+    fields = {name: attrs.pop(name) for name, field in list(attrs.items()) if isinstance(field, ResourceField)}
 
     # If this class is subclassing another ResourceInterface, add that Resource's
     # fields.  Note that we loop over the bases in *reverse*. This is necessary
@@ -12,7 +13,7 @@ def _get_fields(bases, attrs):
     # Borrowed from Django Rest Framework.
     for base in bases[::-1]:
         if hasattr(base, 'fields'):
-            fields = dict(base.fields.items() + fields.items())
+            fields = dict(chain(base.fields.items(), fields.items()))
 
     return fields
 
@@ -21,7 +22,7 @@ def _get_params(attrs):
     params = {}
     if 'Params' in attrs:
         p_attrs = attrs.pop('Params').__dict__
-        params = {name: param for name, param in list(p_attrs.iteritems()) if isinstance(param, ResourceParam)}
+        params = {name: param for name, param in list(p_attrs.items()) if isinstance(param, ResourceParam)}
     return params
 
 
@@ -40,9 +41,8 @@ class ResourceInterfaceBase(object):
         self.fields = copy.deepcopy(self.fields)
 
 
-class ResourceInterface(ResourceInterfaceBase):
-    #Note this won't work in python 3, syntax changed to: class Abc(metaclass=meta):
-    __metaclass__ = ResourceInterfaceMetaClass
+class ResourceInterface(ResourceInterfaceBase, metaclass=ResourceInterfaceMetaClass):
+    pass
 
 
 class CollectionResourceInterface(ResourceInterface):

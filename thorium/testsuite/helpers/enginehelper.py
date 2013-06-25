@@ -14,7 +14,7 @@ class TestEngine(Engine):
     def get(self):
         data = {
             'name': 'Timmy',
-            'birth_date': date(2012, 03, 13),
+            'birth_date': date(2012, 3, 13),
             'age': 1,
             'admin': True
         }
@@ -26,7 +26,7 @@ class TestEngine2(Engine):
     def get(self):
         data = [{
             'name': 'Timmy',
-            'birth_date': date(2012, 03, 13),
+            'birth_date': date(2012, 3, 13),
             'age': 1,
             'admin': True
         }]

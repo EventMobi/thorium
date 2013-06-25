@@ -9,7 +9,6 @@ from .routing import Route, RouteManager, Dispatcher
 
 from .request import Request
 
-import fields
 from .fields import TypedField
 
 from .thoriumflask import ThoriumFlask

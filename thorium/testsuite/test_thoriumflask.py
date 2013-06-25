@@ -26,7 +26,7 @@ class TestThoriumFlask(TestCase):
         data = json.loads(rv.data)
         self.assertEqual(data['name'], 'Timmy')
         self.assertEqual(data['age'], 1)
-        self.assertEqual(data['birth_date'], calendar.timegm(date(2012, 03, 13).timetuple()))
+        self.assertEqual(data['birth_date'], calendar.timegm(date(2012, 3, 13).timetuple()))
         self.assertEqual(data['admin'], True)
 
     def test_simple_list_get(self):
@@ -37,5 +37,5 @@ class TestThoriumFlask(TestCase):
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]['name'], 'Timmy')
         self.assertEqual(data[0]['age'], 1)
-        self.assertEqual(data[0]['birth_date'], calendar.timegm(date(2012, 03, 13).timetuple()))
+        self.assertEqual(data[0]['birth_date'], calendar.timegm(date(2012, 3, 13).timetuple()))
         self.assertEqual(data[0]['admin'], True)

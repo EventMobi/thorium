@@ -9,4 +9,4 @@ class RequestStub(Stub):
 
 
 def get_test_request(method):
-    return Request(method=method, identifiers={})
+    return Request(method=method, identifiers={}, resource=None, query_params=None)
