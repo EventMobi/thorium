@@ -1,14 +1,12 @@
 #make core objects available after import
 from .thorium import Thorium
 
-from .resources import ResourceInterface, ResourceManager, Resource, CollectionResourceInterface, DetailResourceInterface
+from .resources import Resource
 
 from .engine import Engine
 
-from .routing import Route, RouteManager, Dispatcher
+from .routing import Route, RouteManager
 
 from .request import Request
-
-from .fields import TypedField
 
 from .thoriumflask import ThoriumFlask

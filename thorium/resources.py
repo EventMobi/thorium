@@ -2,64 +2,113 @@ from .fields import ResourceField, ResourceParam
 import copy
 from itertools import chain
 
-
-#Note: will likely need some sort of sorted dictionary to maintain field order
-def _get_fields(bases, attrs):
-    fields = {name: attrs.pop(name) for name, field in list(attrs.items()) if isinstance(field, ResourceField)}
-
-    # If this class is subclassing another ResourceInterface, add that Resource's
-    # fields.  Note that we loop over the bases in *reverse*. This is necessary
-    # in order to maintain the correct order of fields.
-    # Borrowed from Django Rest Framework.
-    for base in bases[::-1]:
-        if hasattr(base, 'fields'):
-            fields = dict(chain(base.fields.items(), fields.items()))
-
-    return fields
+VALID_METHODS = {'get', 'post', 'put', 'patch', 'delete'}
 
 
-def _get_params(attrs):
-    params = {}
-    if 'Params' in attrs:
-        p_attrs = attrs.pop('Params').__dict__
-        params = {name: param for name, param in list(p_attrs.items()) if isinstance(param, ResourceParam)}
-    return params
+class ResourceMetaClass(type):
+    def __new__(mcs, resource_name, bases, attrs):
+
+        # validate Resource's children but not Resource
+        if resource_name != 'Resource':
+            mcs._validate_format(mcs, resource_name, attrs)
+
+        attrs['_fields'] = mcs._get_fields(bases, attrs)
+        attrs['query_parameters'] = mcs._get_params(attrs)
+        return super().__new__(mcs, resource_name, bases, attrs)
+
+    #Note: will likely need some sort of sorted dictionary to maintain field order
+    @staticmethod
+    def _get_fields(bases, attrs):
+
+        # gather fields to add to _fields dictionary
+        # also replaces field definition with a property to wrap the _fields dictionary
+        fields = {}
+        for name, field in attrs.items():
+            if isinstance(field, ResourceField):
+                fields[name] = field
+                attrs[name] = property(fget=ResourceMetaClass._gen_get_prop(name),
+                                       fset=ResourceMetaClass._get_set_prop(name))
+
+        # append fields in bases
+        for base in bases[::-1]:
+            if hasattr(base, '_fields'):
+                fields = dict(chain(base._fields.items(), fields.items()))
+
+        return fields
+
+    @staticmethod
+    def _gen_get_prop(name):
+        def get_field_property(self):
+            return self._fields[name].get()
+        return get_field_property
+
+    @staticmethod
+    def _get_set_prop(name):
+        def set_field_property(self, value):
+            return self._fields[name].set(value)
+        return set_field_property
+
+    @staticmethod
+    def _get_params(attrs):
+        params = {}
+        if 'Params' in attrs:
+            p_attrs = attrs.pop('Params').__dict__
+            params = {name: param for name, param in list(p_attrs.items()) if isinstance(param, ResourceParam)}
+        return params
+
+    @staticmethod
+    def _validate_format(mcs, resource_name, attrs):
+
+        if not 'Meta' in attrs:
+            raise Exception('Meta class must be present.')
+
+        meta = attrs['Meta']
+
+        mcs._get_required_attribute(resource_name, meta, 'detail_endpoint')
+        mcs._get_required_attribute(resource_name, meta, 'collection_endpoint')
+
+        detail_methods = mcs._get_required_attribute(resource_name, meta, 'detail_methods')
+        if not detail_methods.issubset(VALID_METHODS):
+            raise Exception('detail_methods: {dm} must be a subset of the '
+                            'valid methods: {VM}'.format(dm=detail_methods, VM=VALID_METHODS))
+
+        collection_methods = mcs._get_required_attribute(resource_name, meta, 'collection_methods')
+        if not collection_methods.issubset(VALID_METHODS):
+            raise Exception('collection_methods {cm} must be a subset of the '
+                            'valid methods: {VM}'.format(cm=collection_methods, VM=VALID_METHODS))
+
+        engine = mcs._get_required_attribute(resource_name, meta, 'engine')
+
+    @staticmethod
+    def _get_required_attribute(resource_name, meta, attr_name):
+        attr = getattr(meta, attr_name, None)
+        if not attr:
+            raise Exception('Required attribute {at_n} not found '
+                            'in the {rs_n} Resource\'s Meta class.'.format(at_n=attr_name, rs_n=resource_name))
+        return attr
 
 
-class ResourceInterfaceMetaClass(type):
-    def __new__(mcs, name, bases, attrs):
-        attrs['fields'] = _get_fields(bases, attrs)
-        attrs['query_parameters'] = _get_params(attrs)
-        return super(ResourceInterfaceMetaClass, mcs).__new__(mcs, name, bases, attrs)
+class Resource(object, metaclass=ResourceMetaClass):
 
-
-class ResourceInterfaceBase(object):
-    """ Base class for all Resources. Responsible for common behaviour such as managing
-    fields.
-    """
     def __init__(self):
-        self.fields = copy.deepcopy(self.fields)
+        # create copy of fields for this instance
+        self._fields = copy.deepcopy(self._fields)
 
+    def from_dict(self, data, convert=False):
+        for name, field in self._fields.items():
+            if name in data:
+                field.set(data[name], convert)
 
-class ResourceInterface(ResourceInterfaceBase, metaclass=ResourceInterfaceMetaClass):
-    pass
+    def to_dict(self, partial=False):
+        if partial:
+            fields = self.valid_fields()
+        else:
+            fields = self._fields
 
+        return {name: field.get() for name, field in fields.items()}
 
-class CollectionResourceInterface(ResourceInterface):
-    """ Base class for collections of Resources. """
-    pass
-
-
-class DetailResourceInterface(ResourceInterface):
-    """ Base class for the details of a ResourceInterface. """
-    pass
-
-
-class Resource(object):
-    """ A collection of :class:`.ResourceField`'s """
-
-    def __init__(self, fields):
-        self.fields = fields
+    def valid_fields(self):
+        return {name: field for name, field in self._fields.items() if field.is_set()}
 
 
 class ResourceManager(object):
@@ -68,35 +117,12 @@ class ResourceManager(object):
     def __init__(self, resource_cls):
         self.resource_cls = resource_cls
 
-    def detail_from_native(self, data):
-        """ Returns a :class:`.Resource` with values mapped from data. """
-        return self._create_resource(self._map_fields(data))
-
-    def collection_from_native(self, data_collection):
-        """ Returns a list of :class:`.Resource`'s with values mapped from data_collection  """
-        return [self._create_resource(self._map_fields(data)) for data in data_collection]
-
     def get_parameters(self, input_params):
         """ Returns a name to :class:`.ResourceParam` dictionary. """
         param_dict = self._get_params()
         for name, param in param_dict.items():
             param.set(input_params[name], convert=True) if name in input_params else param.to_default()
         return param_dict
-
-    def _create_resource(self, fields):
-        """ Creates a :class:`.Resource` from a dictionary of :class:`.ResourceField`'s """
-        return Resource(fields)
-
-    def _map_fields(self, data):
-        """ Returns a dictionary of fields with values mapped from data. """
-        fields = self._get_fields()
-        for name, field in fields.items():
-            field.set(data[name]) if name in data else field.to_default()
-        return fields
-
-    def _get_fields(self):
-        """ Creates a new dictionary of fields from the resource. """
-        return copy.deepcopy(self.resource_cls.fields)
 
     def _get_params(self):
         """ Creates a new dictionary of query parameters from the resource. """

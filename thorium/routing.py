@@ -7,8 +7,7 @@
 
 """
 
-import json
-from .resources import ResourceManager
+from . import dispatcher
 
 
 class Route(object):
@@ -54,76 +53,17 @@ class RouteManager(object):
         """ A convenience method to register a resource by using the default :class:`.Dispatcher`
         and :class:`.Route`. Calls :func:`add_route` for the actual adding.
         """
-        dsp = Dispatcher(resource, resource.Meta.engine)
-        route = Route(resource.__name__, resource.Meta.endpoint, dsp)
-        self.add_route(route)
+        #register collection route
+        collection_dsp = dispatcher.CollectionDispatcher(
+            resource=resource, engine=resource.Meta.engine, allowed_methods=resource.Meta.collection_methods)
+        col_route = Route('{0}_collection'.format(resource.__name__), resource.Meta.collection_endpoint, collection_dsp)
+        self.add_route(col_route)
 
-        return route
+        #register detail route
+        detail_dsp = dispatcher.DetailDispatcher(
+            resource=resource, engine=resource.Meta.engine, allowed_methods=resource.Meta.detail_methods)
+        detail_route = Route('{0}_detail'.format(resource.__name__), resource.Meta.detail_endpoint, detail_dsp)
+        self.add_route(detail_route)
 
+        return {'collection_route': col_route, 'detail_route': detail_route}
 
-class Dispatcher(object):
-    """ The Dispatcher holds a :class:`.ResourceInterface` and :class:`.Engine` pairing and is associated
-    with a :class:`.Route`. It's responsible for handing a request off to the correct components.
-
-    :param resource: A :class:`.ResourceInterface` object
-    :param engine: A :class:`.Engine` object to implement the :class:`.ResourceInterface`
-    """
-
-    def __init__(self, resource, engine):
-        self.resource = resource
-        self.engine = engine
-
-    def dispatch(self, request):
-        """ Injects the :class:`.ResourceInterface` into the :class:`.Engine`
-        then calls a method on the engine to handle the request based
-        on the :class:`.ThoriumRequest`.
-
-        :param request: A :class:`.ThoriumRequest` object
-        """
-
-        #Taken from Tastypie, check that:
-        #the requested HTTP method is in allowed_methods (method_check),
-        #the class has a method that can handle the request (get_list),
-        #the user is authenticated (is_authenticated),
-        #the user is authorized (is_authorized),
-        #the user has not exceeded their throttle (throttle_check).
-
-        eng = self.engine(request)
-
-        eng.pre_request()
-
-        #ensure valid method
-        if request.method not in {'get', 'post', 'put', 'delete', 'patch', 'options'}:
-            raise NotImplementedError() #Note: make a better exception here
-
-        #find the method in the engine that matches the request
-        method = getattr(eng, str(request.method))
-        result = method()
-
-        eng.post_request()
-
-        #Clean this up
-        resource_manager = ResourceManager(self.resource)
-        serializer = Serializer()
-        if isinstance(result, list):
-            resources = resource_manager.collection_from_native(result)
-            result = serializer.serialize_collection(resources)
-        else:
-            resource = resource_manager.detail_from_native(result)
-            result = serializer.serialize_detail(resource)
-
-        return result
-
-
-#move this to it's own file, make it good not bad
-class Serializer(object):
-
-    def serialize_detail(self, resource):
-        data = {name: field.get() for (name, field) in resource.fields.items()}
-        return json.dumps(data)
-
-    def serialize_collection(self, resource_collection):
-        data = []
-        for resource in resource_collection:
-            data.append({name: field.get() for (name, field) in resource.fields.items()})
-        return json.dumps(data)

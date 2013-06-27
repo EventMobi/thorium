@@ -13,7 +13,7 @@ class ThoriumFlask(Thorium):
         routes = self._route_manager.get_all_routes()
         for r in routes:
             fep = FlaskEndpoint(r.dispatcher)
-            self._flask_app.add_url_rule(r.endpoint, r.name, fep.endpoint)
+            self._flask_app.add_url_rule(r.endpoint, r.name, fep.endpoint, methods=r.dispatcher.allowed_methods)
 
 
 class FlaskEndpoint(object):
@@ -23,6 +23,7 @@ class FlaskEndpoint(object):
 
     def endpoint(self, **kwargs):
         request = Request(method=flaskrequest.method, identifiers=flaskrequest.view_args,
-                          resource=self.dispatcher.resource, query_params=flaskrequest.args.to_dict())
+                          resource=self.dispatcher.resource, query_params=flaskrequest.args.to_dict(),
+                          mimetype=flaskrequest.mimetype, body=flaskrequest.json)
         return self.dispatcher.dispatch(request)
 

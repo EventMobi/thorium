@@ -12,6 +12,8 @@ class FieldValidator(object):
     def validate(self, value, convert):
         if self._field.notnull and value is None:
             raise Exception('Value cannot be null')
+        elif value is NotSet:
+            return value
         elif value:
             value = self.type_validation(value, convert)
 
@@ -85,15 +87,15 @@ class TypedField(object):
         # a hook to allow subclasses to add their own unique parameters
         self.set_unique_attributes(**kwargs)
 
-        # set common attributes
         self.notnull = notnull
-        self.default = default
 
         # create validator
-        self._validator = self.validator(self)
+        self._validator = self.validator_type(self)
 
-        # set initial value to default
-        self.to_default()
+        self.default = self._validator.validate(default, convert=False)
+
+        # set initial value to NotSet
+        self._value = NotSet
 
     def set(self, value, convert=False):
         if value is NotSet:
@@ -104,11 +106,17 @@ class TypedField(object):
 
     def get(self):
         if self._value is NotSet:
-            raise Exception('The value is not set and has no default.')
+            if self.default is NotSet:
+                raise Exception('The value is not set and has no default.')
+            else:
+                return self.default
         return self._value
 
     def to_default(self):
         return self.set(self.default)
+
+    def is_set(self):
+        return self._value != NotSet
 
     def set_unique_attributes(self, max_length=None):
         pass
@@ -120,30 +128,26 @@ class ResourceField(TypedField):
 
 
 class CharField(ResourceField):
-    validator = CharValidator
+    validator_type = CharValidator
 
     def set_unique_attributes(self, max_length=None):
         self.max_length = max_length
 
 
 class IntField(ResourceField):
-    validator = IntValidator
+    validator_type = IntValidator
 
 
 class DecimalField(ResourceField):
-    validator = DecimalValidator
+    validator_type = DecimalValidator
 
 
 class DateTimeField(ResourceField):
-    validator = DateTimeValidator
-
-    def get(self):
-        value = super(DateTimeField, self).get()
-        return calendar.timegm(datetime.datetime.timetuple(value))
+    validator_type = DateTimeValidator
 
 
 class BoolField(ResourceField):
-    validator = BoolValidator
+    validator_type = BoolValidator
 
 
 #Resource Params
@@ -152,23 +156,23 @@ class ResourceParam(TypedField):
 
 
 class CharParam(ResourceParam):
-    validator = CharValidator
+    validator_type = CharValidator
 
     def set_unique_attributes(self, max_length=None):
         self.max_length = max_length
 
 
 class IntParam(ResourceParam):
-    validator = IntValidator
+    validator_type = IntValidator
 
 
 class DecimalParam(ResourceParam):
-    validator = DecimalValidator
+    validator_type = DecimalValidator
 
 
 class DateTimeParam(ResourceParam):
-    validator = DateTimeValidator
+    validator_type = DateTimeValidator
 
 
 class BoolParam(ResourceParam):
-    validator = BoolValidator
+    validator_type = BoolValidator
