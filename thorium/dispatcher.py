@@ -48,6 +48,9 @@ class DispatcherBase(object):
             resource = self.serializer.deserialize(request)
             method(resource)
             return ''
+        elif request.method == 'delete':
+            method()
+            return ''
         else:
             result = method()
             result = self.serializer.serialize(result)
