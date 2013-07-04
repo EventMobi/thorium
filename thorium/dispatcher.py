@@ -34,14 +34,14 @@ class DispatcherBase(object):
             #raise 405 error, The response MUST include an Allow header containing a list of valid methods for the requested resource
             raise Exception('405: method not allowed')
 
-        engine = self.engine(request)
+        engine = self.engine(request=request)
+
+        method = self.get_dispatch_method(request=request, engine=engine)
+
+        engine.authenticate(method)
 
         engine.pre_request()
-
-        self.pre_request(engine)
-
-        method = self.get_dispatch_method(request, engine)
-
+        self.pre_request(engine=engine)
         engine.post_request()
 
         if request.method in {'post', 'put', 'patch'}:
@@ -67,7 +67,7 @@ class CollectionDispatcher(DispatcherBase):
     def pre_request(self, engine):
         engine.pre_request_collection()
 
-    def get_dispatch_method(self, request, engine):
+    def get_dispatch_method(self, engine, request):
         """ find the method in the engine that matches the request """
         return getattr(engine, "{meth}_collection".format(meth=request.method))
 
@@ -82,7 +82,7 @@ class DetailDispatcher(DispatcherBase):
     def pre_request(self, engine):
         engine.pre_request_detail()
 
-    def get_dispatch_method(self, request, engine):
+    def get_dispatch_method(self, engine, request):
         """ find the method in the engine that matches the request """
         return getattr(engine, "{meth}_detail".format(meth=request.method))
 
