@@ -1,10 +1,27 @@
 
-def use(authenticator_class):
-    """ A decorator to attach a :class:`Authenticator` """
+def use(*authenticator_classes):
+    """ A decorator to attach one or more :class:`Authenticator`'s to the decorated class.
+
+    Usage:
+        from thorium import auth
+
+        @auth.use(BasicAuth, CustomAuth)
+        class MyEngine(Engine):
+            ...
+
+        OR
+
+        @auth.use(BasicAuth)
+        @auth.use(CustomAuth)
+        class MyEngine(Engine):
+            ...
+
+    :param authenticator_classes: One or more :class:`Authenticator` class definitions.
+    """
     def wrapped(cls):
         if not cls._authenticator_classes:
             cls._authenticator_classes = []
-        cls._authenticator_classes.append(authenticator_class)
+        cls._authenticator_classes.extend(authenticator_classes)
         return cls
     return wrapped
 
@@ -50,7 +67,10 @@ class AuthenticatorMetaClass(type):
 
 
 class Authenticator(object, metaclass=AuthenticatorMetaClass):
+    """ Inherit from this class to create a custom authenticator.
 
+    :param request: A :class:`Request` object.
+    """
     def __init__(self, request):
         self._loaded = False
         self.request = request
@@ -64,6 +84,11 @@ class Authenticator(object, metaclass=AuthenticatorMetaClass):
         return func
 
     def check_auth(self, method):
+        """ Finds and executes all validation rules for the given method.
+
+        :param method: A reference to a class method to run validation on.
+        """
+
         method_def = method.__func__
         if method_def not in self._no_auth_methods:
             self.try_load()
@@ -79,11 +104,20 @@ class Authenticator(object, metaclass=AuthenticatorMetaClass):
         return True
 
     def try_load(self):
+        """ Call the :function:`load` subclass hook if it hasn't not already been called. """
         if not self._loaded:
-            self.load()
+            self._load()
+            self._loaded = True
 
-    def load(self):
+    def _load(self):
+        """ This method will be called only once immediately before running the first validation method.
+        Overriding this method is the preferred way to initiate authenticator data since __init__
+        will be called whether validation is required or not. """
         pass
 
-    def authenticate(self):
+    def _authenticate(self):
+        """ This method will always be called from :function:`check_auth` except in the case
+        where the method being validated has the :function:`no_auth` decorator. Override to
+        provide the default authentication check. A False return will throw a access denied
+        error. """
         raise NotImplementedError('No authenticator found.')
