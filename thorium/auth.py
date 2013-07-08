@@ -92,7 +92,7 @@ class Authenticator(object, metaclass=AuthenticatorMetaClass):
         method_def = method.__func__
         if method_def not in self._no_auth_methods:
             self.try_load()
-            if not self.authenticate():
+            if not self._authenticate():
                 raise Exception('Failed auth')
 
         if method_def in self._validators:

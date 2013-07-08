@@ -1,4 +1,4 @@
-from . import serializers
+from . import serializers, errors
 
 #Taken from Tastypie, check that:
         #the requested HTTP method is in allowed_methods (method_check),
@@ -19,7 +19,7 @@ class DispatcherBase(object):
     def __init__(self, resource, engine, allowed_methods):
         self.resource = resource
         self.engine = engine
-        self.allowed_methods = allowed_methods
+        self.allowed_methods = {method.upper() for method in allowed_methods}
 
     def dispatch(self, request):
         """ Injects the :class:`.ResourceInterface` into the :class:`.Engine`
@@ -31,8 +31,9 @@ class DispatcherBase(object):
 
         #ensure valid method
         if request.method not in self.allowed_methods:
-            #raise 405 error, The response MUST include an Allow header containing a list of valid methods for the requested resource
-            raise Exception('405: method not allowed')
+            msg = 'Method {0} not available on {1} {2} resource.'\
+                .format(request.method, self.resource.__name__, self.dispatch_type)
+            raise errors.MethodNotAllowedError(message=msg, headers={'Allow': ', '.join(self.allowed_methods)})
 
         engine = self.engine(request=request)
 
@@ -56,9 +57,14 @@ class DispatcherBase(object):
             result = self.serializer.serialize(result)
             return result
 
+    def get_dispatch_method(self, engine, request):
+        """ find the method in the engine that matches the request """
+        return getattr(engine, "{0}_{1}".format(request.method.lower(), self.dispatch_type))
+
 
 class CollectionDispatcher(DispatcherBase):
     """ A subclass of :class:`.DispatcherBase` to handle requests made on individual :class:`.Resource`'s """
+    dispatch_type = 'collection'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -67,13 +73,10 @@ class CollectionDispatcher(DispatcherBase):
     def pre_request(self, engine):
         engine.pre_request_collection()
 
-    def get_dispatch_method(self, engine, request):
-        """ find the method in the engine that matches the request """
-        return getattr(engine, "{meth}_collection".format(meth=request.method))
-
 
 class DetailDispatcher(DispatcherBase):
     """ A subclass of :class:`.DispatcherBase` to handle requests made on collections of :class:`.Resource`'s """
+    dispatch_type = 'detail'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -82,9 +85,7 @@ class DetailDispatcher(DispatcherBase):
     def pre_request(self, engine):
         engine.pre_request_detail()
 
-    def get_dispatch_method(self, engine, request):
-        """ find the method in the engine that matches the request """
-        return getattr(engine, "{meth}_detail".format(meth=request.method))
+
 
 
 

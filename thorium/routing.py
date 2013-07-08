@@ -17,13 +17,13 @@ class Route(object):
     Note: To add a route after creation use the :meth:`add_route` method.
 
     :param name: The name to associate with this route
-    :param endpoint: The relative to base url path to access the resource, also known as the endpoint
+    :param path: The relative to base url path to access the resource, sometimes referred to as endpoint
     :param dispatcher: A :class:`.Dispatcher` object to handle the request
     """
 
-    def __init__(self, name, endpoint, dispatcher):
+    def __init__(self, name, path, dispatcher):
         self.name = name
-        self.endpoint = endpoint
+        self.path = path
         self.dispatcher = dispatcher
 
 
