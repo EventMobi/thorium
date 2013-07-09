@@ -49,20 +49,18 @@ class RouteManager(object):
 
         return self._routes
 
-    def register_resource(self, resource):
+    def register_resource(self, resource_cls):
         """ A convenience method to register a resource by using the default :class:`.Dispatcher`
         and :class:`.Route`. Calls :func:`add_route` for the actual adding.
         """
         #register collection route
-        collection_dsp = dispatcher.CollectionDispatcher(
-            resource=resource, engine=resource.Meta.engine, allowed_methods=resource.Meta.collection_methods)
-        col_route = Route('{0}_collection'.format(resource.__name__), resource.Meta.collection_endpoint, collection_dsp)
+        collection_dsp = dispatcher.CollectionDispatcher(resource_cls=resource_cls, engine_cls=resource_cls.Meta.engine, allowed_methods=resource_cls.Meta.collection_methods)
+        col_route = Route('{0}_{1}'.format(resource_cls.__name__, collection_dsp.request_type), resource_cls.Meta.collection_endpoint, collection_dsp)
         self.add_route(col_route)
 
         #register detail route
-        detail_dsp = dispatcher.DetailDispatcher(
-            resource=resource, engine=resource.Meta.engine, allowed_methods=resource.Meta.detail_methods)
-        detail_route = Route('{0}_detail'.format(resource.__name__), resource.Meta.detail_endpoint, detail_dsp)
+        detail_dsp = dispatcher.DetailDispatcher(resource_cls=resource_cls, engine_cls=resource_cls.Meta.engine, allowed_methods=resource_cls.Meta.detail_methods)
+        detail_route = Route('{0}_{1}'.format(resource_cls.__name__, detail_dsp.request_type), resource_cls.Meta.detail_endpoint, detail_dsp)
         self.add_route(detail_route)
 
         return {'collection_route': col_route, 'detail_route': detail_route}

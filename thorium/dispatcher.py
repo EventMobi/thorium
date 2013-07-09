@@ -1,4 +1,5 @@
-from . import serializers, errors
+from . import errors
+from .response import DetailResponse, CollectionResponse
 
 #Taken from Tastypie, check that:
         #the requested HTTP method is in allowed_methods (method_check),
@@ -12,13 +13,13 @@ class DispatcherBase(object):
     """ The Dispatcher holds a :class:`.ResourceInterface` and :class:`.Engine` pairing and is associated
     with a :class:`.Route`. It's responsible for handing a request off to the correct components.
 
-    :param resource: A :class:`.ResourceInterface` object
+    :param resource_cls: A :class:`.Resource` class definition
     :param engine: A :class:`.Engine` object to implement the :class:`.ResourceInterface`
     """
 
-    def __init__(self, resource, engine, allowed_methods):
-        self.resource = resource
-        self.engine = engine
+    def __init__(self, resource_cls, engine_cls, allowed_methods):
+        self.resource_cls = resource_cls
+        self.engine_cls = engine_cls
         self.allowed_methods = {method.upper() for method in allowed_methods}
 
     def dispatch(self, request):
@@ -32,58 +33,52 @@ class DispatcherBase(object):
         #ensure valid method
         if request.method not in self.allowed_methods:
             msg = 'Method {0} not available on {1} {2} resource.'\
-                .format(request.method, self.resource.__name__, self.dispatch_type)
+                .format(request.method, self.resource_cls.__name__, self.request_type)
             raise errors.MethodNotAllowedError(message=msg, headers={'Allow': ', '.join(self.allowed_methods)})
 
-        engine = self.engine(request=request)
+        response = self.build_response_obj(request=request)
 
-        method = self.get_dispatch_method(request=request, engine=engine)
+        engine = self.engine_cls(request=request, response=response)
 
-        engine.authenticate(method)
+        dispatch_method = self.get_dispatch_method(engine=engine)
+
+        engine.authenticate(dispatch_method)
 
         engine.pre_request()
+
         self.pre_request(engine=engine)
+
+        dispatch_method()
+
         engine.post_request()
 
-        if request.method in {'post', 'put', 'patch'}:
-            resource = self.serializer.deserialize(request)
-            method(resource)
-            return ''
-        elif request.method == 'delete':
-            method()
-            return ''
-        else:
-            result = method()
-            result = self.serializer.serialize(result)
-            return result
+        return response
 
-    def get_dispatch_method(self, engine, request):
+    def get_dispatch_method(self, engine):
         """ find the method in the engine that matches the request """
-        return getattr(engine, "{0}_{1}".format(request.method.lower(), self.dispatch_type))
+        return getattr(engine, "{0}_{1}".format(engine.request.method.lower(), self.request_type))
 
 
 class CollectionDispatcher(DispatcherBase):
     """ A subclass of :class:`.DispatcherBase` to handle requests made on individual :class:`.Resource`'s """
-    dispatch_type = 'collection'
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.serializer = serializers.CollectionSerializer()
+    request_type = 'collection'
 
     def pre_request(self, engine):
         engine.pre_request_collection()
 
+    def build_response_obj(self, request):
+        return CollectionResponse(request)
+
 
 class DetailDispatcher(DispatcherBase):
     """ A subclass of :class:`.DispatcherBase` to handle requests made on collections of :class:`.Resource`'s """
-    dispatch_type = 'detail'
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.serializer = serializers.DetailSerializer()
+    request_type = 'detail'
 
     def pre_request(self, engine):
         engine.pre_request_detail()
+
+    def build_response_obj(self, request):
+        return DetailResponse(request)
 
 
 

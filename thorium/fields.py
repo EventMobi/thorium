@@ -60,7 +60,12 @@ class DateTimeValidator(FieldValidator):
     def type_validation(self, value, convert):
         if not isinstance(value, datetime.datetime):
             if convert:
-                value = datetime.datetime.fromtimestamp(int(value))
+                if isinstance(value, str):
+                    value = datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
+                elif isinstance(value, int):
+                    value = datetime.datetime.fromtimestamp(int(value))
+                else:
+                    raise Exception('{0} is not a date'.format(value))
             else:
                 raise Exception('{0} is not a date'.format(value))
         return value

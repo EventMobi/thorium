@@ -1,8 +1,9 @@
 class Engine(object):
     _authenticator_classes = None
 
-    def __init__(self, request):
+    def __init__(self, request, response):
         self.request = request
+        self.response = response
         if self._authenticator_classes:
             self._authenticators = [a(request) for a in self._authenticator_classes]
 
