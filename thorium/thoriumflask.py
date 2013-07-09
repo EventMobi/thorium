@@ -1,7 +1,7 @@
 import json
 from . import Thorium
 from .request import Request
-from .errors import HttpErrorBase
+from .errors import HttpErrorBase, ValidationError, BadRequestError
 from .resources import VALID_METHODS
 from .response import DetailResponse, CollectionResponse
 from flask import Response, request as flaskrequest
@@ -35,20 +35,22 @@ class FlaskEndpoint(object):
             return Response(response=error, status=e.status_code, headers=e.headers, content_type='application/json')
 
     def build_request(self):
-        resource = None
+        try:
+            resource = None
+            if flaskrequest.data:
+                if flaskrequest.mimetype == 'application/json':
+                    if flaskrequest.json:
+                        resource = self.dispatcher.resource_cls()
+                        resource.from_dict(flaskrequest.json)
+                else:
+                    raise NotImplementedError('Currently only json is supported, use application/json mimetype')
 
-        if flaskrequest.data:
-            if flaskrequest.mimetype == 'application/json':
-                if flaskrequest.json:
-                    resource = self.dispatcher.resource_cls()
-                    resource.from_dict(flaskrequest.json, convert=True)
-            else:
-                raise NotImplementedError('Currently only json is supported, use application/json mimetype')
-
-        request = Request(method=flaskrequest.method, identifiers=flaskrequest.view_args,
-                          resource_cls=self.dispatcher.resource_cls, query_params=flaskrequest.args.to_dict(),
-                          mimetype=flaskrequest.mimetype, resource=resource, request_type=self.dispatcher.request_type,
-                          url=flaskrequest.url)
+            request = Request(method=flaskrequest.method, identifiers=flaskrequest.view_args,
+                              resource_cls=self.dispatcher.resource_cls, query_params=flaskrequest.args.to_dict(),
+                              mimetype=flaskrequest.mimetype, resource=resource, request_type=self.dispatcher.request_type,
+                              url=flaskrequest.url)
+        except ValidationError as e:
+            raise BadRequestError(message=e.args[0])
 
         return request
 

@@ -25,6 +25,7 @@ class ResourceMetaClass(type):
         fields = {}
         for name, field in attrs.items():
             if isinstance(field, ResourceField):
+                field.name = name
                 fields[name] = field
                 attrs[name] = property(fget=ResourceMetaClass._gen_get_prop(name),
                                        fset=ResourceMetaClass._get_set_prop(name))
@@ -94,10 +95,10 @@ class Resource(object, metaclass=ResourceMetaClass):
         # create copy of fields for this instance
         self._fields = copy.deepcopy(self._fields)
 
-    def from_dict(self, data, convert=False):
+    def from_dict(self, data):
         for name, field in self._fields.items():
             if name in data:
-                field.set(data[name], convert)
+                field.set(data[name])
 
     def to_dict(self, partial=False):
         if partial:
@@ -121,7 +122,7 @@ class ResourceManager(object):
         """ Returns a name to :class:`.ResourceParam` dictionary. """
         param_dict = self._get_params()
         for name, param in param_dict.items():
-            param.set(input_params[name], convert=True) if name in input_params else param.to_default()
+            param.set(input_params[name]) if name in input_params else param.to_default()
         return param_dict
 
     def _get_params(self):

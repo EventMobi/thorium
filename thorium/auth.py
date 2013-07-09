@@ -1,3 +1,4 @@
+from . import errors
 
 def use(*authenticator_classes):
     """ A decorator to attach one or more :class:`Authenticator`'s to the decorated class.
@@ -93,13 +94,13 @@ class Authenticator(object, metaclass=AuthenticatorMetaClass):
         if method_def not in self._no_auth_methods:
             self.try_load()
             if not self._authenticate():
-                raise Exception('Failed auth')
+                raise errors.UnauthorizedError()
 
         if method_def in self._validators:
             self.try_load()
             for v in self._validators[method_def]:
                 if not v(self):
-                    raise Exception('failed validation')
+                    raise errors.ForbiddenError()
 
         return True
 

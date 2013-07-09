@@ -1,6 +1,6 @@
-import calendar
 import numbers
 import datetime
+from . import errors
 
 
 #Field Validators
@@ -9,13 +9,13 @@ class FieldValidator(object):
     def __init__(self, field):
         self._field = field
 
-    def validate(self, value, convert):
+    def validate(self, value):
         if self._field.notnull and value is None:
-            raise Exception('Value cannot be null')
+            raise errors.ValidationError('{0} cannot be null'.format(self._field))
         elif value is NotSet:
             return value
         elif value:
-            value = self.type_validation(value, convert)
+            value = self.type_validation(value)
 
         return value
 
@@ -24,60 +24,46 @@ class FieldValidator(object):
 
 
 class CharValidator(FieldValidator):
-    def type_validation(self, value, convert):
+    def type_validation(self, value):
         if not isinstance(value, str):
-            if convert:
-                value = str(value)
-            else:
-                raise Exception('{0} is not a string.'.format(value))
+            errors.ValidationError('{0} expects a string, got {1}'.format(self._field, value))
 
         if self._field.max_length and len(value) > self._field.max_length:
-            raise Exception('{0} exceeds max length of {1}'.format(value, self._field.max_length))
+            raise errors.ValidationError('Max length of {0} is {1}, given value was {2}'.format(self._field, self._field.max_length, len(value)))
         return value
 
 
 class IntValidator(FieldValidator):
-    def type_validation(self, value, convert):
+    def type_validation(self, value):
         if not isinstance(value, numbers.Integral):
-            if convert:
-                value = int(value)
-            else:
-                raise Exception('{0} is not an integer or long'.format(value))
+            raise errors.ValidationError('{0} expects an int or long, got {1}'.format(self._field, value))
         return value
 
 
 class DecimalValidator(FieldValidator):
-    def type_validation(self, value, convert):
+    def type_validation(self, value):
         if not isinstance(value, numbers.Real):
-            if convert:
-                value = float(value)
-            else:
-                raise Exception('{0} is not a number'.format(value))
+            raise errors.ValidationError('{0} expects a number, got {1}'.format(self._field, value))
         return value
 
 
 class DateTimeValidator(FieldValidator):
-    def type_validation(self, value, convert):
+    def type_validation(self, value):
         if not isinstance(value, datetime.datetime):
-            if convert:
+            try:
                 if isinstance(value, str):
                     value = datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
-                elif isinstance(value, int):
-                    value = datetime.datetime.fromtimestamp(int(value))
                 else:
-                    raise Exception('{0} is not a date'.format(value))
-            else:
-                raise Exception('{0} is not a date'.format(value))
+                    value = datetime.datetime.fromtimestamp(int(value))
+            except:
+                raise errors.ValidationError('{0} expects a date, got {1}'.format(self._field, value))
         return value
 
 
 class BoolValidator(FieldValidator):
-    def type_validation(self, value, convert):
+    def type_validation(self, value):
         if not isinstance(value, bool):
-            if convert:
-                value = bool(value)
-            else:
-                raise Exception('{0} is not a bool'.format(value))
+            raise errors.ValidationError('{0} expects True or False, got {1}'.format(self._field, value))
         return value
 
 
@@ -88,6 +74,7 @@ class NotSet(object):
 class TypedField(object):
 
     def __init__(self, default=NotSet, notnull=False, *args, **kwargs):
+        self.name = 'noname'
 
         # a hook to allow subclasses to add their own unique parameters
         self.set_unique_attributes(**kwargs)
@@ -97,22 +84,25 @@ class TypedField(object):
         # create validator
         self._validator = self.validator_type(self)
 
-        self.default = self._validator.validate(default, convert=False)
+        self.default = self._validator.validate(default)
 
         # set initial value to NotSet
         self._value = NotSet
 
-    def set(self, value, convert=False):
+    def __str__(self):
+        return '{0}:{1}'.format(self.__class__.__name__, self.name)
+
+    def set(self, value):
         if value is NotSet:
             self._value = NotSet
         else:
-            self._value = self._validator.validate(value, convert)
+            self._value = self._validator.validate(value)
         return self._value
 
     def get(self):
         if self._value is NotSet:
             if self.default is NotSet:
-                raise Exception('The value is not set and has no default.')
+                raise errors.ValidationError('The value of {0} is not set and has no default.'.format(self))
             else:
                 return self.default
         return self._value
