@@ -7,4 +7,8 @@ setup(name='Thorium',
       author_email='ryan@eventmobi.com',
       url='https://github.com/EventMobi/thorium',
       packages=['thorium'],
+      install_requires=['Flask==0.10.1']
       )
+
+
+

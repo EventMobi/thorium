@@ -1,5 +1,6 @@
 import copy
 
+
 class Request(object):
 
     def __init__(self, method, identifiers, resource_cls, query_params, mimetype, resource, request_type, url):
@@ -13,7 +14,7 @@ class Request(object):
         self.url = url
 
 
-def _get_params(self, resource_cls, query_params):
+def _get_params(resource_cls, query_params):
     param_dict = copy.deepcopy(resource_cls.query_parameters)
     for name, param in param_dict.items():
         param.set(query_params[name]) if name in query_params else param.to_default()

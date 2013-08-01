@@ -1,53 +1,72 @@
-from unittest import TestCase
-from thorium import Engine, Request
-from thorium.testsuite.helpers import resourcehelper, requesthelper
-from thorium.testsuite.helpers.commonhelper import ReachedMethod
-from datetime import date
-import calendar
+from unittest import TestCase, mock
+from thorium import Engine, Request, auth
 
 
 class TestEngine(TestCase):
 
     def setUp(self):
-        self.res = resourcehelper.TestResourceInterface()
-
-        self.req = None
-        try:
-            self.req = requesthelper.RequestStub()
-        except ReachedMethod as reached_method:
-            self.assertTrue(reached_method.expected(Request.__init__))
-
-        self.engine = Engine(self.req)
+        self.request = mock.MagicMock(spec=Request)
+        self.response = mock.MagicMock(spec=Request)
+        self.auth_cls = mock.MagicMock(spec=auth.Authenticator)
+        Engine._authenticator_classes = [self.auth_cls]
+        self.engine = Engine(self.request, self.response)
 
     def test_init(self):
-        self.assertEqual(self.engine.request, self.req)
+        self.assertEqual(self.engine.request, self.request)
+        self.auth_cls.assert_called_once_with(self.request)
 
     def test_pre_request(self):
         self.engine.pre_request()
-        self.assertTrue(True)
+
+    def test_pre_request_detail(self):
+        self.engine.pre_request_detail()
+
+    def test_pre_request_collection(self):
+        self.engine.pre_request_collection()
 
     def test_post_request(self):
         self.engine.post_request()
-        self.assertTrue(True)
 
-    def test_get(self):
-        self.assertRaises(NotImplementedError, self.engine.get)
+    def test_get_detail(self):
+        self.assertRaises(NotImplementedError, self.engine.get_detail)
 
-    def test_post(self):
-        self.assertRaises(NotImplementedError, self.engine.post)
+    def test_post_detail(self):
+        self.assertRaises(NotImplementedError, self.engine.post_detail)
 
-    def test_put(self):
-        self.assertRaises(NotImplementedError, self.engine.put)
+    def test_put_detail(self):
+        self.assertRaises(NotImplementedError, self.engine.put_detail)
 
-    def test_patch(self):
-        self.assertRaises(NotImplementedError, self.engine.patch)
+    def test_patch_detail(self):
+        self.assertRaises(NotImplementedError, self.engine.patch_detail)
 
-    def test_delete(self):
-        self.assertRaises(NotImplementedError, self.engine.delete)
+    def test_delete_detail(self):
+        self.assertRaises(NotImplementedError, self.engine.delete_detail)
 
+    def test_get_collection(self):
+        self.assertRaises(NotImplementedError, self.engine.get_collection)
+
+    def test_post_collection(self):
+        self.assertRaises(NotImplementedError, self.engine.post_collection)
+
+    def test_put_collection(self):
+        self.assertRaises(NotImplementedError, self.engine.put_collection)
+
+    def test_patch_collection(self):
+        self.assertRaises(NotImplementedError, self.engine.patch_collection)
+
+    def test_delete_collection(self):
+        self.assertRaises(NotImplementedError, self.engine.delete_collection)
+        
     def test_options(self):
         self.assertRaises(NotImplementedError, self.engine.options)
 
+    def test_authenticate(self):
+        auth_mock1 = mock.MagicMock(spec=auth.Authenticator)
+        auth_mock2 = mock.MagicMock(spec=auth.Authenticator)
+        self.engine._authenticators = [auth_mock1, auth_mock2]
+        self.engine.authenticate('test')
+        auth_mock1.check_auth.assert_called_once_with('test')
+        auth_mock2.check_auth.assert_called_once_with('test')
 
 
 

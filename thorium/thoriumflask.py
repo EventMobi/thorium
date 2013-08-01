@@ -33,6 +33,9 @@ class FlaskEndpoint(object):
         except HttpErrorBase as e:
             error = json.dumps({'error': str(e), 'status': e.status_code})
             return Response(response=error, status=e.status_code, headers=e.headers, content_type='application/json')
+        except Exception as e:
+            print(e)
+            raise e
 
     def build_request(self):
         try:

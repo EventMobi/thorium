@@ -1,9 +1,11 @@
 from unittest import TestCase, mock
 from thorium import resources, fields, errors
 
+
 class SimpleResource(resources.Resource):
     name = fields.CharField()
     age = fields.IntField()
+
 
 class TestResource(TestCase):
 

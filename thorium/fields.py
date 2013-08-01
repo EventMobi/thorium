@@ -26,7 +26,7 @@ class FieldValidator(object):
 class CharValidator(FieldValidator):
     def type_validation(self, value):
         if not isinstance(value, str):
-            errors.ValidationError('{0} expects a string, got {1}'.format(self._field, value))
+            raise errors.ValidationError('{0} expects a string, got {1}'.format(self._field, value))
 
         if self._field.max_length and len(value) > self._field.max_length:
             raise errors.ValidationError('Max length of {0} is {1}, given value was {2}'.format(self._field, self._field.max_length, len(value)))
@@ -35,14 +35,14 @@ class CharValidator(FieldValidator):
 
 class IntValidator(FieldValidator):
     def type_validation(self, value):
-        if not isinstance(value, numbers.Integral):
+        if not isinstance(value, numbers.Integral) or isinstance(value, bool):
             raise errors.ValidationError('{0} expects an int or long, got {1}'.format(self._field, value))
         return value
 
 
 class DecimalValidator(FieldValidator):
     def type_validation(self, value):
-        if not isinstance(value, numbers.Real):
+        if not isinstance(value, numbers.Real) or isinstance(value, bool):
             raise errors.ValidationError('{0} expects a number, got {1}'.format(self._field, value))
         return value
 
@@ -50,12 +50,12 @@ class DecimalValidator(FieldValidator):
 class DateTimeValidator(FieldValidator):
     def type_validation(self, value):
         if not isinstance(value, datetime.datetime):
-            try:
-                if isinstance(value, str):
+            if isinstance(value, str):
+                try:
                     value = datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
-                else:
-                    value = datetime.datetime.fromtimestamp(int(value))
-            except:
+                except:
+                    raise errors.ValidationError('{0} expects a date, got {1}'.format(self._field, value))
+            else:
                 raise errors.ValidationError('{0} expects a date, got {1}'.format(self._field, value))
         return value
 
@@ -72,6 +72,7 @@ class NotSet(object):
 
 
 class TypedField(object):
+    validator_type = None
 
     def __init__(self, default=NotSet, notnull=False, *args, **kwargs):
         self.name = 'noname'
@@ -82,7 +83,7 @@ class TypedField(object):
         self.notnull = notnull
 
         # create validator
-        self._validator = self.validator_type(self)
+        self._validator = self._get_validator()
 
         self.default = self._validator.validate(default)
 
@@ -113,8 +114,15 @@ class TypedField(object):
     def is_set(self):
         return self._value != NotSet
 
-    def set_unique_attributes(self, max_length=None):
+    def set_unique_attributes(self):
         pass
+
+    def _get_validator(self):
+        if self.validator_type:
+            vt_cls = self.validator_type
+            return vt_cls(self)
+        else:
+            raise NotImplementedError('Base class TypedField has no validator')
 
 
 #Resource Fields
@@ -124,6 +132,7 @@ class ResourceField(TypedField):
 
 class CharField(ResourceField):
     validator_type = CharValidator
+    max_length = None
 
     def set_unique_attributes(self, max_length=None):
         self.max_length = max_length

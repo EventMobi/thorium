@@ -1,5 +1,6 @@
 from . import errors
 
+
 def use(*authenticator_classes):
     """ A decorator to attach one or more :class:`Authenticator`'s to the decorated class.
 
