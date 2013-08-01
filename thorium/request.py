@@ -1,5 +1,4 @@
-from .resources import ResourceManager
-
+import copy
 
 class Request(object):
 
@@ -7,10 +6,15 @@ class Request(object):
         self.resource_cls = resource_cls
         self.method = method
         self.identifiers = identifiers
-        self.params = ResourceManager(resource_cls).get_parameters(query_params) #right way to do this?
+        self.params = _get_params(resource_cls, query_params)
         self.mimetype = mimetype
         self.resource = resource
         self.request_type = request_type
         self.url = url
 
 
+def _get_params(self, resource_cls, query_params):
+    param_dict = copy.deepcopy(resource_cls.query_parameters)
+    for name, param in param_dict.items():
+        param.set(query_params[name]) if name in query_params else param.to_default()
+    return param_dict

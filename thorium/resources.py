@@ -59,26 +59,23 @@ class ResourceMetaClass(type):
 
     @staticmethod
     def _validate_format(mcs, resource_name, attrs):
+        if 'Meta' in attrs:
+            meta = attrs['Meta']
 
-        if not 'Meta' in attrs:
-            raise Exception('Meta class must be present.')
+            mcs._get_required_attribute(resource_name, meta, 'detail_endpoint')
+            mcs._get_required_attribute(resource_name, meta, 'collection_endpoint')
 
-        meta = attrs['Meta']
+            detail_methods = mcs._get_required_attribute(resource_name, meta, 'detail_methods')
+            if not detail_methods.issubset(VALID_METHODS):
+                raise Exception('detail_methods: {dm} must be a subset of the '
+                                'valid methods: {VM}'.format(dm=detail_methods, VM=VALID_METHODS))
 
-        mcs._get_required_attribute(resource_name, meta, 'detail_endpoint')
-        mcs._get_required_attribute(resource_name, meta, 'collection_endpoint')
+            collection_methods = mcs._get_required_attribute(resource_name, meta, 'collection_methods')
+            if not collection_methods.issubset(VALID_METHODS):
+                raise Exception('collection_methods {cm} must be a subset of the '
+                                'valid methods: {VM}'.format(cm=collection_methods, VM=VALID_METHODS))
 
-        detail_methods = mcs._get_required_attribute(resource_name, meta, 'detail_methods')
-        if not detail_methods.issubset(VALID_METHODS):
-            raise Exception('detail_methods: {dm} must be a subset of the '
-                            'valid methods: {VM}'.format(dm=detail_methods, VM=VALID_METHODS))
-
-        collection_methods = mcs._get_required_attribute(resource_name, meta, 'collection_methods')
-        if not collection_methods.issubset(VALID_METHODS):
-            raise Exception('collection_methods {cm} must be a subset of the '
-                            'valid methods: {VM}'.format(cm=collection_methods, VM=VALID_METHODS))
-
-        engine = mcs._get_required_attribute(resource_name, meta, 'engine')
+            engine = mcs._get_required_attribute(resource_name, meta, 'engine')
 
     @staticmethod
     def _get_required_attribute(resource_name, meta, attr_name):
@@ -110,21 +107,3 @@ class Resource(object, metaclass=ResourceMetaClass):
 
     def valid_fields(self):
         return {name: field for name, field in self._fields.items() if field.is_set()}
-
-
-class ResourceManager(object):
-    """ Manages :class:`.Resource` objects. """
-
-    def __init__(self, resource_cls):
-        self.resource_cls = resource_cls
-
-    def get_parameters(self, input_params):
-        """ Returns a name to :class:`.ResourceParam` dictionary. """
-        param_dict = self._get_params()
-        for name, param in param_dict.items():
-            param.set(input_params[name]) if name in input_params else param.to_default()
-        return param_dict
-
-    def _get_params(self):
-        """ Creates a new dictionary of query parameters from the resource. """
-        return copy.deepcopy(self.resource_cls.query_parameters)
