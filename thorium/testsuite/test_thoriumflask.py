@@ -7,22 +7,6 @@ import datetime
 import calendar
 
 
-class PersonEngine(Engine):
-
-    def pre_request(self):
-        self.ds = DataStore()
-
-    def get_detail(self):
-        person = self.request.resource_cls()
-        self.ds.populate_person(person)
-        self.response.resource = person
-
-    def get_collection(self):
-        person = self.request.resource_cls()
-        self.ds.populate_person(person)
-        self.response.resources.append(person)
-
-
 class PersonResource(Resource):
     id = fields.IntField(default=None)
     name = fields.CharField()
@@ -41,7 +25,29 @@ class PersonResource(Resource):
         collection_methods = {'get', 'post'}
         detail_endpoint = '/api/event/<int:event_id>/people/<int:id>'
         detail_methods = {'get', 'put', 'patch'}
-        engine = PersonEngine
+
+
+class PersonEngine(Engine):
+
+    def pre_request(self):
+        self.ds = DataStore()
+
+    def get_detail(self):
+        person = self.request.resource_cls()
+        self.ds.populate_person(person)
+        self.response.resource = person
+
+    def get_collection(self):
+        person = self.request.resource_cls()
+        self.ds.populate_person(person)
+        self.response.resources.append(person)
+
+    def post_collection(self):
+        res = self.request.resource
+        name = res.name
+        birth_date = res.birth_date
+        admin = res.admin
+        self.response.location_header(4)
 
 
 class DataStore(object):
@@ -57,16 +63,17 @@ class TestThoriumFlask(unittest.TestCase):
 
     def setUp(self):
         route_manager = RouteManager()
-        route_manager.register_resource(PersonResource)
+        route_manager.register_endpoint(PersonResource, PersonEngine)
         self.flask_app = Flask(__name__)
         ThoriumFlask(
             settings={},
             route_manager=route_manager,
             flask_app=self.flask_app
         )
+        self.c = self.flask_app.test_client()
 
     def test_simple_detail_get(self):
-        rv = self.flask_app.test_client().open('/api/event/1/people/1', method='GET')
+        rv = self.c.open('/api/event/1/people/1', method='GET')
         self.assertEqual(rv.status_code, 200)
         data = json.loads(rv.data.decode())
         self.assertEqual(data['name'], 'Timmy')
@@ -74,7 +81,7 @@ class TestThoriumFlask(unittest.TestCase):
         self.assertEqual(data['id'], 42)
 
     def test_simple_list_get(self):
-        rv = self.flask_app.test_client().open('/api/event/1/people', method='GET')
+        rv = self.c.open('/api/event/1/people', method='GET')
         self.assertEqual(rv.status_code, 200)
         data = json.loads(rv.data.decode())
         self.assertIsInstance(data, list)
@@ -82,3 +89,29 @@ class TestThoriumFlask(unittest.TestCase):
         self.assertEqual(data[0]['name'], 'Timmy')
         self.assertEqual(data[0]['admin'], True)
         self.assertEqual(data[0]['id'], 42)
+
+    def test_post_simple(self):
+        data = {
+            'name': 'Snoopy',
+            'birth_date': datetime.datetime(1974, 3, 13),
+            'admin': True
+        }
+        rv = self.c.post('/api/event/1/people', data=json.dumps(data, default=handler), content_type='application/json')
+        self.assertEqual(rv.status_code, 201)
+
+    def test_post_partial_resource(self):
+        data = {
+            'birth_date': datetime.datetime(1974, 3, 13),
+            'admin': True
+        }
+        rv = self.c.post('/api/event/1/people', data=json.dumps(data, default=handler), content_type='application/json')
+        self.assertEqual(rv.status_code, 400)
+
+
+def handler(obj):
+    if hasattr(obj, 'isoformat'):
+        return obj.isoformat()
+    #elif isinstance(obj, ...):
+    #    return ...
+    else:
+        raise TypeError('Object of type %s with value of %s is not JSON serializable' % (type(obj), repr(obj)))

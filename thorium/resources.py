@@ -1,11 +1,12 @@
-from .fields import ResourceField, ResourceParam
-import copy
-from itertools import chain
+from . import errors, fields
+import copy, collections
 
 VALID_METHODS = {'get', 'post', 'put', 'patch', 'delete'}
 
 
 class ResourceMetaClass(type):
+
+    #Note: attrs comes in alphabetical order, unsure how to maintain declared order of fields
     def __new__(mcs, resource_name, bases, attrs):
 
         # validate Resource's children but not Resource
@@ -22,20 +23,15 @@ class ResourceMetaClass(type):
 
         # gather fields to add to _fields dictionary
         # also replaces field definition with a property to wrap the _fields dictionary
-        fields = {}
+        field_dict = collections.OrderedDict()
         for name, field in attrs.items():
-            if isinstance(field, ResourceField):
+            if isinstance(field, fields.ResourceField):
                 field.name = name
-                fields[name] = field
+                field_dict[name] = field
                 attrs[name] = property(fget=ResourceMetaClass._gen_get_prop(name),
                                        fset=ResourceMetaClass._get_set_prop(name))
 
-        # append fields in bases
-        for base in bases[::-1]:
-            if hasattr(base, '_fields'):
-                fields = dict(chain(base._fields.items(), fields.items()))
-
-        return fields
+        return field_dict
 
     @staticmethod
     def _gen_get_prop(name):
@@ -54,7 +50,7 @@ class ResourceMetaClass(type):
         params = {}
         if 'Params' in attrs:
             p_attrs = attrs.pop('Params').__dict__
-            params = {name: param for name, param in list(p_attrs.items()) if isinstance(param, ResourceParam)}
+            params = {name: param for name, param in list(p_attrs.items()) if isinstance(param, fields.ResourceParam)}
         return params
 
     @staticmethod
@@ -62,48 +58,60 @@ class ResourceMetaClass(type):
         if 'Meta' in attrs:
             meta = attrs['Meta']
 
-            mcs._get_required_attribute(resource_name, meta, 'detail_endpoint')
-            mcs._get_required_attribute(resource_name, meta, 'collection_endpoint')
+            detail_methods = getattr(meta, 'detail_methods', None)
+            if detail_methods:
+                if not detail_methods.issubset(VALID_METHODS):
+                    raise Exception('detail_methods: {dm} must be a subset of the '
+                                    'valid methods: {VM}'.format(dm=detail_methods, VM=VALID_METHODS))
+            else:
+                setattr(meta, 'detail_methods', set())
 
-            detail_methods = mcs._get_required_attribute(resource_name, meta, 'detail_methods')
-            if not detail_methods.issubset(VALID_METHODS):
-                raise Exception('detail_methods: {dm} must be a subset of the '
-                                'valid methods: {VM}'.format(dm=detail_methods, VM=VALID_METHODS))
+            collection_methods = getattr(meta, 'collection_methods', None) or set()
+            if collection_methods:
+                if not collection_methods.issubset(VALID_METHODS):
+                    raise Exception('collection_methods {cm} must be a subset of the '
+                                    'valid methods: {VM}'.format(cm=collection_methods, VM=VALID_METHODS))
+            else:
+                setattr(meta, 'collection_methods', set())
 
-            collection_methods = mcs._get_required_attribute(resource_name, meta, 'collection_methods')
-            if not collection_methods.issubset(VALID_METHODS):
-                raise Exception('collection_methods {cm} must be a subset of the '
-                                'valid methods: {VM}'.format(cm=collection_methods, VM=VALID_METHODS))
+            detail_endpoint = getattr(meta, 'detail_endpoint', None)
+            if not detail_endpoint:
+                setattr(meta, 'detail_endpoint', None)
 
-            engine = mcs._get_required_attribute(resource_name, meta, 'engine')
-
-    @staticmethod
-    def _get_required_attribute(resource_name, meta, attr_name):
-        attr = getattr(meta, attr_name, None)
-        if not attr:
-            raise Exception('Required attribute {at_n} not found '
-                            'in the {rs_n} Resource\'s Meta class.'.format(at_n=attr_name, rs_n=resource_name))
-        return attr
+            collection_endpoint = getattr(meta, 'collection_endpoint', None)
+            if not collection_endpoint:
+                setattr(meta, 'collection_endpoint', None)
 
 
 class Resource(object, metaclass=ResourceMetaClass):
 
-    def __init__(self):
-        # create copy of fields for this instance
-        self._fields = copy.deepcopy(self._fields)
+    def __new__(cls, *args):
+        obj = super().__new__(cls, *args)
+        obj._fields = copy.deepcopy(obj._fields)
+        return obj
+
+    @classmethod
+    def partial(cls, *args, **kwargs):
+        obj = cls(*args, **kwargs)
+        for field in obj._fields.values():
+            field.set(fields.NotSet)
+        return obj
 
     def from_dict(self, data):
         for name, field in self._fields.items():
             if name in data:
                 field.set(data[name])
 
-    def to_dict(self, partial=False):
-        if partial:
-            fields = self.valid_fields()
-        else:
-            fields = self._fields
-
-        return {name: field.get() for name, field in fields.items()}
+    def to_dict(self):
+        return {name: field.get() for name, field in self.valid_fields()}
 
     def valid_fields(self):
-        return {name: field for name, field in self._fields.items() if field.is_set()}
+        return ((name, field) for name, field in self._fields.items() if field.is_set())
+
+    def all_fields(self):
+        return ((name, field) for name, field in self._fields.items())
+
+    def validate_full(self):
+        for field in self._fields.values():
+            if not field.is_set():
+                raise errors.ValidationError('Field {0} is NotSet, expected full resource.'.format(field))

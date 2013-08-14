@@ -7,7 +7,7 @@ class SimpleResource(resources.Resource):
     age = fields.IntField()
 
 
-class TestResource(TestCase):
+class TestSimpleResource(TestCase):
 
     def setUp(self):
         self.resource = SimpleResource()
@@ -49,14 +49,7 @@ class TestResource(TestCase):
         }
         self.resource.from_dict(data)
         self.assertEqual(self.resource.name, data['name'])
-
-        validation_error = False
-        try:
-            age = self.resource.age
-        except errors.ValidationError:
-            validation_error = True
-        finally:
-            self.assertTrue(validation_error)
+        self.assertEqual(self.resource.age, fields.NotSet)
 
     def test_to_dict(self):
         self.resource.name = 'Jack Daniel'
@@ -66,24 +59,14 @@ class TestResource(TestCase):
         self.assertEqual(self.resource.name, data['name'])
         self.assertEqual(self.resource.age, data['age'])
 
-        data2 = self.resource.to_dict(False)
+        data2 = self.resource.to_dict()
         self.assertEqual(data, data2)
 
     def test_to_dict_partial(self):
         self.resource.name = 'Barney'
-        data = self.resource.to_dict(True)
+        data = self.resource.to_dict()
         self.assertEqual(self.resource.name, data['name'])
         self.assertNotIn('age', data)
-
-    def test_to_dict_incomplete_data(self):
-        self.resource.name = 'Marvin'
-        validation_error = False
-        try:
-            data = self.resource.to_dict(False)
-        except errors.ValidationError:
-            validation_error = True
-        finally:
-            self.assertTrue(validation_error)
 
     def test_valid_fields(self):
         self.resource.name = 'Arthur'
@@ -95,12 +78,37 @@ class TestResource(TestCase):
     def test_valid_fields_with_defaults_is_not_set(self):
         self.resource.name = 'Trillian'
         self.resource._fields['age'].default = 0
-        self.assertEqual(self.resource.age, 0)
+        self.assertEqual(self.resource.age, fields.NotSet)
         valid_fields = self.resource.valid_fields()
         self.assertIn('name', valid_fields)
         self.assertNotIn('age', valid_fields)
         self.assertEqual(valid_fields['name'].get(), 'Trillian')
 
 
+class ComplexResource(resources.Resource):
+    name = fields.CharField(max_length=20)
+    age = fields.IntField()
+    admin = fields.BoolField(default=True)
+    birth_date = fields.DateTimeField()
+
+    def __init__(self, extra=False):
+        self.extra = extra
 
 
+class TestComplexResource(TestCase):
+
+    def setUp(self):
+        self.full = ComplexResource()
+        self.partial = ComplexResource.partial()
+
+    def test_full_resource_init(self):
+        self.assertEqual(self.full.name, fields.NotSet)
+        self.assertEqual(self.full.age, fields.NotSet)
+        self.assertEqual(self.full.admin, True)
+        self.assertEqual(self.full.birth_date, fields.NotSet)
+
+    def test_partial_resource_init(self):
+        self.assertEqual(self.partial.name, fields.NotSet)
+        self.assertEqual(self.partial.age, fields.NotSet)
+        self.assertEqual(self.partial.admin, fields.NotSet)
+        self.assertEqual(self.partial.birth_date, fields.NotSet)

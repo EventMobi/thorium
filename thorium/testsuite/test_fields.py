@@ -174,7 +174,7 @@ class TestTypedField(TestCase):
         with_default = SimpleTypedField(default=10)
         self.assertEqual(with_default.notnull, False)
         self.assertEqual(with_default.default, 10)
-        self.assertEqual(with_default._value, fields.NotSet)
+        self.assertEqual(with_default._value, 10)
 
         with_notnull = SimpleTypedField(notnull=True)
         self.assertEqual(with_notnull.notnull, True)
@@ -201,12 +201,12 @@ class TestTypedField(TestCase):
     def test_get_notset_with_default(self):
         self.assertEqual(self.field._value, fields.NotSet)
         self.field.default = 'abc'
-        self.assertEqual(self.field.get(), 'abc')
+        self.assertEqual(self.field.get(), fields.NotSet)
 
     def test_get_notset_without_default(self):
         self.assertEqual(self.field._value, fields.NotSet)
         self.assertEqual(self.field.default, fields.NotSet)
-        self.assertRaises(errors.ValidationError, self.field.get)
+        self.assertEqual(self.field.get(), fields.NotSet)
 
     def test_to_default(self):
         self.field._value = 'abc'

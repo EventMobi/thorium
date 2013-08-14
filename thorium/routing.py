@@ -49,17 +49,17 @@ class RouteManager(object):
 
         return self._routes
 
-    def register_resource(self, resource_cls):
+    def register_endpoint(self, resource_cls, engine_cls):
         """ A convenience method to register a resource by using the default :class:`.Dispatcher`
         and :class:`.Route`. Calls :func:`add_route` for the actual adding.
         """
         #register collection route
-        collection_dsp = dispatcher.CollectionDispatcher(resource_cls=resource_cls, engine_cls=resource_cls.Meta.engine, allowed_methods=resource_cls.Meta.collection_methods)
+        collection_dsp = dispatcher.CollectionDispatcher(resource_cls=resource_cls, engine_cls=engine_cls, allowed_methods=resource_cls.Meta.collection_methods)
         col_route = Route('{0}_{1}'.format(resource_cls.__name__, collection_dsp.request_type), resource_cls.Meta.collection_endpoint, collection_dsp)
         self.add_route(col_route)
 
         #register detail route
-        detail_dsp = dispatcher.DetailDispatcher(resource_cls=resource_cls, engine_cls=resource_cls.Meta.engine, allowed_methods=resource_cls.Meta.detail_methods)
+        detail_dsp = dispatcher.DetailDispatcher(resource_cls=resource_cls, engine_cls=engine_cls, allowed_methods=resource_cls.Meta.detail_methods)
         detail_route = Route('{0}_{1}'.format(resource_cls.__name__, detail_dsp.request_type), resource_cls.Meta.detail_endpoint, detail_dsp)
         self.add_route(detail_route)
 

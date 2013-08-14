@@ -26,9 +26,10 @@ class TestRouteManager(unittest.TestCase):
         self.assertIn(route2, routes)
 
     def test_register_resource(self):
-        res = mock.MagicMock()
-        res.__name__ = 'res'
-        route_dict = self.route_manager.register_resource(res)
+        resource = mock.MagicMock()
+        engine = mock.MagicMock()
+        resource.__name__ = 'res'
+        route_dict = self.route_manager.register_endpoint(resource, engine)
 
         #register_resource should return a collection_route and detail_route
         col_route = route_dict['collection_route']

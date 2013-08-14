@@ -86,9 +86,7 @@ class TypedField(object):
         self._validator = self._get_validator()
 
         self.default = self._validator.validate(default)
-
-        # set initial value to NotSet
-        self._value = NotSet
+        self._value = default
 
     def __str__(self):
         return '{0}:{1}'.format(self.__class__.__name__, self.name)
@@ -101,12 +99,10 @@ class TypedField(object):
         return self._value
 
     def get(self):
-        if self._value is NotSet:
-            if self.default is NotSet:
-                raise errors.ValidationError('The value of {0} is not set and has no default.'.format(self))
-            else:
-                return self.default
         return self._value
+
+    def validate(self):
+        self._validator.validate(self._value)
 
     def to_default(self):
         return self.set(self.default)

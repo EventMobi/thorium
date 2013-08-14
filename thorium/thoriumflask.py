@@ -1,10 +1,10 @@
 import json
-from . import Thorium
+import traceback
+from . import Thorium, errors
 from .request import Request
-from .errors import HttpErrorBase, ValidationError, BadRequestError
 from .resources import VALID_METHODS
 from .response import DetailResponse, CollectionResponse
-from flask import Response, request as flaskrequest
+from flask import Response as FlaskResponse, request as flaskrequest
 
 
 class ThoriumFlask(Thorium):
@@ -16,8 +16,9 @@ class ThoriumFlask(Thorium):
     def _bind_routes(self):
         routes = self._route_manager.get_all_routes()
         for r in routes:
-            fep = FlaskEndpoint(r.dispatcher)
-            self._flask_app.add_url_rule(r.path, r.name, fep.endpoint_target, methods=VALID_METHODS)
+            if r.path:
+                fep = FlaskEndpoint(r.dispatcher)
+                self._flask_app.add_url_rule(r.path, r.name, fep.endpoint_target, methods=VALID_METHODS)
 
 
 class FlaskEndpoint(object):
@@ -30,11 +31,12 @@ class FlaskEndpoint(object):
             request = self.build_request()
             response = self.dispatcher.dispatch(request)
             return self.convert_response(response)
-        except HttpErrorBase as e:
+        except errors.HttpErrorBase as e:
+            traceback.print_exc()
             error = json.dumps({'error': str(e), 'status': e.status_code})
-            return Response(response=error, status=e.status_code, headers=e.headers, content_type='application/json')
+            return FlaskResponse(response=error, status=e.status_code, headers=e.headers, content_type='application/json')
         except Exception as e:
-            print(e)
+            traceback.print_exc()
             raise e
 
     def build_request(self):
@@ -43,33 +45,42 @@ class FlaskEndpoint(object):
             if flaskrequest.data:
                 if flaskrequest.mimetype == 'application/json':
                     if flaskrequest.json:
-                        resource = self.dispatcher.resource_cls()
+                        partial = True if flaskrequest.method == 'PATCH' else False
+                        if partial:
+                            resource = self.dispatcher.resource_cls.partial()
+                        else:
+                            resource = self.dispatcher.resource_cls()
                         resource.from_dict(flaskrequest.json)
+                        if not partial:
+                            resource.validate_full()
                 else:
-                    raise NotImplementedError('Currently only json is supported, use application/json mimetype')
+                    raise errors.BadRequestError('Currently only json is supported, use application/json mimetype')
 
-            request = Request(method=flaskrequest.method, identifiers=flaskrequest.view_args,
-                              resource_cls=self.dispatcher.resource_cls, query_params=flaskrequest.args.to_dict(),
-                              mimetype=flaskrequest.mimetype, resource=resource, request_type=self.dispatcher.request_type,
-                              url=flaskrequest.url)
-        except ValidationError as e:
-            raise BadRequestError(message=e.args[0])
-
-        return request
+            return Request(method=flaskrequest.method, identifiers=flaskrequest.view_args,
+                           resource_cls=self.dispatcher.resource_cls, query_params=flaskrequest.args.to_dict(),
+                           mimetype=flaskrequest.mimetype, resource=resource, request_type=self.dispatcher.request_type,
+                           url=flaskrequest.url)
+        except errors.ValidationError as e:
+            raise errors.BadRequestError(message=e.args[0])
 
     def convert_response(self, response):
         body = None
         if isinstance(response, DetailResponse):
             if response.resource:
-                body = json.dumps(response.resource.to_dict(), default=handler)
+                response.resource.validate_full()
+                data = {n: v.get() for n, v in response.resource.all_fields()}
+                body = json.dumps(data, default=handler)
         elif isinstance(response, CollectionResponse):
             if response.resources:
-                data = [resource.to_dict() for resource in response.resources]
+                data = []
+                for res in response.resources:
+                    res.validate_full()
+                    data.append({n: v.get() for n, v in res.all_fields()})
                 body = json.dumps(data, default=handler)
         else:
             raise Exception('Unexpected response object: {0}'.format(response))
 
-        return Response(response=body, status=200, headers=response.headers, content_type='application/json')
+        return FlaskResponse(response=body, status=response.status_code, headers=response.headers, content_type='application/json')
 
 
 def handler(obj):

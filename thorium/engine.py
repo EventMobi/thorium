@@ -8,6 +8,11 @@ class Engine(object):
         if self._authenticator_classes:
             self._authenticators = [a(request) for a in self._authenticator_classes]
 
+    def authenticate(self, method):
+        if self._authenticators:
+            for auth in self._authenticators:
+                auth.check_auth(method)
+
     def pre_request(self):
         pass
 
@@ -52,8 +57,3 @@ class Engine(object):
 
     def options(self):
         raise NotImplementedError()
-
-    def authenticate(self, method):
-        if self._authenticators:
-            for auth in self._authenticators:
-                auth.check_auth(method)
