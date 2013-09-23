@@ -66,6 +66,18 @@ class BoolValidator(FieldValidator):
             raise errors.ValidationError('{0} expects True or False, got {1}'.format(self._field, value))
         return value
 
+class ListValidator(FieldValidator):
+    def type_validation(self, value):
+        if not isinstance(value, list):
+            raise errors.ValidationError('{0} expects a list, got {1}'.format(self._field, value))
+        return value
+
+class DictValidator(FieldValidator):
+    def type_validation(self, value):
+        if not isinstance(value, dict):
+            raise errors.ValidationError('{0} expects a dict, got {1}'.format(self._field, value))
+        return value
+
 
 class NotSet(object):
     pass
@@ -149,6 +161,11 @@ class DateTimeField(ResourceField):
 class BoolField(ResourceField):
     validator_type = BoolValidator
 
+class ListField(ResourceField):
+    validator_type = ListValidator
+
+class DictField(ResourceField):
+    validator_type = DictValidator
 
 #Resource Params
 class ResourceParam(TypedField):

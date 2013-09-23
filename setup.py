@@ -9,6 +9,3 @@ setup(name='Thorium',
       packages=['thorium'],
       install_requires=['Flask==0.10.1']
       )
-
-
-
