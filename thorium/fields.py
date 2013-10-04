@@ -61,6 +61,9 @@ class DateTimeValidator(FieldValidator):
 
 
 class BoolValidator(FieldValidator):
+    """
+
+    """
     def type_validation(self, value):
         if not isinstance(value, bool):
             raise errors.ValidationError('{0} expects True or False, got {1}'.format(self._field, value))

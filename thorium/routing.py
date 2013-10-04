@@ -37,11 +37,11 @@ class RouteManager(object):
         self._routes = []
 
     def add_route(self, route):
-        """ Adds a :class:`.Route` to internal tracking
+        """
+        Adds a :class:`.Route` to internal tracking
 
         :param route: A :class:`.Route` class to track
         """
-
         self._routes.append(route)
 
     def get_all_routes(self):

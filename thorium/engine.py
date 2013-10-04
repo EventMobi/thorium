@@ -1,4 +1,13 @@
 class Engine(object):
+    """
+    Responsible for the implementation of a single :class:`Resource`,
+    The methods provide hooks which will be called into by the dispatcher
+    during a request.
+
+    :param request: A :class:`Request` object.
+    :param response: A :class:`Response` object.
+    """
+
     _authenticator_classes = None
 
     def __init__(self, request, response):
