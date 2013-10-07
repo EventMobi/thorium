@@ -5,6 +5,7 @@ from .request import Request
 from .resources import VALID_METHODS
 from .response import DetailResponse, CollectionResponse
 from flask import Response as FlaskResponse, request as flaskrequest
+from .crossdomain_decorator import crossdomain
 
 
 class ThoriumFlask(Thorium):
@@ -26,6 +27,7 @@ class FlaskEndpoint(object):
     def __init__(self, dispatcher):
         self.dispatcher = dispatcher
 
+    @crossdomain(origin='*')
     def endpoint_target(self, **kwargs):
         try:
             request = self.build_request()
@@ -79,8 +81,15 @@ class FlaskEndpoint(object):
                 body = json.dumps(data, default=handler)
         else:
             raise Exception('Unexpected response object: {0}'.format(response))
+        headers = self._add_cross_domain_headers_sketch(response.headers)
+        return FlaskResponse(response=body, status=response.status_code, headers=headers, content_type='application/json')
 
-        return FlaskResponse(response=body, status=response.status_code, headers=response.headers, content_type='application/json')
+    def _add_cross_domain_headers_sketch(self, headers):
+        headers['Access-Control-Allow-Origin'] = '*'
+        headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        headers['Access-Control-Allow-Credentials'] = 'true'
+        headers['Access-Control-Allow-Methods'] = 'GET,POST,DELETE'
+        return headers
 
 
 def handler(obj):
