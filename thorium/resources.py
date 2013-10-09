@@ -1,7 +1,7 @@
 from . import errors, fields
 import copy, collections
 
-VALID_METHODS = {'get', 'post', 'put', 'patch', 'delete'}
+VALID_METHODS = {'get', 'post', 'put', 'patch', 'delete', 'options'}
 
 
 class ResourceMetaClass(type):
