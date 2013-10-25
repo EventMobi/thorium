@@ -50,7 +50,11 @@ class ResourceMetaClass(type):
         params = {}
         if 'Params' in attrs:
             p_attrs = attrs.pop('Params').__dict__
-            params = {name: param for name, param in list(p_attrs.items()) if isinstance(param, fields.ResourceParam)}
+            for name, param in list(p_attrs.items()):
+                if isinstance(param, fields.ResourceParam):
+                    param.name = name
+                    params[name] = param
+
         return params
 
     @staticmethod

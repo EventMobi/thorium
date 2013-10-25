@@ -1,3 +1,4 @@
+import types
 from unittest import TestCase, mock
 from thorium import resources, fields, errors
 
@@ -56,6 +57,7 @@ class TestSimpleResource(TestCase):
         self.resource.age = 24
 
         data = self.resource.to_dict()
+        self.assertTrue(isinstance(data, dict))
         self.assertEqual(self.resource.name, data['name'])
         self.assertEqual(self.resource.age, data['age'])
 
@@ -65,12 +67,15 @@ class TestSimpleResource(TestCase):
     def test_to_dict_partial(self):
         self.resource.name = 'Barney'
         data = self.resource.to_dict()
+        self.assertTrue(isinstance(data, dict))
         self.assertEqual(self.resource.name, data['name'])
         self.assertNotIn('age', data)
 
     def test_valid_fields(self):
         self.resource.name = 'Arthur'
         valid_fields = self.resource.valid_fields()
+        self.assertTrue(isinstance(valid_fields, types.GeneratorType))
+        valid_fields = dict(valid_fields)
         self.assertIn('name', valid_fields)
         self.assertNotIn('age', valid_fields)
         self.assertEqual(valid_fields['name'].get(), 'Arthur')
@@ -80,6 +85,8 @@ class TestSimpleResource(TestCase):
         self.resource._fields['age'].default = 0
         self.assertEqual(self.resource.age, fields.NotSet)
         valid_fields = self.resource.valid_fields()
+        self.assertTrue(isinstance(valid_fields, types.GeneratorType))
+        valid_fields = dict(valid_fields)
         self.assertIn('name', valid_fields)
         self.assertNotIn('age', valid_fields)
         self.assertEqual(valid_fields['name'].get(), 'Trillian')
