@@ -119,13 +119,14 @@ class Resource(object, metaclass=ResourceMetaClass):
         if not explicit_mapping:
             obj_mapping_names = mapping.values()
             for name, field in self.all_fields():
-                if name not in obj_mapping_names and hasattr(obj, name):
+                if name not in mapping and name not in obj_mapping_names and hasattr(obj, name):
                     val = getattr(obj, name)
                     field.set(val)
 
         for res_name, obj_name in mapping.items():
-            val = getattr(obj, obj_name)
-            self._fields[res_name].set(val)
+            if res_name and obj_name:
+                val = getattr(obj, obj_name)
+                self._fields[res_name].set(val)
         return self
 
     def to_obj(self, obj, mapping={}, explicit_mapping=False):
