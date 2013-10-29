@@ -109,6 +109,44 @@ class Resource(object, metaclass=ResourceMetaClass):
     def to_dict(self):
         return {name: field.get() for name, field in self.valid_fields()}
 
+    def from_obj(self, obj, mapping={}, explicit_mapping=False):
+        """
+        Maps the public attributes from a object to the resource fields based on identical names.
+        Optional mapping parameter allows for discrepancies in naming with resource names being the
+        key and the object attribute name to map to being the value. If explicit_mapping is True,
+        only the attributes in the mapping dictionary will be copied.
+        """
+        if not explicit_mapping:
+            obj_mapping_names = mapping.values()
+            for name, field in self.all_fields():
+                if name not in obj_mapping_names and hasattr(obj, name):
+                    val = getattr(obj, name)
+                    field.set(val)
+
+        for res_name, obj_name in mapping.items():
+            val = getattr(obj, obj_name)
+            self._fields[res_name].set(val)
+        return self
+
+    def to_obj(self, obj, mapping={}, explicit_mapping=False):
+        """
+        Maps the fields from the resource to an object based on identical names. Optional mapping
+        parameter allows for discrepancies in naming with resource names being the
+        key and the object attribute name to map to being the value. If explicit_mapping is True,
+        only the attributes in the mapping dictionary will be copied.
+        """
+        if not explicit_mapping:
+            for key in obj.__dict__:
+                if not key.startswith('_') and key not in mapping and key in self._fields:
+                    val = self._fields[key].get()
+                    setattr(obj, key, val)
+
+        for res_name, obj_name in mapping.items():
+            val = self._fields[res_name].get()
+            setattr(obj, obj_name, val)
+
+        return obj
+
     def valid_fields(self):
         return ((name, field) for name, field in self._fields.items() if field.is_set())
 

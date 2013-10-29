@@ -13,7 +13,7 @@ class HttpErrorBase(Exception):
 
 class BadRequestError(HttpErrorBase):
     status_code = 400
-    default_message = 'Expected resource was not found.'
+    default_message = 'Badly formed request.'
 
 
 class UnauthorizedError(HttpErrorBase):
@@ -34,3 +34,8 @@ class ResourceNotFoundError(HttpErrorBase):
 class MethodNotAllowedError(HttpErrorBase):
     status_code = 405
     default_message = 'Attempted method not allowed on this resource.'
+
+
+class MethodNotImplementedError(HttpErrorBase):
+    status_code = 500
+    default_message = 'The attempted method was not found at this endpoint.'

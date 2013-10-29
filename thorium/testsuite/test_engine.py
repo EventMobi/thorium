@@ -1,5 +1,5 @@
 from unittest import TestCase, mock
-from thorium import Engine, Request, auth
+from thorium import Engine, Request, auth, errors
 
 
 class TestEngine(TestCase):
@@ -28,37 +28,37 @@ class TestEngine(TestCase):
         self.engine.post_request()
 
     def test_get_detail(self):
-        self.assertRaises(NotImplementedError, self.engine.get_detail)
+        self.assertRaises(errors.MethodNotImplementedError, self.engine.get_detail)
 
     def test_post_detail(self):
-        self.assertRaises(NotImplementedError, self.engine.post_detail)
+        self.assertRaises(errors.MethodNotImplementedError, self.engine.post_detail)
 
     def test_put_detail(self):
-        self.assertRaises(NotImplementedError, self.engine.put_detail)
+        self.assertRaises(errors.MethodNotImplementedError, self.engine.put_detail)
 
     def test_patch_detail(self):
-        self.assertRaises(NotImplementedError, self.engine.patch_detail)
+        self.assertRaises(errors.MethodNotImplementedError, self.engine.patch_detail)
 
     def test_delete_detail(self):
-        self.assertRaises(NotImplementedError, self.engine.delete_detail)
+        self.assertRaises(errors.MethodNotImplementedError, self.engine.delete_detail)
 
     def test_get_collection(self):
-        self.assertRaises(NotImplementedError, self.engine.get_collection)
+        self.assertRaises(errors.MethodNotImplementedError, self.engine.get_collection)
 
     def test_post_collection(self):
-        self.assertRaises(NotImplementedError, self.engine.post_collection)
+        self.assertRaises(errors.MethodNotImplementedError, self.engine.post_collection)
 
     def test_put_collection(self):
-        self.assertRaises(NotImplementedError, self.engine.put_collection)
+        self.assertRaises(errors.MethodNotImplementedError, self.engine.put_collection)
 
     def test_patch_collection(self):
-        self.assertRaises(NotImplementedError, self.engine.patch_collection)
+        self.assertRaises(errors.MethodNotImplementedError, self.engine.patch_collection)
 
     def test_delete_collection(self):
-        self.assertRaises(NotImplementedError, self.engine.delete_collection)
+        self.assertRaises(errors.MethodNotImplementedError, self.engine.delete_collection)
         
     def test_options(self):
-        self.assertRaises(NotImplementedError, self.engine.options)
+        self.assertRaises(errors.MethodNotImplementedError, self.engine.options)
 
     def test_authenticate(self):
         auth_mock1 = mock.MagicMock(spec=auth.Authenticator)

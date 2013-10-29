@@ -15,7 +15,10 @@ class Request(object):
 
 
 def _get_params(resource_cls, query_params):
-    param_dict = copy.deepcopy(resource_cls.query_parameters)
-    for name, param in param_dict.items():
+    params_dict = {}
+    resource_params = copy.deepcopy(resource_cls.query_parameters)
+    for name, param in resource_params.items():
         param.set(query_params[name]) if name in query_params else param.to_default()
-    return param_dict
+        if param.is_set():
+            params_dict[name] = param.get()
+    return params_dict
