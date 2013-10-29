@@ -26,14 +26,14 @@ class TestFieldValidator(TestCase):
         validator_nullable = fields.FieldValidator(field)
         self.assertEqual(validator_nullable.validate(None), None)
 
-    def test_type_validation(self):
-        self.assertRaises(NotImplementedError, self.validator.type_validation, 10)
+    def test_validate(self):
+        self.assertRaises(NotImplementedError, self.validator.validate, 10)
 
     def test_validate_returns_value(self):
         def func(self, value):
             return value
 
-        self.validator.type_validation = types.MethodType(func, self.validator)
+        self.validator.validate = types.MethodType(func, self.validator)
         self.assertEqual(self.validator.validate(True), True)
         self.assertEqual(self.validator.validate(False), False)
         self.assertEqual(self.validator.validate(10), 10)
@@ -47,21 +47,21 @@ class TestCharValidator(TestCase):
         char_field.notnull = True
         self.validator = fields.CharValidator(char_field)
 
-    def test_type_validation(self):
-        result = self.validator.type_validation('test1')
+    def test_validate(self):
+        result = self.validator.validate('test1')
         self.assertEqual('test1', result)
 
     def test_int_invalid(self):
-        self.assertRaises(errors.ValidationError, self.validator.type_validation, 1)
+        self.assertRaises(errors.ValidationError, self.validator.validate, 1)
 
     def test_bool_invalid(self):
-        self.assertRaises(errors.ValidationError, self.validator.type_validation, True)
+        self.assertRaises(errors.ValidationError, self.validator.validate, True)
 
     def test_date_invalid(self):
-        self.assertRaises(errors.ValidationError, self.validator.type_validation, datetime.datetime)
+        self.assertRaises(errors.ValidationError, self.validator.validate, datetime.datetime)
 
     def test_max_length(self):
-        self.assertRaises(errors.ValidationError, self.validator.type_validation, 'longer than 10 characters')
+        self.assertRaises(errors.ValidationError, self.validator.validate, 'longer than 10 characters')
 
 
 class TestIntValidator(TestCase):
@@ -69,22 +69,22 @@ class TestIntValidator(TestCase):
     def setUp(self):
         self.validator = fields.IntValidator(mock.MagicMock())
 
-    def test_type_validation(self):
-        result = self.validator.type_validation(42)
+    def test_validate(self):
+        result = self.validator.validate(42)
         self.assertEqual(42, result)
 
     def test_long_validation(self):
-        result = self.validator.type_validation(420000000000000000000000000)
+        result = self.validator.validate(420000000000000000000000000)
         self.assertEqual(420000000000000000000000000, result)
 
     def test_str_invalid(self):
-        self.assertRaises(errors.ValidationError, self.validator.type_validation, 'abc')
+        self.assertRaises(errors.ValidationError, self.validator.validate, 'abc')
 
     def test_bool_invalid(self):
-        self.assertRaises(errors.ValidationError, self.validator.type_validation, True)
+        self.assertRaises(errors.ValidationError, self.validator.validate, True)
 
     def test_date_invalid(self):
-        self.assertRaises(errors.ValidationError, self.validator.type_validation, datetime.datetime)
+        self.assertRaises(errors.ValidationError, self.validator.validate, datetime.datetime)
 
 
 class TestDateTimeValidator(TestCase):
@@ -92,19 +92,19 @@ class TestDateTimeValidator(TestCase):
     def setUp(self):
         self.validator = fields.DateTimeValidator(mock.MagicMock())
 
-    def test_type_validation(self):
+    def test_validate(self):
         dt = datetime.datetime.utcnow()
-        result = self.validator.type_validation(dt)
+        result = self.validator.validate(dt)
         self.assertEqual(dt, result)
 
     def test_str_invalid(self):
-        self.assertRaises(errors.ValidationError, self.validator.type_validation, 'abc')
+        self.assertRaises(errors.ValidationError, self.validator.validate, 'abc')
 
     def test_bool_invalid(self):
-        self.assertRaises(errors.ValidationError, self.validator.type_validation, True)
+        self.assertRaises(errors.ValidationError, self.validator.validate, True)
 
     def test_int_invalid(self):
-        self.assertRaises(errors.ValidationError, self.validator.type_validation, 1)
+        self.assertRaises(errors.ValidationError, self.validator.validate, 1)
 
 
 class TestDecimalValidator(TestCase):
@@ -112,18 +112,18 @@ class TestDecimalValidator(TestCase):
     def setUp(self):
         self.validator = fields.DecimalValidator(mock.MagicMock())
 
-    def test_type_validation(self):
-        result = self.validator.type_validation(4.2)
+    def test_validate(self):
+        result = self.validator.validate(4.2)
         self.assertEqual(4.2, result)
 
     def test_str_invalid(self):
-        self.assertRaises(errors.ValidationError, self.validator.type_validation, 'abc')
+        self.assertRaises(errors.ValidationError, self.validator.validate, 'abc')
 
     def test_bool_invalid(self):
-        self.assertRaises(errors.ValidationError, self.validator.type_validation, True)
+        self.assertRaises(errors.ValidationError, self.validator.validate, True)
 
     def test_date_invalid(self):
-        self.assertRaises(errors.ValidationError, self.validator.type_validation, datetime.datetime)
+        self.assertRaises(errors.ValidationError, self.validator.validate, datetime.datetime)
 
 
 class TestBoolValidator(TestCase):
@@ -131,25 +131,25 @@ class TestBoolValidator(TestCase):
     def setUp(self):
         self.validator = fields.BoolValidator(mock.MagicMock())
 
-    def test_type_validation(self):
-        result = self.validator.type_validation(True)
-        self.assertEqual(True, result)
-        result = self.validator.type_validation(False)
-        self.assertEqual(False, result)
+    def test_validate(self):
+        result = self.validator.validate(True)
+        self.assertEqual(result, True)
+        result = self.validator.validate(False)
+        self.assertEqual(result, False)
 
     def test_str_invalid(self):
-        self.assertRaises(errors.ValidationError, self.validator.type_validation, 'abc')
+        self.assertRaises(errors.ValidationError, self.validator.validate, 'abc')
 
     def test_int_invalid(self):
-        self.assertRaises(errors.ValidationError, self.validator.type_validation, 92)
+        self.assertRaises(errors.ValidationError, self.validator.validate, 92)
 
     def test_date_invalid(self):
-        self.assertRaises(errors.ValidationError, self.validator.type_validation, datetime.datetime)
+        self.assertRaises(errors.ValidationError, self.validator.validate, datetime.datetime)
 
 
 class SimpleValidator(fields.FieldValidator):
 
-    def validate(self, value):
+    def validate(self, value, cast=False):
         return value
 
 
@@ -192,7 +192,7 @@ class TestTypedField(TestCase):
     def test_set_calls_validator(self):
         self.field._validator = mock.MagicMock()
         self.field.set(10)
-        self.field._validator.validate.assert_called_once_with(10)
+        self.field._validator.validate.assert_called_once_with(10, False)
 
     def test_get_with_value(self):
         self.field._value = 10
@@ -341,7 +341,7 @@ class TestDateTimeField(TestCase):
 
     def test_char_field_invalid_values(self):
         self.assertRaises(errors.ValidationError, self.field.set, 'abc')
-        self.assertRaises(errors.ValidationError, self.field.set, 10)
+        self.assertRaises(errors.ValidationError, self.field.set, 10, False)
         self.assertRaises(errors.ValidationError, self.field.set, True)
 
 
@@ -450,5 +450,5 @@ class TestDateTimeParam(TestCase):
 
     def test_char_field_invalid_values(self):
         self.assertRaises(errors.ValidationError, self.field.set, 'abc')
-        self.assertRaises(errors.ValidationError, self.field.set, 10)
+        self.assertRaises(errors.ValidationError, self.field.set, 10, False)
         self.assertRaises(errors.ValidationError, self.field.set, True)
