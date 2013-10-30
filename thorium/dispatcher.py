@@ -48,7 +48,9 @@ class DispatcherBase(object):
 
         self.pre_request(engine=engine)
 
-        dispatch_method()
+        method_response = dispatch_method()
+        if method_response:
+            response = method_response
 
         engine.post_request()
 
