@@ -143,8 +143,9 @@ class Resource(object, metaclass=ResourceMetaClass):
                     setattr(obj, key, val)
 
         for res_name, obj_name in mapping.items():
-            val = self._fields[res_name].get()
-            setattr(obj, obj_name, val)
+            if res_name and obj_name:
+                val = self._fields[res_name].get()
+                setattr(obj, obj_name, val)
 
         return obj
 
