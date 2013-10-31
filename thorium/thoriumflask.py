@@ -41,27 +41,39 @@ class FlaskEndpoint(object):
             traceback.print_exc()
             raise e
 
+    def _create_resource(self, data, partial):
+        if partial:
+            resource = self.dispatcher.resource_cls.partial()
+        else:
+            resource = self.dispatcher.resource_cls()
+        resource.from_dict(data)
+        if not partial:
+            resource.validate_full()
+        return resource
+
     def build_request(self):
         try:
             resource = None
+            resources = []
             if flaskrequest.data:
                 if flaskrequest.mimetype == 'application/json':
                     if flaskrequest.json:
                         partial = True if flaskrequest.method == 'PATCH' else False
-                        if partial:
-                            resource = self.dispatcher.resource_cls.partial()
+
+                        #hack for single or list resources
+                        if isinstance(flaskrequest.json, list):
+                            for i in flaskrequest.json:
+                                resources.append(self._create_resource(i, partial))
                         else:
-                            resource = self.dispatcher.resource_cls()
-                        resource.from_dict(flaskrequest.json)
-                        if not partial:
-                            resource.validate_full()
+                            resource = self._create_resource(flaskrequest.json, partial)
+
                 else:
                     raise errors.BadRequestError('Currently only json is supported, use application/json mimetype')
 
             return Request(method=flaskrequest.method, identifiers=flaskrequest.view_args,
                            resource_cls=self.dispatcher.resource_cls, query_params=flaskrequest.args.to_dict(),
-                           mimetype=flaskrequest.mimetype, resource=resource, request_type=self.dispatcher.request_type,
-                           url=flaskrequest.url)
+                           mimetype=flaskrequest.mimetype, resource=resource, resources=resources,
+                           request_type=self.dispatcher.request_type, url=flaskrequest.url)
         except errors.ValidationError as e:
             raise errors.BadRequestError(message=e.args[0])
 
