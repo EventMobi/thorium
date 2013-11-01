@@ -1,3 +1,5 @@
+from . import errors
+
 class Engine(object):
     """
     Responsible for the implementation of a single :class:`Resource`,
@@ -35,34 +37,34 @@ class Engine(object):
         pass
 
     def get_detail(self):
-        raise NotImplementedError()
+        raise errors.MethodNotImplementedError()
 
     def get_collection(self):
-        raise NotImplementedError()
+        raise errors.MethodNotImplementedError()
 
     def post_detail(self):
-        raise NotImplementedError()
+        raise errors.MethodNotImplementedError()
 
     def post_collection(self):
-        raise NotImplementedError()
+        raise errors.MethodNotImplementedError()
 
     def put_detail(self):
-        raise NotImplementedError()
+        raise errors.MethodNotImplementedError()
 
     def put_collection(self):
-        raise NotImplementedError()
+        raise errors.MethodNotImplementedError()
 
     def delete_detail(self):
-        raise NotImplementedError()
+        raise errors.MethodNotImplementedError()
 
     def delete_collection(self):
-        raise NotImplementedError()
+        raise errors.MethodNotImplementedError()
 
     def patch_detail(self):
-        raise NotImplementedError()
+        raise errors.MethodNotImplementedError()
 
     def patch_collection(self):
-        raise NotImplementedError()
+        raise errors.MethodNotImplementedError()
 
     def options(self):
-        raise NotImplementedError()
+        raise errors.MethodNotImplementedError()
