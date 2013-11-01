@@ -10,8 +10,8 @@ class ResourceMetaClass(type):
     def __new__(mcs, resource_name, bases, attrs):
 
         # validate Resource's children but not Resource
-        if resource_name != 'Resource':
-            mcs._validate_format(mcs, resource_name, attrs)
+        #if resource_name != 'Resource':
+        #    mcs._validate_format(mcs, resource_name, attrs)
 
         attrs['_fields'] = mcs._get_fields(bases, attrs)
         attrs['query_parameters'] = mcs._get_params(attrs)
