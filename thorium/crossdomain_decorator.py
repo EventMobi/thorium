@@ -33,7 +33,7 @@ def crossdomain(origin=None, methods=None, headers=None,
 
             h = resp.headers
 
-            h['Access-Control-Allow-Origin'] = origin
+            h['Access-Control-Allow-Origin'] = request.headers['origin'] or '*'
             h['Access-Control-Allow-Methods'] = get_methods()
             h['Access-Control-Max-Age'] = str(max_age)
             h['Access-Control-Allow-Headers'] = 'accept, origin, content-type'
