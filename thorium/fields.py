@@ -10,7 +10,7 @@ class FieldValidator(object):
         self._field = field
 
     def validate(self, value, cast=False):
-        if self._field.notnull and value is None:
+        if self._field.flags['notnull'] and value is None:
             raise errors.ValidationError('{0} cannot be null'.format(self._field))
         elif value is NotSet:
             return value
@@ -56,10 +56,10 @@ class CharValidator(FieldValidator):
         raise errors.ValidationError('{0} expects a string, got {1}'.format(self._field, value))
 
     def additional_validation(self, value):
-        if self._field.max_length and len(value) > self._field.max_length:
+        if self._field.flags['max_length'] and len(value) > self._field.flags['max_length']:
             raise errors.ValidationError('Max length of {0} is {1}, given value was {2}'.format(
                 self._field,
-                self._field.max_length,
+                self._field.flags['max_length'],
                 len(value))
             )
 
@@ -151,7 +151,15 @@ class DictValidator(FieldValidator):
         raise errors.ValidationError('{0} expects a dict, got {1}'.format(self._field, value))
 
 
-class NotSet(object):
+class NotSetMeta(type):
+    def __repr__(self):
+        return "Not Set"
+
+    def __str__(self):
+        return "Not Set"
+
+
+class NotSet(object, metaclass=NotSetMeta):
     pass
 
 
@@ -159,17 +167,16 @@ class TypedField(object):
     validator_type = None
 
     def __init__(self, default=NotSet, notnull=False, readonly=False, *args, **kwargs):
+        self.flags = {'notnull': notnull, 'readonly': readonly, 'default': default}
         self.name = 'noname'
-        self.notnull = notnull
-        self.readonly = readonly
 
         # a hook to allow subclasses to add their own unique parameters
         self.set_unique_attributes(**kwargs)
 
         # create validator
         self._validator = self._get_validator()
-        self.default = self._validator.validate(default, cast=False)
-        self._value = self.default
+        self.flags['default'] = self._validator.validate(default, cast=False)
+        self._value = self.flags['default']
 
     def __str__(self):
         return '{0}:{1}'.format(self.__class__.__name__, self.name)
@@ -188,7 +195,7 @@ class TypedField(object):
         return self._validator.validate(self._value, cast)
 
     def to_default(self):
-        return self.set(self.default)
+        return self.set(self.flags['default'])
 
     def is_set(self):
         return self._value != NotSet
@@ -211,10 +218,9 @@ class ResourceField(TypedField):
 
 class CharField(ResourceField):
     validator_type = CharValidator
-    max_length = None
 
     def set_unique_attributes(self, max_length=None):
-        self.max_length = max_length
+        self.flags['max_length'] = max_length
 
 
 class IntField(ResourceField):
@@ -265,7 +271,7 @@ class CharParam(ResourceParam):
     validator_type = CharValidator
 
     def set_unique_attributes(self, max_length=None):
-        self.max_length = max_length
+        self.flags['max_length'] = max_length
 
 
 class IntParam(ResourceParam):

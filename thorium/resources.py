@@ -10,8 +10,8 @@ class ResourceMetaClass(type):
     def __new__(mcs, resource_name, bases, attrs):
 
         # validate Resource's children but not Resource
-        #if resource_name != 'Resource':
-        #    mcs._validate_format(mcs, resource_name, attrs)
+        if resource_name != 'Resource':
+            mcs._validate_format(mcs, resource_name, attrs)
 
         attrs['_fields'] = mcs._get_fields(bases, attrs)
         attrs['query_parameters'] = mcs._get_params(attrs)
@@ -62,29 +62,36 @@ class ResourceMetaClass(type):
         if 'Meta' in attrs:
             meta = attrs['Meta']
 
-            detail_methods = getattr(meta, 'detail_methods', None)
+            detail = getattr(meta, 'detail', None)
+            collection = getattr(meta, 'collection', None)
+
+            detail_methods = detail['methods']
             if detail_methods:
                 if not detail_methods.issubset(VALID_METHODS):
                     raise Exception('detail_methods: {dm} must be a subset of the '
                                     'valid methods: {VM}'.format(dm=detail_methods, VM=VALID_METHODS))
             else:
-                setattr(meta, 'detail_methods', set())
+                detail['methods'] = set()
+                setattr(meta, 'detail', detail)
 
-            collection_methods = getattr(meta, 'collection_methods', None) or set()
+            collection_methods = collection['methods'] or set()
             if collection_methods:
                 if not collection_methods.issubset(VALID_METHODS):
                     raise Exception('collection_methods {cm} must be a subset of the '
                                     'valid methods: {VM}'.format(cm=collection_methods, VM=VALID_METHODS))
             else:
-                setattr(meta, 'collection_methods', set())
+                collection['methods'] = set()
+                setattr(meta, 'collection', collection)
 
-            detail_endpoint = getattr(meta, 'detail_endpoint', None)
+            detail_endpoint = detail['endpoint']
             if not detail_endpoint:
-                setattr(meta, 'detail_endpoint', None)
+                detail['endpoint'] = None
+                setattr(meta, 'detail', detail)
 
-            collection_endpoint = getattr(meta, 'collection_endpoint', None)
+            collection_endpoint = collection['endpoint']
             if not collection_endpoint:
-                setattr(meta, 'collection_endpoint', None)
+                collection['endpoint'] = None
+                setattr(meta, 'collection', collection)
 
 
 class Resource(object, metaclass=ResourceMetaClass):

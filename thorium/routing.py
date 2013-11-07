@@ -54,13 +54,13 @@ class RouteManager(object):
         and :class:`.Route`. Calls :func:`add_route` for the actual adding.
         """
         #register collection route
-        collection_dsp = dispatcher.CollectionDispatcher(resource_cls=resource_cls, engine_cls=engine_cls, allowed_methods=resource_cls.Meta.collection_methods)
-        col_route = Route('{0}_{1}'.format(resource_cls.__name__, collection_dsp.request_type), resource_cls.Meta.collection_endpoint, collection_dsp)
+        collection_dsp = dispatcher.CollectionDispatcher(resource_cls=resource_cls, engine_cls=engine_cls, allowed_methods=resource_cls.Meta.collection['methods'])
+        col_route = Route('{0}_{1}'.format(resource_cls.__name__, collection_dsp.request_type), resource_cls.Meta.collection['endpoint'], collection_dsp)
         self.add_route(col_route)
 
         #register detail route
-        detail_dsp = dispatcher.DetailDispatcher(resource_cls=resource_cls, engine_cls=engine_cls, allowed_methods=resource_cls.Meta.detail_methods)
-        detail_route = Route('{0}_{1}'.format(resource_cls.__name__, detail_dsp.request_type), resource_cls.Meta.detail_endpoint, detail_dsp)
+        detail_dsp = dispatcher.DetailDispatcher(resource_cls=resource_cls, engine_cls=engine_cls, allowed_methods=resource_cls.Meta.detail['methods'])
+        detail_route = Route('{0}_{1}'.format(resource_cls.__name__, detail_dsp.request_type), resource_cls.Meta.detail['endpoint'], detail_dsp)
         self.add_route(detail_route)
 
         return {'collection_route': col_route, 'detail_route': detail_route}
