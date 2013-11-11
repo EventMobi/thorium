@@ -8,7 +8,8 @@ class TestFieldValidator(TestCase):
 
     def setUp(self):
         field = mock.MagicMock()
-        field.notnull = True
+        field.flags = {}
+        field.flags['notnull'] = True
         self.validator = fields.FieldValidator(field)
 
     def test_validate(self):
@@ -22,7 +23,8 @@ class TestFieldValidator(TestCase):
 
     def test_validate_with_nullable_field(self):
         field = mock.MagicMock()
-        field.notnull = False
+        field.flags = {}
+        field.flags['notnull'] = False
         validator_nullable = fields.FieldValidator(field)
         self.assertEqual(validator_nullable.validate(None), None)
 
@@ -43,8 +45,9 @@ class TestCharValidator(TestCase):
 
     def setUp(self):
         char_field = mock.MagicMock(fields.CharField)
-        char_field.max_length = 10
-        char_field.notnull = True
+        char_field.flags = {}
+        char_field.flags['max_length'] = 10
+        char_field.flags['notnull'] = True
         self.validator = fields.CharValidator(char_field)
 
     def test_validate(self):
@@ -167,18 +170,18 @@ class TestTypedField(TestCase):
 
         simple = SimpleTypedField()
         self.assertEqual(simple.name, 'noname')
-        self.assertEqual(simple.notnull, False)
-        self.assertEqual(simple.default, fields.NotSet)
+        self.assertEqual(simple.flags['notnull'], False)
+        self.assertEqual(simple.flags['default'], fields.NotSet)
         self.assertEqual(simple._value, fields.NotSet)
 
         with_default = SimpleTypedField(default=10)
-        self.assertEqual(with_default.notnull, False)
-        self.assertEqual(with_default.default, 10)
+        self.assertEqual(with_default.flags['notnull'], False)
+        self.assertEqual(with_default.flags['default'], 10)
         self.assertEqual(with_default._value, 10)
 
         with_notnull = SimpleTypedField(notnull=True)
-        self.assertEqual(with_notnull.notnull, True)
-        self.assertEqual(with_notnull.default, fields.NotSet)
+        self.assertEqual(with_notnull.flags['notnull'], True)
+        self.assertEqual(with_notnull.flags['default'], fields.NotSet)
         self.assertEqual(with_notnull._value, fields.NotSet)
 
     def test_set_with_notset(self):
@@ -205,16 +208,16 @@ class TestTypedField(TestCase):
 
     def test_get_notset_without_default(self):
         self.assertEqual(self.field._value, fields.NotSet)
-        self.assertEqual(self.field.default, fields.NotSet)
+        self.assertEqual(self.field.flags['default'], fields.NotSet)
         self.assertEqual(self.field.get(), fields.NotSet)
 
     def test_to_default(self):
         self.field._value = 'abc'
-        self.assertEqual(self.field.default, fields.NotSet)
+        self.assertEqual(self.field.flags['default'], fields.NotSet)
         self.assertEqual(self.field.to_default(), fields.NotSet)
         self.assertEqual(self.field._value, fields.NotSet)
 
-        self.field.default = 10
+        self.field.flags['default'] = 10
         self.assertEqual(self.field.to_default(), 10)
         self.assertEqual(self.field._value, 10)
 
@@ -248,15 +251,15 @@ class TestCharField(TestCase):
         self.assertEqual(self.field.validator_type, fields.CharValidator)
 
     def test_set_unique_attributes(self):
-        self.assertEqual(self.field.max_length, None)
+        self.assertEqual(self.field.flags['max_length'], None)
         self.field.set_unique_attributes(max_length=99)
-        self.assertEqual(self.field.max_length, 99)
+        self.assertEqual(self.field.flags['max_length'], 99)
 
     def test_char_field_usage(self):
         self.assertEqual(self.field.set('hello world!'), self.field.get())
 
     def test_char_field_maxlength(self):
-        self.field.max_length = 5
+        self.field.flags['max_length'] = 5
         self.assertRaises(errors.ValidationError, self.field.set, 'too long for max_length')
 
     def test_char_field_invalid_values(self):
@@ -357,15 +360,15 @@ class TestCharParam(TestCase):
         self.assertEqual(self.field.validator_type, fields.CharValidator)
 
     def test_set_unique_attributes(self):
-        self.assertEqual(self.field.max_length, None)
+        self.assertEqual(self.field.flags['max_length'], None)
         self.field.set_unique_attributes(max_length=99)
-        self.assertEqual(self.field.max_length, 99)
+        self.assertEqual(self.field.flags['max_length'], 99)
 
     def test_char_param_usage(self):
         self.assertEqual(self.field.set('hello world!'), self.field.get())
 
     def test_char_param_maxlength(self):
-        self.field.max_length = 5
+        self.field.flags['max_length'] = 5
         self.assertRaises(errors.ValidationError, self.field.set, 'too long for max_length')
 
     def test_char_field_invalid_values(self):

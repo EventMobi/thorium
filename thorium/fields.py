@@ -198,7 +198,7 @@ class TypedField(object):
         return self.set(self.flags['default'])
 
     def is_set(self):
-        return self._value != NotSet
+        return self._value != NotSet and self._value != NotSetMeta
 
     def set_unique_attributes(self):
         pass

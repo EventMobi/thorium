@@ -62,10 +62,10 @@ class ResourceMetaClass(type):
         if 'Meta' in attrs:
             meta = attrs['Meta']
 
-            detail = getattr(meta, 'detail', None)
-            collection = getattr(meta, 'collection', None)
+            detail = getattr(meta, 'detail', {})
+            collection = getattr(meta, 'collection', {})
 
-            detail_methods = detail['methods']
+            detail_methods = detail.get('methods')
             if detail_methods:
                 if not detail_methods.issubset(VALID_METHODS):
                     raise Exception('detail_methods: {dm} must be a subset of the '
@@ -74,7 +74,7 @@ class ResourceMetaClass(type):
                 detail['methods'] = set()
                 setattr(meta, 'detail', detail)
 
-            collection_methods = collection['methods'] or set()
+            collection_methods = collection.get('methods')
             if collection_methods:
                 if not collection_methods.issubset(VALID_METHODS):
                     raise Exception('collection_methods {cm} must be a subset of the '
@@ -83,12 +83,12 @@ class ResourceMetaClass(type):
                 collection['methods'] = set()
                 setattr(meta, 'collection', collection)
 
-            detail_endpoint = detail['endpoint']
+            detail_endpoint = detail.get('endpoint')
             if not detail_endpoint:
                 detail['endpoint'] = None
                 setattr(meta, 'detail', detail)
 
-            collection_endpoint = collection['endpoint']
+            collection_endpoint = collection.get('endpoint')
             if not collection_endpoint:
                 collection['endpoint'] = None
                 setattr(meta, 'collection', collection)

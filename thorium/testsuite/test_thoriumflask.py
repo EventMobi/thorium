@@ -21,10 +21,15 @@ class PersonResource(Resource):
         birth_date = fields.DateTimeParam()
 
     class Meta:
-        collection_endpoint = '/api/event/<int:event_id>/people'
-        collection_methods = {'get', 'post'}
-        detail_endpoint = '/api/event/<int:event_id>/people/<int:id>'
-        detail_methods = {'get', 'put', 'patch'}
+        collection = {
+            'endpoint': '/api/event/<int:event_id>/people',
+            'methods': {'get', 'post'}
+        }
+
+        detail = {
+            'endpoint': '/api/event/<int:event_id>/people/<int:id>',
+            'methods': {'get', 'put', 'patch'}
+        }
 
 
 class PersonEngine(Engine):
