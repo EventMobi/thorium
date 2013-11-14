@@ -165,10 +165,14 @@ class NotSet(object, metaclass=NotSetMeta):
 
 class TypedField(object):
     validator_type = None
+    order_counter = 0
 
     def __init__(self, default=NotSet, notnull=False, readonly=False, *args, **kwargs):
         self.flags = {'notnull': notnull, 'readonly': readonly, 'default': default}
         self.name = 'noname'
+
+        self.order_value = TypedField.order_counter
+        TypedField.order_counter += 1
 
         # a hook to allow subclasses to add their own unique parameters
         self.set_unique_attributes(**kwargs)

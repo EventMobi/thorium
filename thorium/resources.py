@@ -31,7 +31,9 @@ class ResourceMetaClass(type):
                 attrs[name] = property(fget=ResourceMetaClass._gen_get_prop(name),
                                        fset=ResourceMetaClass._get_set_prop(name))
 
-        return field_dict
+        #Sort the dictionary by order value.
+        sorted_dict = collections.OrderedDict(sorted(field_dict.items(), key=lambda x: x[1].order_value))
+        return sorted_dict
 
     @staticmethod
     def _gen_get_prop(name):
