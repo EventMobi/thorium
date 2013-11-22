@@ -1,3 +1,8 @@
+import json
+import traceback
+from flask import Response as FlaskResponse
+
+
 class ValidationError(Exception):
     pass
 
@@ -36,6 +41,24 @@ class MethodNotAllowedError(HttpErrorBase):
     default_message = 'Attempted method not allowed on this resource.'
 
 
+class InternalSeverError(HttpErrorBase):
+    status_code = 500
+    default_message = 'The server encountered an internal error or misconfiguration and was unable to complete your ' \
+                      'request. Please try again later or contact the server administrator.'
+
+
 class MethodNotImplementedError(HttpErrorBase):
     status_code = 500
     default_message = 'The attempted method was not found at this endpoint.'
+
+
+class ExceptionHandler(object):
+
+    @staticmethod
+    def handle_general_exception(e):
+        return ExceptionHandler.handle_http_exception(InternalSeverError())
+
+    @staticmethod
+    def handle_http_exception(e):
+        error = json.dumps({'error': str(e), 'status': e.status_code})
+        return FlaskResponse(response=error, status=e.status_code, headers=e.headers, content_type='application/json')

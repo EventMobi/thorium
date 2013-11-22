@@ -18,14 +18,15 @@ class ThoriumFlask(Thorium):
         routes = self._route_manager.get_all_routes()
         for r in routes:
             if r.path:
-                fep = FlaskEndpoint(r.dispatcher)
+                fep = FlaskEndpoint(r.dispatcher, self.exception_handler)
                 self._flask_app.add_url_rule(r.path, r.name, fep.endpoint_target, methods=VALID_METHODS)
 
 
 class FlaskEndpoint(object):
 
-    def __init__(self, dispatcher):
+    def __init__(self, dispatcher, exception_handler):
         self.dispatcher = dispatcher
+        self.exception_handler = exception_handler #should this just have a reference to the thorium object?
 
     @crossdomain(origin='*')
     def endpoint_target(self, **kwargs):
@@ -34,12 +35,9 @@ class FlaskEndpoint(object):
             response = self.dispatcher.dispatch(request)
             return self.convert_response(response)
         except errors.HttpErrorBase as e:
-            traceback.print_exc()
-            error = json.dumps({'error': str(e), 'status': e.status_code})
-            return FlaskResponse(response=error, status=e.status_code, headers=e.headers, content_type='application/json')
+            return self.exception_handler.handle_http_exception(e)
         except Exception as e:
-            traceback.print_exc()
-            raise e
+            return self.exception_handler.handle_general_exception(e)
 
     def _create_resource(self, data, partial):
         if partial:
