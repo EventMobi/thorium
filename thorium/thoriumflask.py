@@ -18,13 +18,14 @@ class ThoriumFlask(Thorium):
         routes = self._route_manager.get_all_routes()
         for r in routes:
             if r.path:
-                fep = FlaskEndpoint(r.dispatcher, self.exception_handler)
+                fep = FlaskEndpoint(r.dispatcher, self.exception_handler, self._flask_app.config)
                 self._flask_app.add_url_rule(r.path, r.name, fep.endpoint_target, methods=VALID_METHODS)
 
 
 class FlaskEndpoint(object):
 
-    def __init__(self, dispatcher, exception_handler):
+    def __init__(self, dispatcher, exception_handler, flask_config):
+        self.flask_config = flask_config
         self.dispatcher = dispatcher
         self.exception_handler = exception_handler #should this just have a reference to the thorium object?
 
@@ -37,7 +38,10 @@ class FlaskEndpoint(object):
         except errors.HttpErrorBase as e:
             return self.exception_handler.handle_http_exception(e)
         except Exception as e:
-            return self.exception_handler.handle_general_exception(e)
+            if self.flask_config['DEBUG']:
+                raise e
+            else:
+                return self.exception_handler.handle_general_exception(e)
 
     def _create_resource(self, data, partial):
         if partial:
