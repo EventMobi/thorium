@@ -40,6 +40,9 @@ class MethodNotAllowedError(HttpErrorBase):
     status_code = 405
     default_message = 'Attempted method not allowed on this resource.'
 
+class ConflictError(HttpErrorBase):
+    status_code = 409
+    default_message = 'Request could not be processed because of a conflict.'
 
 class InternalSeverError(HttpErrorBase):
     status_code = 500
