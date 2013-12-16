@@ -149,6 +149,23 @@ class TestBoolValidator(TestCase):
     def test_date_invalid(self):
         self.assertRaises(errors.ValidationError, self.validator.validate, datetime.datetime)
 
+    def test_cast(self):
+        self.assertTrue(self.validator.validate(True, cast=True))
+        self.assertTrue(self.validator.validate(1, cast=True))
+        self.assertTrue(self.validator.validate('1', cast=True))
+        self.assertTrue(self.validator.validate('true', cast=True))
+        self.assertTrue(self.validator.validate('True', cast=True))
+        self.assertTrue(self.validator.validate('TRUE', cast=True))
+        self.assertFalse(self.validator.validate(False, cast=True))
+        self.assertFalse(self.validator.validate(0, cast=True))
+        self.assertFalse(self.validator.validate('0', cast=True))
+        self.assertFalse(self.validator.validate('false', cast=True))
+        self.assertFalse(self.validator.validate('False', cast=True))
+        self.assertFalse(self.validator.validate('FALSE', cast=True))
+        self.assertRaises(errors.ValidationError, self.validator.validate, 2, True)
+        self.assertRaises(errors.ValidationError, self.validator.validate, 'tRuE', True)
+        self.assertRaises(errors.ValidationError, self.validator.validate, -1, True)
+
 
 class SimpleValidator(fields.FieldValidator):
 
@@ -255,14 +272,14 @@ class TestCharField(TestCase):
         self.field.set_unique_attributes(max_length=99)
         self.assertEqual(self.field.flags['max_length'], 99)
 
-    def test_char_field_usage(self):
+    def test_field_usage(self):
         self.assertEqual(self.field.set('hello world!'), self.field.get())
 
-    def test_char_field_maxlength(self):
+    def test_field_maxlength(self):
         self.field.flags['max_length'] = 5
         self.assertRaises(errors.ValidationError, self.field.set, 'too long for max_length')
 
-    def test_char_field_invalid_values(self):
+    def test_field_invalid_values(self):
         self.assertRaises(errors.ValidationError, self.field.set, 10)
         self.assertRaises(errors.ValidationError, self.field.set, datetime.datetime.utcnow())
         self.assertRaises(errors.ValidationError, self.field.set, True)
@@ -279,10 +296,10 @@ class TestIntField(TestCase):
     def test_validator_type(self):
         self.assertEqual(self.field.validator_type, fields.IntValidator)
 
-    def test_char_field_usage(self):
+    def test_field_usage(self):
         self.assertEqual(self.field.set(10), self.field.get())
 
-    def test_char_field_invalid_values(self):
+    def test_field_invalid_values(self):
         self.assertRaises(errors.ValidationError, self.field.set, 'abc')
         self.assertRaises(errors.ValidationError, self.field.set, datetime.datetime.utcnow())
         self.assertRaises(errors.ValidationError, self.field.set, True)
@@ -299,10 +316,10 @@ class TestBoolField(TestCase):
     def test_validator_type(self):
         self.assertEqual(self.field.validator_type, fields.BoolValidator)
 
-    def test_char_field_usage(self):
+    def test_field_usage(self):
         self.assertEqual(self.field.set(True), self.field.get())
 
-    def test_char_field_invalid_values(self):
+    def test_field_invalid_values(self):
         self.assertRaises(errors.ValidationError, self.field.set, 'abc')
         self.assertRaises(errors.ValidationError, self.field.set, datetime.datetime.utcnow())
         self.assertRaises(errors.ValidationError, self.field.set, 10)
@@ -319,10 +336,10 @@ class TestDecimalField(TestCase):
     def test_validator_type(self):
         self.assertEqual(self.field.validator_type, fields.DecimalValidator)
 
-    def test_char_field_usage(self):
+    def test_field_usage(self):
         self.assertEqual(self.field.set(5.234), self.field.get())
 
-    def test_char_field_invalid_values(self):
+    def test_field_invalid_values(self):
         self.assertRaises(errors.ValidationError, self.field.set, 'abc')
         self.assertRaises(errors.ValidationError, self.field.set, datetime.datetime.utcnow())
         self.assertRaises(errors.ValidationError, self.field.set, True)
@@ -339,10 +356,10 @@ class TestDateTimeField(TestCase):
     def test_validator_type(self):
         self.assertEqual(self.field.validator_type, fields.DateTimeValidator)
 
-    def test_char_field_usage(self):
+    def test_field_usage(self):
         self.assertEqual(self.field.set(datetime.datetime.utcnow()), self.field.get())
 
-    def test_char_field_invalid_values(self):
+    def test_field_invalid_values(self):
         self.assertRaises(errors.ValidationError, self.field.set, 'abc')
         self.assertRaises(errors.ValidationError, self.field.set, 10, False)
         self.assertRaises(errors.ValidationError, self.field.set, True)
@@ -364,14 +381,14 @@ class TestCharParam(TestCase):
         self.field.set_unique_attributes(max_length=99)
         self.assertEqual(self.field.flags['max_length'], 99)
 
-    def test_char_param_usage(self):
+    def test_param_usage(self):
         self.assertEqual(self.field.set('hello world!'), self.field.get())
 
-    def test_char_param_maxlength(self):
+    def test_param_maxlength(self):
         self.field.flags['max_length'] = 5
         self.assertRaises(errors.ValidationError, self.field.set, 'too long for max_length')
 
-    def test_char_field_invalid_values(self):
+    def test_field_invalid_values(self):
         self.assertRaises(errors.ValidationError, self.field.set, 10)
         self.assertRaises(errors.ValidationError, self.field.set, datetime.datetime.utcnow())
         self.assertRaises(errors.ValidationError, self.field.set, True)
@@ -388,13 +405,12 @@ class TestIntParam(TestCase):
     def test_validator_type(self):
         self.assertEqual(self.field.validator_type, fields.IntValidator)
 
-    def test_char_field_usage(self):
+    def test_field_usage(self):
         self.assertEqual(self.field.set(10), self.field.get())
 
-    def test_char_field_invalid_values(self):
+    def test_field_invalid_values(self):
         self.assertRaises(errors.ValidationError, self.field.set, 'abc')
         self.assertRaises(errors.ValidationError, self.field.set, datetime.datetime.utcnow())
-        self.assertRaises(errors.ValidationError, self.field.set, True)
 
 
 class TestBoolParam(TestCase):
@@ -408,10 +424,10 @@ class TestBoolParam(TestCase):
     def test_validator_type(self):
         self.assertEqual(self.field.validator_type, fields.BoolValidator)
 
-    def test_char_field_usage(self):
+    def test_field_usage(self):
         self.assertEqual(self.field.set(True), self.field.get())
 
-    def test_char_field_invalid_values(self):
+    def test_field_invalid_values(self):
         self.assertRaises(errors.ValidationError, self.field.set, 'abc')
         self.assertRaises(errors.ValidationError, self.field.set, datetime.datetime.utcnow())
         self.assertRaises(errors.ValidationError, self.field.set, 10)
@@ -428,13 +444,12 @@ class TestDecimalParam(TestCase):
     def test_validator_type(self):
         self.assertEqual(self.field.validator_type, fields.DecimalValidator)
 
-    def test_char_field_usage(self):
+    def test_field_usage(self):
         self.assertEqual(self.field.set(5.234), self.field.get())
 
-    def test_char_field_invalid_values(self):
+    def test_field_invalid_values(self):
         self.assertRaises(errors.ValidationError, self.field.set, 'abc')
         self.assertRaises(errors.ValidationError, self.field.set, datetime.datetime.utcnow())
-        self.assertRaises(errors.ValidationError, self.field.set, True)
 
 
 class TestDateTimeParam(TestCase):
@@ -448,10 +463,10 @@ class TestDateTimeParam(TestCase):
     def test_validator_type(self):
         self.assertEqual(self.field.validator_type, fields.DateTimeValidator)
 
-    def test_char_field_usage(self):
+    def test_field_usage(self):
         self.assertEqual(self.field.set(datetime.datetime.utcnow()), self.field.get())
 
-    def test_char_field_invalid_values(self):
+    def test_field_invalid_values(self):
         self.assertRaises(errors.ValidationError, self.field.set, 'abc')
         self.assertRaises(errors.ValidationError, self.field.set, 10, False)
         self.assertRaises(errors.ValidationError, self.field.set, True)

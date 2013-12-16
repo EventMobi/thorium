@@ -113,7 +113,12 @@ class BoolValidator(FieldValidator):
         return isinstance(value, bool)
 
     def attempt_cast(self, value):
-        return bool(value)
+        if value in {True, 1, '1', 'true', 'True', 'TRUE'}:
+            return True
+        elif value in {False, 0, '0', 'false', 'False', 'FALSE'}:
+            return False
+        else:
+            self.raise_validation_error(value)
 
     def raise_validation_error(self, value):
         raise errors.ValidationError('{0} expects True or False, got {1}'.format(self._field, value))
@@ -264,15 +269,25 @@ class ListField(ResourceField):
 class DictField(ResourceField):
     validator_type = DictValidator
 
+
 #Resource Params
-
-
 class ResourceParam(TypedField):
-    pass
+
+    def set(self, value, cast=True):
+        """
+        ResourceParam defaults cast to True since params always come in as strings.
+        """
+        return super().set(value, cast)
 
 
 class CharParam(ResourceParam):
     validator_type = CharValidator
+
+    def set(self, value, cast=False):
+        """
+        CharParam defaults cast to False since params always come in as strings.
+        """
+        return super().set(value, cast)
 
     def set_unique_attributes(self, max_length=None):
         self.flags['max_length'] = max_length
@@ -288,12 +303,6 @@ class DecimalParam(ResourceParam):
 
 class DateTimeParam(ResourceParam):
     validator_type = DateTimeValidator
-
-    def set(self, value, cast=True):
-        """
-        DateTimeParam defaults cast to True since serialized data won't be in a python datetime format.
-        """
-        return super().set(value, cast)
 
 
 class BoolParam(ResourceParam):

@@ -76,6 +76,7 @@ class Authenticator(object, metaclass=AuthenticatorMetaClass):
     def __init__(self, request):
         self._loaded = False
         self.request = request
+        self.method = None
 
     @classmethod
     def no_auth(cls, func):
@@ -90,16 +91,15 @@ class Authenticator(object, metaclass=AuthenticatorMetaClass):
 
         :param method: A reference to a class method to run validation on.
         """
-
-        method_def = method.__func__
-        if method_def not in self._no_auth_methods:
+        self.method = method.__func__
+        if self.method not in self._no_auth_methods:
             self.try_load()
             if not self._authenticate():
                 raise errors.UnauthorizedError()
 
-        if method_def in self._validators:
+        if self.method in self._validators:
             self.try_load()
-            for v in self._validators[method_def]:
+            for v in self._validators[self.method]:
                 if not v(self):
                     raise errors.ForbiddenError()
 
@@ -120,6 +120,6 @@ class Authenticator(object, metaclass=AuthenticatorMetaClass):
     def _authenticate(self):
         """ This method will always be called from :function:`check_auth` except in the case
         where the method being validated has the :function:`no_auth` decorator. Override to
-        provide the default authentication check. A False return will throw a access denied
+        provide the default authentication check. A False return will throw an access denied
         error. """
         raise NotImplementedError('No authenticator found.')

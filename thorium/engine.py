@@ -1,5 +1,6 @@
 from . import errors
 
+
 class Engine(object):
     """
     Responsible for the implementation of a single :class:`Resource`,
