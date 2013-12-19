@@ -7,7 +7,9 @@ thorium/crossdomain_decorator.py
 thorium/dispatcher.py
 thorium/engine.py
 thorium/errors.py
+thorium/exception_handler.py
 thorium/fields.py
+thorium/logging.py
 thorium/request.py
 thorium/resources.py
 thorium/response.py

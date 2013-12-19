@@ -40,9 +40,11 @@ class MethodNotAllowedError(HttpErrorBase):
     status_code = 405
     default_message = 'Attempted method not allowed on this resource.'
 
+
 class ConflictError(HttpErrorBase):
     status_code = 409
     default_message = 'Request could not be processed because of a conflict.'
+
 
 class InternalSeverError(HttpErrorBase):
     status_code = 500
@@ -53,15 +55,3 @@ class InternalSeverError(HttpErrorBase):
 class MethodNotImplementedError(HttpErrorBase):
     status_code = 500
     default_message = 'The attempted method was not found at this endpoint.'
-
-
-class ExceptionHandler(object):
-
-    @staticmethod
-    def handle_general_exception(e):
-        return ExceptionHandler.handle_http_exception(InternalSeverError())
-
-    @staticmethod
-    def handle_http_exception(e):
-        error = json.dumps({'error': str(e), 'status': e.status_code})
-        return FlaskResponse(response=error, status=e.status_code, headers=e.headers, content_type='application/json')

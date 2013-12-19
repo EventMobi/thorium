@@ -12,7 +12,7 @@ class ThoriumFlask(Thorium):
 
     def __init__(self, settings, route_manager, flask_app):
         self._flask_app = flask_app
-        super(ThoriumFlask, self).__init__(settings=settings, route_manager=route_manager)
+        super(ThoriumFlask, self).__init__(settings=settings, route_manager=route_manager, debug=self._flask_app.debug)
 
     def _bind_routes(self):
         routes = self._route_manager.get_all_routes()
@@ -27,7 +27,7 @@ class FlaskEndpoint(object):
     def __init__(self, dispatcher, exception_handler, flask_config):
         self.flask_config = flask_config
         self.dispatcher = dispatcher
-        self.exception_handler = exception_handler #should this just have a reference to the thorium object?
+        self.exception_handler = exception_handler  # should this just have a reference to the thorium object?
 
     @crossdomain(origin='*')
     def endpoint_target(self, **kwargs):
@@ -36,12 +36,15 @@ class FlaskEndpoint(object):
             response = self.dispatcher.dispatch(request)
             return self.convert_response(response)
         except errors.HttpErrorBase as e:
-            return self.exception_handler.handle_http_exception(e)
+            error_body = self.exception_handler.handle_http_exception(e)
+            return FlaskResponse(response=error_body, status=e.status_code, headers=e.headers, content_type='application/json')
         except Exception as e:
-            if self.flask_config['DEBUG']:
+            route = 'test_route'
+            method = 'test_method'
+            error_body = self.exception_handler.handle_general_exception(route, method, e)
+            if self.flask_config['DEBUG']:  # if flask debug raise exception instead of returning json response
                 raise e
-            else:
-                return self.exception_handler.handle_general_exception(e)
+            return FlaskResponse(response=error_body, status=500, headers={}, content_type='application/json')
 
     def _create_resource(self, data, partial):
         if partial:
@@ -95,21 +98,12 @@ class FlaskEndpoint(object):
                 body = json.dumps(data, default=handler)
         else:
             raise Exception('Unexpected response object: {0}'.format(response))
-        headers = self._add_cross_domain_headers_sketch(response.headers)
-        return FlaskResponse(response=body, status=response.status_code, headers=headers, content_type='application/json')
 
-    def _add_cross_domain_headers_sketch(self, headers):
-        headers['Access-Control-Allow-Origin'] = '*'
-        headers['Access-Control-Allow-Headers'] = 'Content-Type'
-        headers['Access-Control-Allow-Credentials'] = 'true'
-        headers['Access-Control-Allow-Methods'] = 'GET,POST,DELETE'
-        return headers
+        return FlaskResponse(response=body, status=response.status_code, content_type='application/json')
 
 
 def handler(obj):
     if hasattr(obj, 'isoformat'):
         return obj.isoformat()
-    #elif isinstance(obj, ...):
-    #    return ...
     else:
         raise TypeError('Object of type %s with value of %s is not JSON serializable' % (type(obj), repr(obj)))
