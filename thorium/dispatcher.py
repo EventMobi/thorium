@@ -1,5 +1,7 @@
 from . import errors
+from .request import Request
 from .response import DetailResponse, CollectionResponse
+from .fields import LinkedResourceField
 
 #Taken from Tastypie, check that:
         #the requested HTTP method is in allowed_methods (method_check),
@@ -52,6 +54,8 @@ class DispatcherBase(object):
         if method_response:
             response = method_response
 
+        self.build_hierarchy(request, response)
+
         engine.post_request()
 
         return response
@@ -59,6 +63,41 @@ class DispatcherBase(object):
     def get_dispatch_method(self, engine):
         """ find the method in the engine that matches the request """
         return getattr(engine, "{0}_{1}".format(engine.request.method.lower(), self.request_type))
+
+    def build_hierarchy(self, request, response):
+
+        fields = {}
+        for name, field in self.resource_cls._fields.items():
+            if isinstance(field, LinkedResourceField):
+                fields[name] = field
+
+        if not fields:
+            return
+
+        for name, field in fields.items():
+            ids = set()
+            for res in response.resources or response.resource:
+                ids.add(getattr(res, name))
+            req = Request(method='get', identifiers=request.identifiers,
+                           resource_cls=field.flags['resource'], query_params={'ids': ','.join([str(s) for s in ids])},
+                           mimetype=None, resource=None, resources=[],
+                           request_type='collection', url='')
+            resp = self.build_response_obj(request=req)
+            eng = field.flags['resource']._engine(req, resp)
+            eng.pre_request()
+            self.pre_request(engine=eng)
+            dispatch_method = self.get_dispatch_method(engine=eng)
+            method_response = dispatch_method()
+            if method_response:
+                resp = method_response
+
+            # join
+            dict_resources = {r.id: r for r in resp.resources}
+
+            for res in response.resources or response.resource:
+                val = getattr(res, name)
+                if val:
+                    setattr(res, name, dict_resources[val])
 
 
 class CollectionDispatcher(DispatcherBase):

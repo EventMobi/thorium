@@ -95,6 +95,14 @@ class FlaskEndpoint(object):
                 for res in response.resources:
                     res.validate_full()
                     data.append({n: v.get() for n, v in res.all_fields()})
+
+                    #for hierarchies, make better
+                    from . import resources
+                    for item in data:
+                        for name, value in item.items():
+                            if isinstance(value, resources.Resource):
+                                item[name] = {n: v.get() for n, v in value.all_fields()}
+
                 body = json.dumps(data, default=handler)
         else:
             raise Exception('Unexpected response object: {0}'.format(response))

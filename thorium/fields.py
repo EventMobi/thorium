@@ -156,6 +156,18 @@ class DictValidator(FieldValidator):
         raise errors.ValidationError('{0} expects a dict, got {1}'.format(self._field, value))
 
 
+class LinkedResourceValidator(FieldValidator):
+
+    def valid(self, value):
+        return True
+
+    def attempt_cast(self, value):
+        raise NotImplementedError('No cast yet for linked resources')
+
+    def raise_validation_error(self, value):
+        raise errors.ValidationError('{0} expects a resource, got {1}'.format(self._field, value))
+
+
 class NotSetMeta(type):
     def __repr__(self):
         return "Not Set"
@@ -268,6 +280,13 @@ class ListField(ResourceField):
 
 class DictField(ResourceField):
     validator_type = DictValidator
+
+
+class LinkedResourceField(ResourceField):
+    validator_type = LinkedResourceValidator
+
+    def set_unique_attributes(self, resource=None):
+        self.flags['resource'] = resource
 
 
 #Resource Params
