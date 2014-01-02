@@ -99,7 +99,7 @@ class FlaskEndpoint(object):
         else:
             raise Exception('Unexpected response object: {0}'.format(response))
 
-        return FlaskResponse(response=body, status=response.status_code, content_type='application/json')
+        return FlaskResponse(response=body, headers=response.headers, status=response.status_code, content_type='application/json')
 
 
 def handler(obj):
