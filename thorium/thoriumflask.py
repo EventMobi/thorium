@@ -39,9 +39,7 @@ class FlaskEndpoint(object):
             error_body = self.exception_handler.handle_http_exception(e)
             return FlaskResponse(response=error_body, status=e.status_code, headers=e.headers, content_type='application/json')
         except Exception as e:
-            route = 'test_route'
-            method = 'test_method'
-            error_body = self.exception_handler.handle_general_exception(route, method, e)
+            error_body = self.exception_handler.handle_general_exception(request, e)
             if self.flask_config['DEBUG']:  # if flask debug raise exception instead of returning json response
                 raise e
             return FlaskResponse(response=error_body, status=500, headers={}, content_type='application/json')
