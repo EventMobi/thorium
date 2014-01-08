@@ -114,6 +114,7 @@ class Resource(object, metaclass=ResourceMetaClass):
         for name, field in self._fields.items():
             if name in data:
                 field.set(data[name])
+        return self
 
     def to_dict(self):
         return {name: field.get() for name, field in self.valid_fields()}

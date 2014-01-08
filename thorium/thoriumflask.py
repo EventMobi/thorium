@@ -33,11 +33,13 @@ class FlaskEndpoint(object):
     def endpoint_target(self, **kwargs):
         try:
             request = self.build_request()
-            response = self.dispatcher.dispatch(request)
-            return self.convert_response(response)
+            response, serialized_body = self.dispatcher.dispatch(request)
+            return FlaskResponse(response=serialized_body, headers=response.headers,
+                                 status=response.status_code, content_type='application/json')
         except errors.HttpErrorBase as e:
             error_body = self.exception_handler.handle_http_exception(e)
-            return FlaskResponse(response=error_body, status=e.status_code, headers=e.headers, content_type='application/json')
+            return FlaskResponse(response=error_body, status=e.status_code,
+                                 headers=e.headers, content_type='application/json')
         except Exception as e:
             error_body = self.exception_handler.handle_general_exception(request, e)
             if self.flask_config['DEBUG']:  # if flask debug raise exception instead of returning json response
@@ -79,29 +81,3 @@ class FlaskEndpoint(object):
                            request_type=self.dispatcher.request_type, url=flaskrequest.url)
         except errors.ValidationError as e:
             raise errors.BadRequestError(message=e.args[0])
-
-    def convert_response(self, response):
-        body = None
-        if isinstance(response, DetailResponse):
-            if response.resource:
-                response.resource.validate_full()
-                data = {n: v.get() for n, v in response.resource.all_fields()}
-                body = json.dumps(data, default=handler)
-        elif isinstance(response, CollectionResponse):
-            if response.resources:
-                data = []
-                for res in response.resources:
-                    res.validate_full()
-                    data.append({n: v.get() for n, v in res.all_fields()})
-                body = json.dumps(data, default=handler)
-        else:
-            raise Exception('Unexpected response object: {0}'.format(response))
-
-        return FlaskResponse(response=body, headers=response.headers, status=response.status_code, content_type='application/json')
-
-
-def handler(obj):
-    if hasattr(obj, 'isoformat'):
-        return obj.isoformat()
-    else:
-        raise TypeError('Object of type %s with value of %s is not JSON serializable' % (type(obj), repr(obj)))

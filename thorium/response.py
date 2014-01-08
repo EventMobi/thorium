@@ -39,6 +39,7 @@ class CollectionResponse(Response):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.resources = []
+        self.meta = {}
 
     def add_resource_from_dict(self, data):
         res = self.request.resource_cls()

@@ -88,12 +88,15 @@ class TestThoriumFlask(unittest.TestCase):
     def test_simple_list_get(self):
         rv = self.c.open('/api/event/1/people', method='GET')
         self.assertEqual(rv.status_code, 200)
-        data = json.loads(rv.data.decode())
-        self.assertIsInstance(data, list)
-        self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]['name'], 'Timmy')
-        self.assertEqual(data[0]['admin'], True)
-        self.assertEqual(data[0]['id'], 42)
+        body = json.loads(rv.data.decode())
+        items = body['items']
+        meta = body['_meta']
+        self.assertEqual(meta, {})
+        self.assertIsInstance(items, list)
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0]['name'], 'Timmy')
+        self.assertEqual(items[0]['admin'], True)
+        self.assertEqual(items[0]['id'], 42)
 
     def test_post_simple(self):
         data = {

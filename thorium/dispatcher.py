@@ -1,5 +1,6 @@
 from . import errors
 from .response import DetailResponse, CollectionResponse
+from .serializer import JsonSerializer
 
 #Taken from Tastypie, check that:
         #the requested HTTP method is in allowed_methods (method_check),
@@ -54,11 +55,17 @@ class DispatcherBase(object):
 
         engine.post_request()
 
-        return response
+        serializer = self.get_serializer()
+        serialized_body = serializer.serialize_response(response)
+
+        return response, serialized_body
 
     def get_dispatch_method(self, engine):
         """ find the method in the engine that matches the request """
         return getattr(engine, "{0}_{1}".format(engine.request.method.lower(), self.request_type))
+
+    def get_serializer(self):
+        return JsonSerializer()
 
 
 class CollectionDispatcher(DispatcherBase):

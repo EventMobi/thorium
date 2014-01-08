@@ -3,6 +3,7 @@ from unittest import TestCase, mock
 from thorium import resources, fields, errors
 import datetime
 
+
 class SimpleResource(resources.Resource):
     name = fields.CharField()
     age = fields.IntField()
