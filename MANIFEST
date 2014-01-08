@@ -14,5 +14,6 @@ thorium/request.py
 thorium/resources.py
 thorium/response.py
 thorium/routing.py
+thorium/serializer.py
 thorium/thorium.py
 thorium/thoriumflask.py
