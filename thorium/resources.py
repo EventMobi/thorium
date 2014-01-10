@@ -110,10 +110,10 @@ class Resource(object, metaclass=ResourceMetaClass):
             field.set(fields.NotSet)
         return obj
 
-    def from_dict(self, data):
+    def from_dict(self, data, check_readonly=False):
         for name, field in self._fields.items():
             if name in data:
-                field.set(data[name])
+                field.set(data[name], check_readonly=check_readonly)
         return self
 
     def to_dict(self):

@@ -7,6 +7,7 @@ import datetime
 class SimpleResource(resources.Resource):
     name = fields.CharField()
     age = fields.IntField()
+    readonly = fields.IntField(readonly=True)
 
 
 class SimpleObj(object):
@@ -24,11 +25,24 @@ class TestSimpleResource(TestCase):
     def test_from_dict(self):
         data = {
             'name': 'Fred',
-            'age': 9001
+            'age': 9001,
+            'readonly': 10
         }
         self.resource.from_dict(data)
         self.assertEqual(self.resource.name, data['name'])
         self.assertEqual(self.resource.age, data['age'])
+        self.assertEqual(self.resource.readonly, data['readonly'])
+
+    def test_from_dict_check_readonly(self):
+        data = {
+            'name': 'Fred',
+            'age': 9001,
+            'readonly': 10
+        }
+        self.resource.from_dict(data, check_readonly=True)
+        self.assertEqual(self.resource.name, data['name'])
+        self.assertEqual(self.resource.age, data['age'])
+        self.assertEqual(self.resource.readonly, fields.NotSet)
 
     def test_from_dict_invalid(self):
         data = {

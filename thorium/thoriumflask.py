@@ -41,17 +41,19 @@ class FlaskEndpoint(object):
             return FlaskResponse(response=error_body, status=e.status_code,
                                  headers=e.headers, content_type='application/json')
         except Exception as e:
+            traceback.print_exc()
             error_body = self.exception_handler.handle_general_exception(request, e)
             if self.flask_config['DEBUG']:  # if flask debug raise exception instead of returning json response
                 raise e
             return FlaskResponse(response=error_body, status=500, headers={}, content_type='application/json')
 
+    #This probably shouldn't be here, not explicitly flask related
     def _create_resource(self, data, partial):
         if partial:
             resource = self.dispatcher.resource_cls.partial()
         else:
             resource = self.dispatcher.resource_cls()
-        resource.from_dict(data)
+        resource.from_dict(data, check_readonly=True)
         if not partial:
             resource.validate_full()
         return resource

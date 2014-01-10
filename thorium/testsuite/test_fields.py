@@ -189,17 +189,26 @@ class TestTypedField(TestCase):
         self.assertEqual(simple.name, 'noname')
         self.assertEqual(simple.flags['notnull'], False)
         self.assertEqual(simple.flags['default'], fields.NotSet)
+        self.assertEqual(simple.flags['readonly'], False)
         self.assertEqual(simple._value, fields.NotSet)
 
         with_default = SimpleTypedField(default=10)
         self.assertEqual(with_default.flags['notnull'], False)
         self.assertEqual(with_default.flags['default'], 10)
+        self.assertEqual(with_default.flags['readonly'], False)
         self.assertEqual(with_default._value, 10)
 
         with_notnull = SimpleTypedField(notnull=True)
         self.assertEqual(with_notnull.flags['notnull'], True)
         self.assertEqual(with_notnull.flags['default'], fields.NotSet)
+        self.assertEqual(with_default.flags['readonly'], False)
         self.assertEqual(with_notnull._value, fields.NotSet)
+
+        with_default = SimpleTypedField(readonly=True)
+        self.assertEqual(with_default.flags['notnull'], False)
+        self.assertEqual(with_default.flags['default'], fields.NotSet)
+        self.assertEqual(with_default.flags['readonly'], True)
+        self.assertEqual(with_default._value, fields.NotSet)
 
     def test_set_with_notset(self):
         self.assertEqual(self.field.set(fields.NotSet), fields.NotSet)
@@ -254,6 +263,25 @@ class TestTypedField(TestCase):
 
         self.field.validator_type = None
         self.assertRaises(NotImplementedError, self.field._get_validator)
+
+    def test_set_readonly_no_check(self):
+        val = 10
+        readonly_field = SimpleTypedField(readonly=True)
+        readonly_field.set(val)
+        self.assertEqual(readonly_field.get(), val)
+
+    def test_set_readonly_with_check(self):
+        val = 10
+        readonly_field = SimpleTypedField(readonly=True)
+        readonly_field.set(val, check_readonly=True)
+        self.assertEqual(readonly_field.get(), fields.NotSet)
+
+    def test_set_readonly_with_check_and_default(self):
+        val = 10
+        default = 42
+        readonly_field = SimpleTypedField(readonly=True, default=default)
+        readonly_field.set(val, check_readonly=True)
+        self.assertEqual(readonly_field.get(), default)
 
 
 class TestCharField(TestCase):

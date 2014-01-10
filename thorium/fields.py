@@ -190,8 +190,10 @@ class TypedField(object):
     def __str__(self):
         return '{0}:{1}'.format(self.__class__.__name__, self.name)
 
-    def set(self, value, cast=False):
-        if value is NotSet:
+    def set(self, value, cast=False, check_readonly=False):
+        if check_readonly and self.flags['readonly']:
+            self.to_default()
+        elif value is NotSet:
             self._value = NotSet
         else:
             self._value = self._validator.validate(value, cast)
@@ -208,6 +210,9 @@ class TypedField(object):
 
     def is_set(self):
         return self._value != NotSet and self._value != NotSetMeta
+
+    def is_readonly(self):
+        return self.flags['readonly']
 
     def set_unique_attributes(self):
         pass
@@ -243,11 +248,11 @@ class DecimalField(ResourceField):
 class DateTimeField(ResourceField):
     validator_type = DateTimeValidator
 
-    def set(self, value, cast=True):
+    def set(self, value, cast=True, check_readonly=False):
         """
         DateTimeField defaults cast to True since serialized data won't be in a python datetime format.
         """
-        return super().set(value, cast)
+        return super().set(value, cast, check_readonly)
 
 
 class BoolField(ResourceField):
@@ -273,11 +278,11 @@ class DictField(ResourceField):
 #Resource Params
 class ResourceParam(TypedField):
 
-    def set(self, value, cast=True):
+    def set(self, value, cast=True, check_readonly=False):
         """
         ResourceParam defaults cast to True since params always come in as strings.
         """
-        return super().set(value, cast)
+        return super().set(value, cast, check_readonly)
 
 
 class CharParam(ResourceParam):
@@ -312,10 +317,10 @@ class BoolParam(ResourceParam):
 class ListParam(ResourceParam):
     validator_type = ListValidator
 
-    def set(self, value, cast=False):
+    def set(self, value, cast=False, check_readonly=False):
         if isinstance(value, str):
             value = value.split(',')
-        return super().set(value, cast)
+        return super().set(value, cast, check_readonly)
 
     def set_unique_attributes(self, item_type=None):
         if item_type:
