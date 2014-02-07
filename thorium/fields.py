@@ -156,6 +156,18 @@ class DictValidator(FieldValidator):
         raise errors.ValidationError('{0} expects a dict, got {1}'.format(self._field, value))
 
 
+class SetValidator(FieldValidator):
+
+    def valid(self, value):
+        return isinstance(value, set)
+
+    def attempt_cast(self, value):
+        return set(value)
+
+    def raise_validation_error(self, value):
+        raise errors.ValidationError('{0} expects a set, got {1}'.format(self._field, value))
+
+
 class NotSetMeta(type):
     def __repr__(self):
         return "Not Set"
@@ -190,10 +202,8 @@ class TypedField(object):
     def __str__(self):
         return '{0}:{1}'.format(self.__class__.__name__, self.name)
 
-    def set(self, value, cast=False, check_readonly=False):
-        if check_readonly and self.flags['readonly']:
-            self.to_default()
-        elif value is NotSet:
+    def set(self, value, cast=False):
+        if value is NotSet:
             self._value = NotSet
         else:
             self._value = self._validator.validate(value, cast)
@@ -252,7 +262,7 @@ class DateTimeField(ResourceField):
         """
         DateTimeField defaults cast to True since serialized data won't be in a python datetime format.
         """
-        return super().set(value, cast, check_readonly)
+        return super().set(value, cast)
 
 
 class BoolField(ResourceField):
@@ -275,14 +285,17 @@ class DictField(ResourceField):
     validator_type = DictValidator
 
 
+class SetField(ResourceField):
+    validator_type = SetValidator
+
 #Resource Params
 class ResourceParam(TypedField):
 
-    def set(self, value, cast=True, check_readonly=False):
+    def set(self, value, cast=True):
         """
         ResourceParam defaults cast to True since params always come in as strings.
         """
-        return super().set(value, cast, check_readonly)
+        return super().set(value, cast)
 
 
 class CharParam(ResourceParam):
@@ -317,10 +330,10 @@ class BoolParam(ResourceParam):
 class ListParam(ResourceParam):
     validator_type = ListValidator
 
-    def set(self, value, cast=False, check_readonly=False):
+    def set(self, value, cast=False):
         if isinstance(value, str):
             value = value.split(',')
-        return super().set(value, cast, check_readonly)
+        return super().set(value, cast)
 
     def set_unique_attributes(self, item_type=None):
         if item_type:

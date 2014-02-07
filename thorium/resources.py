@@ -1,5 +1,6 @@
 from . import errors, fields
-import copy, collections
+import copy
+import collections
 
 VALID_METHODS = {'get', 'post', 'put', 'patch', 'delete', 'options'}
 
@@ -44,7 +45,7 @@ class ResourceMetaClass(type):
     @staticmethod
     def _get_set_prop(name):
         def set_field_property(self, value):
-            return self._fields[name].set(value)
+            return self._set(self._fields[name], value)
         return set_field_property
 
     @staticmethod
@@ -98,22 +99,68 @@ class ResourceMetaClass(type):
 
 class Resource(object, metaclass=ResourceMetaClass):
 
-    def __new__(cls, *args):
-        obj = super().__new__(cls, *args)
+    def __new__(cls, *args, **kwargs):
+        obj = super().__new__(cls)
         obj._fields = copy.deepcopy(obj._fields)
         return obj
 
+    def __init__(self, *args, **kwargs):
+        self._partial = False
+        self._init(*args, **kwargs)
+
     @classmethod
     def partial(cls, *args, **kwargs):
-        obj = cls(*args, **kwargs)
-        for field in obj._fields.values():
-            field.set(fields.NotSet)
-        return obj
+        resource = cls.__new__(cls)
+        resource._partial = True
+        resource.clear()
+        resource._init(*args, **kwargs)
+        return resource
 
-    def from_dict(self, data, check_readonly=False):
+    # is there a better way to do this?
+    @classmethod
+    def init_from_obj(cls, obj, partial=False, **kwargs):
+        resource = cls.__new__(cls)
+        resource._partial = partial
+        if resource._partial:
+            resource.clear()
+        resource.from_obj(obj, **kwargs)
+        if not resource._partial:
+            resource.validate_full()
+        return resource
+
+    @classmethod
+    def empty(cls):
+        resource = cls.__new__(cls)
+        resource._partial = False
+        resource.clear()
+        return resource
+
+    def _init(self, *args, **kwargs):
+        if args and len(args) == 1 and isinstance(args[0], dict):
+            self.from_dict(args[0])
+        elif args:
+            raise Exception('Resource initiation accepts only a dictionary or fields by keyword.')
+
+        if kwargs:
+            self.from_dict(kwargs)
+
+        if not self._partial:
+            self.validate_full()
+
+    def clear(self):
+        for name, field in self._fields.items():
+            if self._partial:
+                self._set(field, fields.NotSet)
+            else:
+                if field.flags['default'] == fields.NotSet:
+                    self._set(field, None)
+                else:
+                    field.to_default()
+
+    def from_dict(self, data):
         for name, field in self._fields.items():
             if name in data:
-                field.set(data[name], check_readonly=check_readonly)
+                self._set(field, data[name])
         return self
 
     def to_dict(self):
@@ -131,15 +178,15 @@ class Resource(object, metaclass=ResourceMetaClass):
             for name, field in self.all_fields():
                 if name not in mapping and name not in obj_mapping_names and hasattr(obj, name):
                     val = getattr(obj, name)
-                    field.set(val)
+                    self._set(field, val)
 
         for res_name, obj_name in mapping.items():
             if res_name and obj_name:
                 val = getattr(obj, obj_name)
-                self._fields[res_name].set(val)
+                self._set(self._fields[res_name], val)
         return self
 
-    def to_obj(self, obj, mapping={}, explicit_mapping=False):
+    def to_obj(self, obj, mapping={}, explicit_mapping=False, partial=False):
         """
         Maps the fields from the resource to an object based on identical names. Optional mapping
         parameter allows for discrepancies in naming with resource names being the
@@ -147,15 +194,17 @@ class Resource(object, metaclass=ResourceMetaClass):
         only the attributes in the mapping dictionary will be copied.
         """
         if not explicit_mapping:
-            for key in obj.__dict__:
-                if not key.startswith('_') and key not in mapping and key in self._fields:
-                    val = self._fields[key].get()
-                    setattr(obj, key, val)
+            for name, field in self.valid_fields():
+                if hasattr(obj, name):
+                    setattr(obj, name, field.get())
 
+        # reconsider this
         for res_name, obj_name in mapping.items():
+            raise NotImplementedError()
             if res_name and obj_name:
                 val = self._fields[res_name].get()
-                setattr(obj, obj_name, val)
+                if not partial or val != fields.NotSet:
+                    setattr(obj, obj_name, val)
 
         return obj
 
@@ -169,3 +218,8 @@ class Resource(object, metaclass=ResourceMetaClass):
         for field in self._fields.values():
             if not field.is_set():
                 raise errors.ValidationError('Field {0} is NotSet, expected full resource.'.format(field))
+
+    def _set(self, field, value):
+        if not self._partial and value == fields.NotSet:
+            raise errors.ValidationError('Attempted to set field {0} of a non-partial resource to NotSet'.format(field))
+        return field.set(value)

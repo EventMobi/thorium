@@ -264,25 +264,6 @@ class TestTypedField(TestCase):
         self.field.validator_type = None
         self.assertRaises(NotImplementedError, self.field._get_validator)
 
-    def test_set_readonly_no_check(self):
-        val = 10
-        readonly_field = SimpleTypedField(readonly=True)
-        readonly_field.set(val)
-        self.assertEqual(readonly_field.get(), val)
-
-    def test_set_readonly_with_check(self):
-        val = 10
-        readonly_field = SimpleTypedField(readonly=True)
-        readonly_field.set(val, check_readonly=True)
-        self.assertEqual(readonly_field.get(), fields.NotSet)
-
-    def test_set_readonly_with_check_and_default(self):
-        val = 10
-        default = 42
-        readonly_field = SimpleTypedField(readonly=True, default=default)
-        readonly_field.set(val, check_readonly=True)
-        self.assertEqual(readonly_field.get(), default)
-
 
 class TestCharField(TestCase):
 

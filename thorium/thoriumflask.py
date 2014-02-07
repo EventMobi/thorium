@@ -6,6 +6,7 @@ from .resources import VALID_METHODS
 from .response import DetailResponse, CollectionResponse
 from flask import Response as FlaskResponse, request as flaskrequest
 from .crossdomain_decorator import crossdomain
+from werkzeug.exceptions import BadRequest as WerkzeugBadRequest
 
 
 class ThoriumFlask(Thorium):
@@ -31,8 +32,11 @@ class FlaskEndpoint(object):
 
     @crossdomain(origin='*')
     def endpoint_target(self, **kwargs):
+        url = method = 'unknown'
         try:
             request = self.build_request()
+            url = request.url
+            method = request.method
             response, serialized_body = self.dispatcher.dispatch(request)
             return FlaskResponse(response=serialized_body, headers=response.headers,
                                  status=response.status_code, content_type='application/json')
@@ -42,21 +46,10 @@ class FlaskEndpoint(object):
                                  headers=e.headers, content_type='application/json')
         except Exception as e:
             traceback.print_exc()
-            error_body = self.exception_handler.handle_general_exception(request, e)
+            error_body = self.exception_handler.handle_general_exception(url, method, e)
             if self.flask_config['DEBUG']:  # if flask debug raise exception instead of returning json response
                 raise e
             return FlaskResponse(response=error_body, status=500, headers={}, content_type='application/json')
-
-    #This probably shouldn't be here, not explicitly flask related
-    def _create_resource(self, data, partial):
-        if partial:
-            resource = self.dispatcher.resource_cls.partial()
-        else:
-            resource = self.dispatcher.resource_cls()
-        resource.from_dict(data, check_readonly=True)
-        if not partial:
-            resource.validate_full()
-        return resource
 
     def build_request(self):
         try:
@@ -81,5 +74,18 @@ class FlaskEndpoint(object):
                            resource_cls=self.dispatcher.resource_cls, query_params=flaskrequest.args.to_dict(),
                            mimetype=flaskrequest.mimetype, resource=resource, resources=resources,
                            request_type=self.dispatcher.request_type, url=flaskrequest.url)
-        except errors.ValidationError as e:
-            raise errors.BadRequestError(message=e.args[0])
+        except (errors.ValidationError, WerkzeugBadRequest) as e:
+            raise errors.BadRequestError(message=e.args[0] if e.args else None)
+
+    #This probably shouldn't be here, not explicitly flask related
+    def _create_resource(self, data, partial):
+        if partial:
+            resource = self.dispatcher.resource_cls.partial(data)
+        else:
+            resource = self.dispatcher.resource_cls(data)
+        for name, field in resource.all_fields():
+            if field.is_readonly():
+                field.to_default()
+        if not partial:
+            resource.validate_full()
+        return resource

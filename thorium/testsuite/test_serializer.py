@@ -35,7 +35,7 @@ class TestJsonSerializer(unittest.TestCase):
 
     def test_serialize_collection_response(self):
         response = mock.MagicMock(spec=CollectionResponse)
-        response.resources = [SimpleResource().from_dict(self.data)]
+        response.resources = [SimpleResource(self.data)]
         response.meta = {}
         serialized_data = self.serializer.serialize_response(response)
         self.assertEqual(serialized_data, json.dumps({'items': [self.data], '_meta': {}}))
@@ -49,7 +49,7 @@ class TestJsonSerializer(unittest.TestCase):
 
     def test_serialize_detail_response(self):
         response = mock.MagicMock(spec=DetailResponse)
-        response.resource = SimpleResource().from_dict(self.data)
+        response.resource = SimpleResource(self.data)
         serialized_data = self.serializer.serialize_response(response)
         self.assertEqual(serialized_data, json.dumps(self.data))
 

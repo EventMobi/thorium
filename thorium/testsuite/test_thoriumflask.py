@@ -35,16 +35,19 @@ class PersonResource(Resource):
 class PersonEngine(Engine):
 
     def pre_request(self):
-        self.ds = DataStore()
+        self.data = {
+            'id': 42,
+            'name': 'Timmy',
+            'birth_date': datetime.datetime(1974, 3, 13),
+            'admin': True
+        }
 
     def get_detail(self):
-        person = self.request.resource_cls()
-        self.ds.populate_person(person)
+        person = self.request.resource_cls(self.data)
         self.response.resource = person
 
     def get_collection(self):
-        person = self.request.resource_cls()
-        self.ds.populate_person(person)
+        person = self.request.resource_cls(self.data)
         self.response.resources.append(person)
 
     def post_collection(self):
@@ -53,15 +56,6 @@ class PersonEngine(Engine):
         birth_date = res.birth_date
         admin = res.admin
         self.response.location_header(4)
-
-
-class DataStore(object):
-
-    def populate_person(self, person):
-        person.id = 42
-        person.name = 'Timmy'
-        person.birth_date = datetime.datetime(1974, 3, 13)
-        person.admin = True
 
 
 class TestThoriumFlask(unittest.TestCase):
@@ -119,7 +113,5 @@ class TestThoriumFlask(unittest.TestCase):
 def handler(obj):
     if hasattr(obj, 'isoformat'):
         return obj.isoformat()
-    #elif isinstance(obj, ...):
-    #    return ...
     else:
         raise TypeError('Object of type %s with value of %s is not JSON serializable' % (type(obj), repr(obj)))
