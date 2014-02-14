@@ -14,11 +14,7 @@ class PersonResource(Resource):
     admin = fields.BoolField()
 
     class Params:
-        email = fields.CharParam(default=None, max_length=200)
-        q = fields.CharParam(default=None)
-        ids = fields.CharParam()
-        admin = fields.BoolParam()
-        birth_date = fields.DateTimeParam()
+        times = fields.IntParam(default=1)
 
     class Meta:
         collection = {
@@ -47,8 +43,9 @@ class PersonEngine(Engine):
         self.response.resource = person
 
     def get_collection(self):
-        person = self.request.resource_cls(self.data)
-        self.response.resources.append(person)
+        for x in range(self.request.params['times']):
+            person = self.request.resource_cls(self.data)
+            self.response.resources.append(person)
 
     def post_collection(self):
         res = self.request.resource
@@ -108,6 +105,32 @@ class TestThoriumFlask(unittest.TestCase):
         }
         rv = self.c.post('/api/event/1/people', data=json.dumps(data, default=handler), content_type='application/json')
         self.assertEqual(rv.status_code, 400)
+
+
+class TestResourceSpeed(unittest.TestCase):
+
+    def setUp(self):
+        route_manager = RouteManager()
+        route_manager.register_endpoint(PersonResource, PersonEngine)
+        self.flask_app = Flask(__name__)
+        ThoriumFlask(
+            settings={},
+            route_manager=route_manager,
+            flask_app=self.flask_app
+        )
+        self.c = self.flask_app.test_client()
+
+    def test_speed_simple(self):
+        import time
+        abc = [1, 10, 100]
+        for y in abc:
+            times = []
+            for x in range(20):
+                start_time = time.time()
+                rv = self.c.open('/api/event/1/people?times={0}'.format(y), method='GET')
+                times.append(time.time() - start_time)
+                self.assertEqual(rv.status_code, 200)
+            print('{0} - avg time: {1}'.format(y, sum(times) / len(times)))
 
 
 def handler(obj):

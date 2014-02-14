@@ -173,39 +173,25 @@ class Resource(object, metaclass=ResourceMetaClass):
         key and the object attribute name to map to being the value. If explicit_mapping is True,
         only the attributes in the mapping dictionary will be copied.
         """
-        if not explicit_mapping:
-            obj_mapping_names = mapping.values()
-            for name, field in self.all_fields():
-                if name not in mapping and name not in obj_mapping_names and hasattr(obj, name):
-                    val = getattr(obj, name)
-                    self._set(field, val)
-
-        for res_name, obj_name in mapping.items():
-            if res_name and obj_name:
-                val = getattr(obj, obj_name)
-                self._set(self._fields[res_name], val)
+        for name, field in self.all_fields():
+            if name in mapping or name not in mapping and not explicit_mapping:
+                name = mapping.get(name, name)
+                if name and hasattr(obj, name):
+                    self._set(field, getattr(obj, name))
         return self
 
-    def to_obj(self, obj, mapping={}, explicit_mapping=False, partial=False):
+    def to_obj(self, obj, mapping={}, explicit_mapping=False):
         """
         Maps the fields from the resource to an object based on identical names. Optional mapping
         parameter allows for discrepancies in naming with resource names being the
         key and the object attribute name to map to being the value. If explicit_mapping is True,
         only the attributes in the mapping dictionary will be copied.
         """
-        if not explicit_mapping:
-            for name, field in self.valid_fields():
-                if hasattr(obj, name):
+        for name, field in self.valid_fields():
+            if name in mapping or name not in mapping and not explicit_mapping:
+                name = mapping.get(name, name)
+                if name and hasattr(obj, name):
                     setattr(obj, name, field.get())
-
-        # reconsider this
-        for res_name, obj_name in mapping.items():
-            raise NotImplementedError()
-            if res_name and obj_name:
-                val = self._fields[res_name].get()
-                if not partial or val != fields.NotSet:
-                    setattr(obj, obj_name, val)
-
         return obj
 
     def valid_fields(self):

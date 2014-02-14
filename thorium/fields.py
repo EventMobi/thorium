@@ -168,24 +168,29 @@ class SetValidator(FieldValidator):
         raise errors.ValidationError('{0} expects a set, got {1}'.format(self._field, value))
 
 
-class NotSetMeta(type):
-    def __repr__(self):
-        return "Not Set"
+class NotSet(object):
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__)
+
+    def __bool__(self):
+        return False
 
     def __str__(self):
-        return "Not Set"
+        return 'NotSet'
 
+    def __repr__(self):
+        return 'NotSet'
 
-class NotSet(object, metaclass=NotSetMeta):
-    pass
+NotSet = NotSet()
 
 
 class TypedField(object):
     validator_type = None
     order_counter = 0
 
-    def __init__(self, default=NotSet, notnull=False, readonly=False, *args, **kwargs):
-        self.flags = {'notnull': notnull, 'readonly': readonly, 'default': default}
+    def __init__(self, default=NotSet, notnull=False, readonly=False, writeonly=False, *args, **kwargs):
+        self.flags = {'notnull': notnull, 'readonly': readonly, 'default': default, 'writeonly': writeonly}
         self.name = 'noname'
 
         self.order_value = TypedField.order_counter
@@ -219,7 +224,7 @@ class TypedField(object):
         return self.set(self.flags['default'])
 
     def is_set(self):
-        return self._value != NotSet and self._value != NotSetMeta
+        return self._value != NotSet
 
     def is_readonly(self):
         return self.flags['readonly']
