@@ -136,10 +136,11 @@ class ListValidator(FieldValidator):
         raise errors.ValidationError('{0} expects a list, got {1}'.format(self._field, value))
 
     def additional_validation(self, value):
-        if self._field.item_type:
-            for item in value:
+        item_type = self._field.flags['item_type']
+        if item_type:
+            for index, item in enumerate(value):
                 try:
-                    self._field.item_type.set(item, cast=True)
+                    value[index] = item_type.set(item, cast=True)  # Validates and casts list items
                 except errors.ValidationError as e:
                     raise errors.ValidationError('An item within {0} raised exception: {1}'.format(self._field, e))
 
@@ -208,7 +209,7 @@ class TypedField(object):
         return '{0}:{1}'.format(self.__class__.__name__, self.name)
 
     def set(self, value, cast=False):
-        if value is NotSet:
+        if value == NotSet:
             self._value = NotSet
         else:
             self._value = self._validator.validate(value, cast)
@@ -281,9 +282,9 @@ class ListField(ResourceField):
         if item_type:
             if item_type == NotSet or not isinstance(item_type, ResourceField):
                 raise errors.ValidationError('ListField must have an item_type set to a valid ResourceField')
-            self.item_type = item_type
+            self.flags['item_type'] = item_type
         else:
-            self.item_type = None
+            self.flags['item_type'] = None
 
 
 class DictField(ResourceField):
@@ -292,6 +293,7 @@ class DictField(ResourceField):
 
 class SetField(ResourceField):
     validator_type = SetValidator
+
 
 #Resource Params
 class ResourceParam(TypedField):
@@ -344,8 +346,8 @@ class ListParam(ResourceParam):
         if item_type:
             if item_type == NotSet or not isinstance(item_type, ResourceParam):
                 raise errors.ValidationError('ListParam must have an item_type set to a valid ResourceParam')
-            self.item_type = item_type
+            self.flags['item_type'] = item_type
         else:
-            self.item_type = None
+            self.flags['item_type'] = None
 
 
