@@ -294,6 +294,9 @@ class DictField(ResourceField):
 class SetField(ResourceField):
     validator_type = SetValidator
 
+    def set(self, value, cast=True):
+        return super().set(value, cast)
+
 
 #Resource Params
 class ResourceParam(TypedField):
