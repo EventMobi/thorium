@@ -118,12 +118,13 @@ class Resource(object, metaclass=ResourceMetaClass):
 
     # is there a better way to do this?
     @classmethod
-    def init_from_obj(cls, obj, partial=False, **kwargs):
+    def init_from_obj(cls, obj, partial=False, mapping=None, explicit_mapping=False):
+        mapping = mapping if mapping else {}
         resource = cls.__new__(cls)
         resource._partial = partial
         if resource._partial:
             resource.clear()
-        resource.from_obj(obj, **kwargs)
+        resource.from_obj(obj, mapping, explicit_mapping)
         if not resource._partial:
             resource.validate_full()
         return resource
@@ -166,13 +167,14 @@ class Resource(object, metaclass=ResourceMetaClass):
     def to_dict(self):
         return {name: field.get() for name, field in self.valid_fields()}
 
-    def from_obj(self, obj, mapping={}, explicit_mapping=False):
+    def from_obj(self, obj, mapping=None, explicit_mapping=False):
         """
         Maps the public attributes from a object to the resource fields based on identical names.
         Optional mapping parameter allows for discrepancies in naming with resource names being the
         key and the object attribute name to map to being the value. If explicit_mapping is True,
         only the attributes in the mapping dictionary will be copied.
         """
+        mapping = mapping if mapping else {}
         for name, field in self.all_fields():
             if name in mapping or name not in mapping and not explicit_mapping:
                 name = mapping.get(name, name)
@@ -180,13 +182,14 @@ class Resource(object, metaclass=ResourceMetaClass):
                     self._set(field, getattr(obj, name))
         return self
 
-    def to_obj(self, obj, mapping={}, explicit_mapping=False):
+    def to_obj(self, obj, mapping=None, explicit_mapping=False):
         """
         Maps the fields from the resource to an object based on identical names. Optional mapping
         parameter allows for discrepancies in naming with resource names being the
         key and the object attribute name to map to being the value. If explicit_mapping is True,
         only the attributes in the mapping dictionary will be copied.
         """
+        mapping = mapping if mapping else {}
         for name, field in self.valid_fields():
             if name in mapping or name not in mapping and not explicit_mapping:
                 name = mapping.get(name, name)
@@ -204,6 +207,10 @@ class Resource(object, metaclass=ResourceMetaClass):
         for field in self._fields.values():
             if not field.is_set():
                 raise errors.ValidationError('Field {0} is NotSet, expected full resource.'.format(field))
+
+    @property
+    def is_partial(self):
+        return self._partial
 
     def _set(self, field, value):
         if not self._partial and value == fields.NotSet:
