@@ -22,7 +22,8 @@ class SampleTestedClass(object):
 
     def __init__(self):
         self.request = True
-        self.auth = self._authenticator_classes[0](self.request)
+        self.response = False
+        self.auth = self._authenticator_classes[0](self)
 
     def method1(self):
         pass

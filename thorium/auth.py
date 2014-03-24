@@ -71,11 +71,13 @@ class AuthenticatorMetaClass(type):
 class Authenticator(object, metaclass=AuthenticatorMetaClass):
     """ Inherit from this class to create a custom authenticator.
 
-    :param request: A :class:`Request` object.
+    :param engine: A :class:`Engine` object.
     """
-    def __init__(self, request):
+    def __init__(self, engine):
         self._loaded = False
-        self.request = request
+        self.engine = engine
+        self.request = engine.request
+        self.response = engine.response
         self.method = None
 
     @classmethod

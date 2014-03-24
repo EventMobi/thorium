@@ -13,7 +13,7 @@ class TestEngine(TestCase):
 
     def test_init(self):
         self.assertEqual(self.engine.request, self.request)
-        self.auth_cls.assert_called_once_with(self.request)
+        self.auth_cls.assert_called_once_with(self.engine)
 
     def test_pre_request(self):
         self.engine.pre_request()

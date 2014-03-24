@@ -202,6 +202,32 @@ class TestComplexResource(TestCase):
         self.assertEqual(res.admin, co.administrator)
         self.assertEqual(res.birth_date, co.birth)
 
+    def test_resource_init_from_obj_full_with_override(self):
+        co = ComplexObj()
+        co.name = 'Timmy!'
+        co.administrator = False
+        co.birth = datetime.datetime.now()
+        co.somethingelse = 'abc'
+        res = ComplexResource.init_from_obj(co, override={'admin': co.administrator, 'birth_date': co.birth, 'age': 29})
+        self.assertEqual(res.name, co.name)
+        self.assertEqual(res.age, 29)
+        self.assertEqual(res.admin, co.administrator)
+        self.assertEqual(res.birth_date, co.birth)
+
+    def test_resource_init_from_obj_full_with_mapping_and_override(self):
+        co = ComplexObj()
+        co.name = 'Timmy!'
+        co.administrator = False
+        co.birth = datetime.datetime.now()
+        co.somethingelse = 'abc'
+        res = ComplexResource.init_from_obj(co,
+                                            mapping=co.resource_mapping,
+                                            override={'administrator': co.administrator, 'birth': co.birth, 'age': 29})
+        self.assertEqual(res.name, co.name)
+        self.assertEqual(res.age, 29)
+        self.assertEqual(res.admin, co.administrator)
+        self.assertEqual(res.birth_date, co.birth)
+
     def test_resource_init_from_obj_partial(self):
         co = ComplexObj()
         co.name = 'Timmy!'
@@ -214,16 +240,43 @@ class TestComplexResource(TestCase):
         self.assertEqual(res.admin, fields.NotSet)
         self.assertEqual(res.birth_date, fields.NotSet)
 
-    def test_resource_init_from_obj_partial(self):
+    def test_resource_init_from_obj_partial_with_mapping(self):
         co = ComplexObj()
         co.name = 'Timmy!'
         co.administrator = False
         co.birth = datetime.datetime.now()
         co.somethingelse = 'abc'
-        res = ComplexResource.init_from_obj(co, partial=True, mapping=co.resource_mapping)
+        res = ComplexResource.init_from_obj(obj=co, partial=True, mapping=co.resource_mapping)
         self.assertEqual(res.name, co.name)
         self.assertEqual(res.age, fields.NotSet)
         self.assertEqual(res.admin, co.administrator)
+        self.assertEqual(res.birth_date, co.birth)
+
+    def test_resource_init_from_obj_partial_with_override(self):
+        co = ComplexObj()
+        co.name = 'Timmy!'
+        co.administrator = False
+        co.birth = datetime.datetime.now()
+        co.somethingelse = 'abc'
+        res = ComplexResource.init_from_obj(obj=co, partial=True, override={'age': 29, 'admin': False})
+        self.assertEqual(res.name, co.name)
+        self.assertEqual(res.age, 29)
+        self.assertEqual(res.admin, False)
+        self.assertEqual(res.birth_date, fields.NotSet)
+
+    def test_resource_init_from_obj_partial_with_mapping_and_override(self):
+        co = ComplexObj()
+        co.name = 'Timmy!'
+        co.administrator = False
+        co.birth = datetime.datetime.now()
+        co.somethingelse = 'abc'
+        res = ComplexResource.init_from_obj(obj=co,
+                                            partial=True,
+                                            mapping=co.resource_mapping,
+                                            override={'age': 29, 'admin': False})
+        self.assertEqual(res.name, co.name)
+        self.assertEqual(res.age, 29)
+        self.assertEqual(res.admin, False)
         self.assertEqual(res.birth_date, co.birth)
 
     def test_full_resource_must_be_valid(self):
@@ -268,9 +321,39 @@ class TestComplexResource(TestCase):
         co.administrator = False
         co.birth = datetime.datetime.now()
         co.somethingelse = 'abc'
+        co.age = 30
         res = ComplexResource.empty().from_obj(co, co.resource_mapping)
         self.assertEqual(res.name, co.name)
         self.assertEqual(res.admin, co.administrator)
+        self.assertEqual(res.birth_date, co.birth)
+        self.assertFalse(hasattr(res, 'somethingelse'))
+
+    def test_obj_to_resource_with_override(self):
+        co = ComplexObj()
+        co.name = 'Timmy!'
+        co.administrator = False
+        co.birth = datetime.datetime.now()
+        co.somethingelse = 'abc'
+        res = ComplexResource.empty().from_obj(obj=co,
+                                               override={'admin': co.administrator, 'birth_date': co.birth, 'age': 30})
+        self.assertEqual(res.age, 30)
+        self.assertEqual(res.name, co.name)
+        self.assertEqual(res.admin, co.administrator)
+        self.assertEqual(res.birth_date, co.birth)
+        self.assertFalse(hasattr(res, 'somethingelse'))
+
+    def test_obj_to_resource_with_override_and_mapping(self):
+        co = ComplexObj()
+        co.name = 'Timmy!'
+        co.administrator = False
+        co.birth = datetime.datetime.now()
+        co.somethingelse = 'abc'
+        res = ComplexResource.empty().from_obj(obj=co,
+                                               mapping=co.resource_mapping,
+                                               override={'age': 29, 'admin': False})
+        self.assertEqual(res.name, co.name)
+        self.assertEqual(res.admin, False)
+        self.assertEqual(res.age, 29)
         self.assertEqual(res.birth_date, co.birth)
         self.assertFalse(hasattr(res, 'somethingelse'))
 

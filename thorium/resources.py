@@ -118,13 +118,13 @@ class Resource(object, metaclass=ResourceMetaClass):
 
     # is there a better way to do this?
     @classmethod
-    def init_from_obj(cls, obj, partial=False, mapping=None, explicit_mapping=False):
+    def init_from_obj(cls, obj, partial=False, mapping=None, explicit_mapping=False, override=None):
         mapping = mapping if mapping else {}
         resource = cls.__new__(cls)
         resource._partial = partial
         if resource._partial:
             resource.clear()
-        resource.from_obj(obj, mapping, explicit_mapping)
+        resource.from_obj(obj, mapping, explicit_mapping, override)
         if not resource._partial:
             resource.validate_full()
         return resource
@@ -167,19 +167,43 @@ class Resource(object, metaclass=ResourceMetaClass):
     def to_dict(self):
         return {name: field.get() for name, field in self.valid_fields()}
 
-    def from_obj(self, obj, mapping=None, explicit_mapping=False):
+    def from_obj(self, obj, mapping=None, explicit_mapping=False, override=None):
         """
         Maps the public attributes from a object to the resource fields based on identical names.
         Optional mapping parameter allows for discrepancies in naming with resource names being the
         key and the object attribute name to map to being the value. If explicit_mapping is True,
-        only the attributes in the mapping dictionary will be copied.
+        only the attributes in the mapping dictionary will be copied. An optional override dictionary
+        is used to set values explicitly.
         """
-        mapping = mapping if mapping else {}
         for name, field in self.all_fields():
-            if name in mapping or name not in mapping and not explicit_mapping:
+
+            # If explicate_mapping only names within the mapping will be considered
+            if explicit_mapping and name not in mapping:
+                continue
+
+            # Convert name to mapped name if available, else use Resource's existing name
+            if mapping:
                 name = mapping.get(name, name)
-                if name and hasattr(obj, name):
-                    self._set(field, getattr(obj, name))
+
+            # A None value for name indicates that we shouldn't map this field
+            if not name:
+                continue
+
+            # Check override for the value first
+            value = fields.NotSet
+            if override:
+                value = override.get(name, fields.NotSet)
+
+            # If we don't have a value from override, attempt to get it from source obj
+            if value is fields.NotSet:
+                value = getattr(obj, name, fields.NotSet)
+
+            # If we still don't have a value, then continue
+            if value is fields.NotSet:
+                continue
+
+            self._set(field, value)
+
         return self
 
     def to_obj(self, obj, mapping=None, explicit_mapping=False):
@@ -189,12 +213,27 @@ class Resource(object, metaclass=ResourceMetaClass):
         key and the object attribute name to map to being the value. If explicit_mapping is True,
         only the attributes in the mapping dictionary will be copied.
         """
-        mapping = mapping if mapping else {}
         for name, field in self.valid_fields():
-            if name in mapping or name not in mapping and not explicit_mapping:
+
+            # If explicate_mapping only names within the mapping will be considered
+            if explicit_mapping and name not in mapping:
+                continue
+
+            # Convert name to mapped name if available, else use Resource's existing name
+            if mapping:
                 name = mapping.get(name, name)
-                if name and hasattr(obj, name):
-                    setattr(obj, name, field.get())
+
+            # A None value for name indicates that we shouldn't map this field
+            if not name:
+                continue
+
+            # Ensure that target obj has an attribute with a matching name
+            if not hasattr(obj, name):
+                continue
+
+            # Set target obj value from Resource value
+            setattr(obj, name, field.get())
+
         return obj
 
     def valid_fields(self):

@@ -18,7 +18,7 @@ class Engine(object):
         self.response = response
         self._authenticators = []
         if self._authenticator_classes:
-            self._authenticators = [a(request) for a in self._authenticator_classes]
+            self._authenticators = [a(self) for a in self._authenticator_classes]
 
     def authenticate(self, method):
         if self._authenticators:
