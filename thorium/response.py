@@ -1,8 +1,11 @@
 class Response(object):
 
     def __init__(self, request):
+        self.meta = {}
         self.headers = {}
         self.request = request
+        self.error = None
+        self.response_type = None
         self.status_code = self._set_status_code()
 
     def location_header(self, resource_id):
@@ -13,6 +16,9 @@ class Response(object):
         self.headers['Location'] = ep
 
     def _set_status_code(self):
+        if not self.request:  # Hacky
+            return 500
+
         if self.request.method == 'POST':
             return 201
         elif self.request.method == 'DELETE':
@@ -20,29 +26,46 @@ class Response(object):
         else:
             return 200
 
+    def get_response_data(self):
+        raise NotImplementedError('This method must be overridden by subclass.')
+
 
 class DetailResponse(Response):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.response_type = 'detail'
         self.resource = None
 
-    def set_resource_from_dict(self, data):
-        if not self.resource:
-            self.resource = self.request.resource_cls()
-        self.resource.from_dict(data)
-        return self.resource
+    def get_response_data(self):
+        data = None
+        if self.resource:
+            data = {n: v.get() for n, v in self.resource.all_fields()}
+        return data
 
 
 class CollectionResponse(Response):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.response_type = 'collection'
         self.resources = []
-        self.meta = {}
 
-    def add_resource_from_dict(self, data):
-        res = self.request.resource_cls()
-        res.from_dict(data)
-        self.resources.append(res)
-        return res
+    def get_response_data(self):
+        data = []
+        if self.resources:
+            for res in self.resources:
+                data.append({n: v.get() for n, v in res.all_fields()})
+        return data
+
+
+class ErrorResponse(Response):
+
+    def __init__(self, http_error, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.response_type = 'error'
+        self.status_code = http_error.status_code
+        self.error = str(http_error)
+
+    def get_response_data(self):
+        return None

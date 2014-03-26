@@ -33,6 +33,7 @@ class FlaskEndpoint(object):
     @crossdomain(origin='*')
     def endpoint_target(self, **kwargs):
         url = method = 'unknown'
+        request = None
         try:
             request = self.build_request()
             url = request.url
@@ -41,12 +42,12 @@ class FlaskEndpoint(object):
             return FlaskResponse(response=serialized_body, headers=response.headers,
                                  status=response.status_code, content_type='application/json')
         except errors.HttpErrorBase as e:
-            error_body = self.exception_handler.handle_http_exception(e)
+            error_body = self.exception_handler.handle_http_exception(e, request)
             return FlaskResponse(response=error_body, status=e.status_code,
                                  headers=e.headers, content_type='application/json')
         except Exception as e:
             traceback.print_exc()
-            error_body = self.exception_handler.handle_general_exception(url, method, e)
+            error_body = self.exception_handler.handle_general_exception(url, method, e, request)
             if self.flask_config['DEBUG']:  # if flask debug raise exception instead of returning json response
                 raise e
             return FlaskResponse(response=error_body, status=500, headers={}, content_type='application/json')

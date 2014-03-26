@@ -1,29 +1,23 @@
 import json
-from .response import DetailResponse, CollectionResponse
 
 
 class SerializerBase(object):
 
     def serialize_response(self, response):
-        if isinstance(response, DetailResponse):
-            body = {}
-            if response.resource:
-                response.resource.validate_full()
-                body = {n: v.get() for n, v in response.resource.all_fields()}
-            serialized_body = self._serialize_data(body)
-        elif isinstance(response, CollectionResponse):
-            body = {'items': [], '_meta': response.meta}
-            if response.resources:
-                for res in response.resources:
-                    res.validate_full()
-                    body['items'].append({n: v.get() for n, v in res.all_fields()})
-            serialized_body = self._serialize_data(body)
-        else:
-            raise Exception('Unexpected response object: {0}'.format(response))
+        body = self._build_envelope(response_type=response.response_type,
+                                    status=response.status_code,
+                                    error=response.error,
+                                    data=response.get_response_data(),
+                                    meta=response.meta)
+        serialized_body = self._serialize_data(body)
         return serialized_body
 
+    @staticmethod
+    def _build_envelope(response_type, status, error, data, meta):
+        return {'type': response_type, 'status': status, 'error': error, 'data': data, 'meta': meta}
+
     def _serialize_data(self, data):
-        raise NotImplementedError('Do not use Serializer directly.')
+        raise NotImplementedError('This method must be implemented by a subclass.')
 
 
 class JsonSerializer(SerializerBase):
