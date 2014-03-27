@@ -1,25 +1,10 @@
 import unittest
 import json
 from unittest import mock
-from thorium.serializer import SerializerBase, JsonSerializer, CollectionResponse, DetailResponse
+from thorium.response import CollectionResponse, DetailResponse, ErrorResponse
+from thorium.serializer import JsonSerializer
+from thorium.errors import MethodNotAllowedError
 from thorium import Resource, fields
-
-
-class TestSerializerBase(unittest.TestCase):
-
-    def setUp(self):
-        self.serializer_base = SerializerBase()
-
-    def test_serialize_collection_response(self):
-        response = mock.MagicMock(spec=CollectionResponse)
-        response.resources = [mock.MagicMock()]
-        response.meta = {}
-        self.assertRaises(NotImplementedError, self.serializer_base.serialize_response, response)
-
-    def test_serialize_detail_response(self):
-        response = mock.MagicMock(spec=DetailResponse)
-        response.resource = mock.MagicMock()
-        self.assertRaises(NotImplementedError, self.serializer_base.serialize_response, response)
 
 
 class SimpleResource(Resource):
@@ -32,29 +17,72 @@ class TestJsonSerializer(unittest.TestCase):
     def setUp(self):
         self.serializer = JsonSerializer()
         self.data = {'id': 1, 'name': 'Jim'}
+        self.request = mock.MagicMock()
 
     def test_serialize_collection_response(self):
-        response = mock.MagicMock(spec=CollectionResponse)
-        response.resources = [SimpleResource(self.data)]
-        response.meta = {}
-        serialized_data = self.serializer.serialize_response(response)
-        self.assertEqual(serialized_data, json.dumps({'items': [self.data], '_meta': {}}))
+        collection_response = CollectionResponse(self.request)
+        collection_response.resources = [SimpleResource(self.data)]
+        serialized_data = self.serializer.serialize_response(collection_response)
+        data = json.loads(serialized_data)
+        expected_data = {
+            "type": "collection",
+            "error": None,
+            "status": 200,
+            "meta": {},
+            "data": [self.data]
+        }
+        self.assertEqual(data, expected_data)
 
     def test_serialize_empty_collection_response(self):
-        response = mock.MagicMock(spec=CollectionResponse)
-        response.resources = []
-        response.meta = {}
-        serialized_data = self.serializer.serialize_response(response)
-        self.assertEqual(serialized_data, json.dumps({'items': [], '_meta': {}}))
+        collection_response = CollectionResponse(self.request)
+        serialized_data = self.serializer.serialize_response(collection_response)
+        data = json.loads(serialized_data)
+        expected_data = {
+            "type": "collection",
+            "error": None,
+            "status": 200,
+            "meta": {},
+            "data": []
+        }
+        self.assertEqual(data, expected_data)
 
     def test_serialize_detail_response(self):
-        response = mock.MagicMock(spec=DetailResponse)
-        response.resource = SimpleResource(self.data)
-        serialized_data = self.serializer.serialize_response(response)
-        self.assertEqual(serialized_data, json.dumps(self.data))
+        detail_response = DetailResponse(self.request)
+        detail_response.resource = SimpleResource(self.data)
+        serialized_data = self.serializer.serialize_response(detail_response)
+        data = json.loads(serialized_data)
+        expected_data = {
+            "type": "detail",
+            "error": None,
+            "status": 200,
+            "meta": {},
+            "data": self.data
+        }
+        self.assertEqual(data, expected_data)
 
     def test_serialize_empty_detail_response(self):
-        response = mock.MagicMock(spec=DetailResponse)
-        response.resource = None
-        serialized_data = self.serializer.serialize_response(response)
-        self.assertEqual(serialized_data, json.dumps({}))
+        detail_response = DetailResponse(self.request)
+        serialized_data = self.serializer.serialize_response(detail_response)
+        data = json.loads(serialized_data)
+        expected_data = {
+            "type": "detail",
+            "error": None,
+            "status": 200,
+            "meta": {},
+            "data": None
+        }
+        self.assertEqual(data, expected_data)
+
+    def test_serialize_error_response(self):
+        http_error = MethodNotAllowedError()
+        error_response = ErrorResponse(http_error, self.request)
+        serialized_data = self.serializer.serialize_response(error_response)
+        data = json.loads(serialized_data)
+        expected_data = {
+            "type": "error",
+            "error": str(http_error),
+            "status": http_error.status_code,
+            "meta": {},
+            "data": None
+        }
+        self.assertEqual(data, expected_data)

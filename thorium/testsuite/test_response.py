@@ -1,5 +1,12 @@
 from unittest import TestCase, mock
-from thorium.response import Response, DetailResponse, CollectionResponse
+from thorium.response import Response, DetailResponse, CollectionResponse, ErrorResponse
+from thorium.errors import MethodNotAllowedError
+from thorium import Resource, fields
+
+
+class SimpleResource(Resource):
+    id = fields.IntField()
+    name = fields.CharField()
 
 
 class TestResponse(TestCase):
@@ -13,6 +20,9 @@ class TestResponse(TestCase):
         self.response.location_header(10)
         self.assertEqual(self.response.headers['Location'], 'http://testurl/api/10')
 
+    def test_get_response_data_raises_error(self):
+        self.assertRaises(NotImplementedError, self.response.get_response_data)
+
 
 class TestDetailResponse(TestCase):
 
@@ -20,12 +30,21 @@ class TestDetailResponse(TestCase):
         self.request_mock = mock.MagicMock()
         self.response = DetailResponse(request=self.request_mock)
 
-    def test_set_resource_from_dict(self):
-        data = {'a': 4}
-        result = self.response.set_resource_from_dict(data)
-        self.request_mock.resource_cls.assert_called_once_with()
-        self.response.resource.from_dict.assert_called_once_with(data)
-        self.assertEqual(result, self.response.resource)
+    def test_attributes(self):
+        self.assertEqual(self.response.status_code, 200)
+        self.assertEqual(self.response.error, None)
+        self.assertEqual(self.response.meta, {})
+        self.assertEqual(self.response.response_type, 'detail')
+        self.assertEqual(self.response.resource, None)
+
+    def test_get_response_data_empty(self):
+        data = self.response.get_response_data()
+        self.assertEqual(data, None)
+
+    def test_get_response_data(self):
+        self.response.resource = SimpleResource(id=1, name='a')
+        data = self.response.get_response_data()
+        self.assertEqual(data, {'id': 1, 'name': 'a'})
 
 
 class TestCollectionResponse(TestCase):
@@ -34,9 +53,36 @@ class TestCollectionResponse(TestCase):
         self.request_mock = mock.MagicMock()
         self.response = CollectionResponse(request=self.request_mock)
 
-    def test_add_resource_from_dict(self):
-        data = {'a': 4}
-        result = self.response.add_resource_from_dict(data)
-        self.request_mock.resource_cls.assert_called_once_with()
-        self.response.resources[0].from_dict.assert_called_once_with(data)
-        self.assertEqual(result, self.response.resources[0])
+    def test_attributes(self):
+        self.assertEqual(self.response.status_code, 200)
+        self.assertEqual(self.response.error, None)
+        self.assertEqual(self.response.meta, {})
+        self.assertEqual(self.response.response_type, 'collection')
+        self.assertEqual(self.response.resources, [])
+
+    def test_get_response_data_empty(self):
+        data = self.response.get_response_data()
+        self.assertEqual(data, [])
+
+    def test_get_response_data(self):
+        self.response.resources = [SimpleResource(id=1, name='a')]
+        data = self.response.get_response_data()
+        self.assertEqual(data, [{'id': 1, 'name': 'a'}])
+
+
+class TestErrorResponse(TestCase):
+
+    def setUp(self):
+        self.request_mock = mock.MagicMock()
+        self.error = MethodNotAllowedError()
+        self.response = ErrorResponse(http_error=self.error, request=self.request_mock)
+
+    def test_attributes(self):
+        self.assertEqual(self.response.status_code, 405)
+        self.assertEqual(self.response.error, str(self.error))
+        self.assertEqual(self.response.meta, {})
+        self.assertEqual(self.response.response_type, 'error')
+
+    def test_get_response_data_empty(self):
+        data = self.response.get_response_data()
+        self.assertEqual(data, None)
