@@ -1,6 +1,6 @@
 import types
 from unittest import TestCase, mock
-from thorium import resources, fields, errors
+from thorium import resources, fields, errors, NotSet
 import datetime
 
 
@@ -94,7 +94,7 @@ class TestSimpleResource(TestCase):
     def test_valid_fields_with_defaults_is_not_set(self):
         res = SimpleResource.partial(name='Trillian')
         res._fields['age'].default = 0
-        self.assertEqual(res.age, fields.NotSet)
+        self.assertEqual(res.age, NotSet)
         valid_fields = res.valid_fields()
         self.assertTrue(isinstance(valid_fields, types.GeneratorType))
         valid_fields = dict(valid_fields)
@@ -236,9 +236,9 @@ class TestComplexResource(TestCase):
         co.somethingelse = 'abc'
         res = ComplexResource.init_from_obj(co, partial=True)
         self.assertEqual(res.name, co.name)
-        self.assertEqual(res.age, fields.NotSet)
-        self.assertEqual(res.admin, fields.NotSet)
-        self.assertEqual(res.birth_date, fields.NotSet)
+        self.assertEqual(res.age, NotSet)
+        self.assertEqual(res.admin, NotSet)
+        self.assertEqual(res.birth_date, NotSet)
 
     def test_resource_init_from_obj_partial_with_mapping(self):
         co = ComplexObj()
@@ -248,7 +248,7 @@ class TestComplexResource(TestCase):
         co.somethingelse = 'abc'
         res = ComplexResource.init_from_obj(obj=co, partial=True, mapping=co.resource_mapping)
         self.assertEqual(res.name, co.name)
-        self.assertEqual(res.age, fields.NotSet)
+        self.assertEqual(res.age, NotSet)
         self.assertEqual(res.admin, co.administrator)
         self.assertEqual(res.birth_date, co.birth)
 
@@ -262,7 +262,7 @@ class TestComplexResource(TestCase):
         self.assertEqual(res.name, co.name)
         self.assertEqual(res.age, 29)
         self.assertEqual(res.admin, False)
-        self.assertEqual(res.birth_date, fields.NotSet)
+        self.assertEqual(res.birth_date, NotSet)
 
     def test_resource_init_from_obj_partial_with_mapping_and_override(self):
         co = ComplexObj()
@@ -280,12 +280,12 @@ class TestComplexResource(TestCase):
         self.assertEqual(res.birth_date, co.birth)
 
     def test_full_resource_must_be_valid(self):
-        self.assertRaises(errors.ValidationError, setattr, self.full, 'name', fields.NotSet)
-        self.assertRaises(errors.ValidationError, setattr, self.full, 'age', fields.NotSet)
-        self.assertRaises(errors.ValidationError, setattr, self.full, 'admin', fields.NotSet)
-        self.assertRaises(errors.ValidationError, setattr, self.full, 'birth_date', fields.NotSet)
+        self.assertRaises(errors.ValidationError, setattr, self.full, 'name', NotSet)
+        self.assertRaises(errors.ValidationError, setattr, self.full, 'age', NotSet)
+        self.assertRaises(errors.ValidationError, setattr, self.full, 'admin', NotSet)
+        self.assertRaises(errors.ValidationError, setattr, self.full, 'birth_date', NotSet)
 
-        data = {'name': 'Socrates', 'age': 71, 'admin': fields.NotSet, 'birth_date': datetime.datetime.now()}
+        data = {'name': 'Socrates', 'age': 71, 'admin': NotSet, 'birth_date': datetime.datetime.now()}
         self.assertRaises(errors.ValidationError, ComplexResource, data)
         self.assertRaises(errors.ValidationError, self.full.from_dict, data)
 
@@ -297,23 +297,23 @@ class TestComplexResource(TestCase):
 
     def test_partial_resource_allows_notset(self):
         self.partial.age = 14
-        self.partial.age = fields.NotSet
-        self.assertEqual(self.partial.age, fields.NotSet)
+        self.partial.age = NotSet
+        self.assertEqual(self.partial.age, NotSet)
 
-        data = {'name': 'Socrates', 'age': 71, 'admin': fields.NotSet, 'birth_date': datetime.datetime.now()}
+        data = {'name': 'Socrates', 'age': 71, 'admin': NotSet, 'birth_date': datetime.datetime.now()}
         self.partial.from_dict(data)
-        self.assertEqual(self.partial.admin, fields.NotSet)
+        self.assertEqual(self.partial.admin, NotSet)
         self.assertEqual(self.partial.age, 71)
 
         res = ComplexResource.partial(data)
-        self.assertEqual(res.admin, fields.NotSet)
+        self.assertEqual(res.admin, NotSet)
         self.assertEqual(res.age, 71)
 
     def test_partial_resource_init(self):
-        self.assertEqual(self.partial.name, fields.NotSet)
-        self.assertEqual(self.partial.age, fields.NotSet)
-        self.assertEqual(self.partial.admin, fields.NotSet)
-        self.assertEqual(self.partial.birth_date, fields.NotSet)
+        self.assertEqual(self.partial.name, NotSet)
+        self.assertEqual(self.partial.age, NotSet)
+        self.assertEqual(self.partial.admin, NotSet)
+        self.assertEqual(self.partial.birth_date, NotSet)
 
     def test_obj_to_resource_with_mapping(self):
         co = ComplexObj()
@@ -371,7 +371,7 @@ class TestComplexResource(TestCase):
         co.somethingelse = 'abc'
         res = ComplexResource.partial().from_obj(co, co.resource_mapping, explicit_mapping=True)
         self.assertNotEqual(res.name, co.name)
-        self.assertEqual(res.name, fields.NotSet)
+        self.assertEqual(res.name, NotSet)
         self.assertEqual(res.admin, co.administrator)
         self.assertEqual(res.birth_date, co.birth)
         self.assertFalse(hasattr(res, 'somethingelse'))

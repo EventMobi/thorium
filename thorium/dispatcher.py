@@ -11,20 +11,21 @@ from .serializer import JsonSerializer
 
 
 class DispatcherBase(object):
-    """ The Dispatcher holds a :class:`.ResourceInterface` and :class:`.Engine` pairing and is associated
+    """ The Dispatcher holds a :class:`.ResourceInterface` and :class:`.Endpoint` pairing and is associated
     with a :class:`.Route`. It's responsible for handing a request off to the correct components.
 
     :param resource_cls: A :class:`.Resource` class definition
-    :param engine: A :class:`.Engine` object to implement the :class:`.ResourceInterface`
+    :param engine: A :class:`.Endpoint` object to implement the :class:`.ResourceInterface`
     """
 
-    def __init__(self, resource_cls, engine_cls, allowed_methods):
+    def __init__(self, endpoint_cls, resource_cls, parameters_cls, allowed_methods):
+        self.endpoint_cls = endpoint_cls
         self.resource_cls = resource_cls
-        self.engine_cls = engine_cls
+        self.parameters_cls = parameters_cls
         self.allowed_methods = {method.upper() for method in allowed_methods}
 
     def dispatch(self, request):
-        """ Injects the :class:`.ResourceInterface` into the :class:`.Engine`
+        """ Injects the :class:`.ResourceInterface` into the :class:`.Endpoint`
         then calls a method on the engine to handle the request based
         on the :class:`.ThoriumRequest`.
 
@@ -39,7 +40,7 @@ class DispatcherBase(object):
 
         response = self.build_response_obj(request=request)
 
-        engine = self.engine_cls(request=request, response=response)
+        engine = self.endpoint_cls(request=request, response=response)
 
         dispatch_method = self.get_dispatch_method(engine=engine)
 

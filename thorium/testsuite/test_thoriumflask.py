@@ -1,10 +1,8 @@
 from flask import Flask
 import unittest
-from unittest import mock
-from thorium import ThoriumFlask, RouteManager, Resource, fields, Engine
+from thorium import ThoriumFlask, RouteManager, Resource, fields, Endpoint, params, routing, Parameters
 import json
 import datetime
-import calendar
 
 
 class PersonResource(Resource):
@@ -13,22 +11,15 @@ class PersonResource(Resource):
     birth_date = fields.DateTimeField()
     admin = fields.BoolField()
 
-    class Params:
-        times = fields.IntParam(default=1)
 
-    class Meta:
-        collection = {
-            'endpoint': '/api/event/<int:event_id>/people',
-            'methods': {'get', 'post'}
-        }
-
-        detail = {
-            'endpoint': '/api/event/<int:event_id>/people/<int:id>',
-            'methods': {'get', 'put', 'patch'}
-        }
+class CollectionParams(Parameters):
+    times = params.IntParam(default=1)
 
 
-class PersonEngine(Engine):
+@routing.collection('/api/event/<int:event_id>/people', methods=('get', 'post'), params=CollectionParams)
+@routing.detail('/api/event/<int:event_id>/people/<int:id>', ('get', 'put', 'patch'))
+class PersonEndpoint(Endpoint):
+    resource = PersonResource
 
     def pre_request(self):
         self.data = {
@@ -59,7 +50,7 @@ class TestThoriumFlask(unittest.TestCase):
 
     def setUp(self):
         route_manager = RouteManager()
-        route_manager.register_endpoint(PersonResource, PersonEngine)
+        route_manager.register_endpoint(PersonEndpoint)
         self.flask_app = Flask(__name__)
         ThoriumFlask(
             settings={},
@@ -111,7 +102,7 @@ class TestResourceSpeed(unittest.TestCase):
 
     def setUp(self):
         route_manager = RouteManager()
-        route_manager.register_endpoint(PersonResource, PersonEngine)
+        route_manager.register_endpoint(PersonEndpoint)
         self.flask_app = Flask(__name__)
         ThoriumFlask(
             settings={},

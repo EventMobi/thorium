@@ -8,6 +8,7 @@
 """
 
 from . import dispatcher
+from .resources import ResourceMetaClass
 
 
 class Route(object):
@@ -49,25 +50,47 @@ class RouteManager(object):
 
         return self._routes
 
-    def register_endpoint(self, resource_cls, engine_cls):
-        """ A convenience method to register a resource by using the default :class:`.Dispatcher`
-        and :class:`.Route`. Calls :func:`add_route` for the actual adding.
-        """
-        #register collection route
-        collection_dsp = dispatcher.CollectionDispatcher(resource_cls=resource_cls,
-                                                         engine_cls=engine_cls,
-                                                         allowed_methods=resource_cls.Meta.collection['methods'])
-        col_route = Route('{0}_{1}'.format(resource_cls.__name__, collection_dsp.request_type),
-                          resource_cls.Meta.collection['endpoint'], collection_dsp)
-        self.add_route(col_route)
+    def register_endpoint(self, endpoint_cls):
+        if not hasattr(endpoint_cls, 'routes') or not isinstance(endpoint_cls.routes, list):
+            raise Exception('Endpoint {0} expects attribute routes to be a list of Route objects.'
+                            .format(endpoint_cls.__name__))
 
-        #register detail route
-        detail_dsp = dispatcher.DetailDispatcher(resource_cls=resource_cls,
-                                                 engine_cls=engine_cls,
-                                                 allowed_methods=resource_cls.Meta.detail['methods'])
-        detail_route = Route('{0}_{1}'.format(resource_cls.__name__, detail_dsp.request_type),
-                             resource_cls.Meta.detail['endpoint'], detail_dsp)
-        self.add_route(detail_route)
+        for route in endpoint_cls.routes:
+            self.add_route(route)
 
-        return {'collection_route': col_route, 'detail_route': detail_route}
 
+def collection(path, methods, params=None):
+    def wrapped(cls):
+        route = build_route(dispatcher.CollectionDispatcher, cls, params, path, methods)
+        if hasattr(cls, 'routes'):
+            cls.routes.append(route)
+        else:
+            cls.routes = [route]
+        return cls
+    return wrapped
+
+
+def detail(path, methods, params=None):
+    def wrapped(cls):
+        route = build_route(dispatcher.DetailDispatcher, cls, params, path, methods)
+        if hasattr(cls, 'routes'):
+            cls.routes.append(route)
+        else:
+            cls.routes = [route]
+        return cls
+    return wrapped
+
+
+def build_route(dispatcher_cls, endpoint_cls, parameters_cls, path, methods):
+    if not hasattr(endpoint_cls, 'resource') or not isinstance(endpoint_cls.resource, ResourceMetaClass):
+        raise Exception('Endpoint {0} expects attribute resource to have a valid Resource object.'
+                        .format(endpoint_cls.__name__))
+
+    dsp = dispatcher_cls(endpoint_cls=endpoint_cls,
+                         resource_cls=endpoint_cls.resource,
+                         parameters_cls=parameters_cls,
+                         allowed_methods=set(methods))
+    route = Route(name='{0}_{1}'.format(endpoint_cls.__name__, dsp.request_type),
+                  path=path,
+                  dispatcher=dsp)
+    return route

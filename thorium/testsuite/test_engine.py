@@ -1,5 +1,5 @@
 from unittest import TestCase, mock
-from thorium import Engine, Request, auth, errors
+from thorium import Endpoint, Request, auth, errors
 
 
 class TestEngine(TestCase):
@@ -8,8 +8,8 @@ class TestEngine(TestCase):
         self.request = mock.MagicMock(spec=Request)
         self.response = mock.MagicMock(spec=Request)
         self.auth_cls = mock.MagicMock(spec=auth.Authenticator)
-        Engine._authenticator_classes = [self.auth_cls]
-        self.engine = Engine(self.request, self.response)
+        Endpoint._authenticator_classes = [self.auth_cls]
+        self.engine = Endpoint(self.request, self.response)
 
     def test_init(self):
         self.assertEqual(self.engine.request, self.request)

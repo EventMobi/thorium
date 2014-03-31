@@ -71,10 +71,10 @@ class FlaskEndpoint(object):
                 else:
                     raise errors.BadRequestError('Currently only json is supported, use application/json mimetype')
 
-            return Request(method=flaskrequest.method, identifiers=flaskrequest.view_args,
-                           resource_cls=self.dispatcher.resource_cls, query_params=flaskrequest.args.to_dict(),
+            return Request(dispatcher=self.dispatcher, method=flaskrequest.method, identifiers=flaskrequest.view_args,
+                           query_params=flaskrequest.args.to_dict(),
                            mimetype=flaskrequest.mimetype, resource=resource, resources=resources,
-                           request_type=self.dispatcher.request_type, url=flaskrequest.url)
+                           url=flaskrequest.url)
         except (errors.ValidationError, WerkzeugBadRequest) as e:
             raise errors.BadRequestError(message=e.args[0] if e.args else None)
 
