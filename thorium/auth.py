@@ -8,14 +8,14 @@ def use(*authenticator_classes):
         from thorium import auth
 
         @auth.use(BasicAuth, CustomAuth)
-        class MyEngine(Engine):
+        class MyEngine(Endpoint):
             ...
 
         OR
 
         @auth.use(BasicAuth)
         @auth.use(CustomAuth)
-        class MyEngine(Engine):
+        class MyEngine(Endpoint):
             ...
 
     :param authenticator_classes: One or more :class:`Authenticator` class definitions.
@@ -39,7 +39,7 @@ def validation(func):
 class AuthenticatorMetaClass(type):
     """ Metaclass for :class:`Authenticator`, finds all validation methods within
     the Authenticator and converts them to classmethod decorators which can be used
-    on an :class:`Engine`'s methods.
+    on an :class:`Endpoint`'s methods.
     """
 
     def __new__(mcs, cls_name, bases, attrs):
@@ -71,7 +71,7 @@ class AuthenticatorMetaClass(type):
 class Authenticator(object, metaclass=AuthenticatorMetaClass):
     """ Inherit from this class to create a custom authenticator.
 
-    :param engine: A :class:`Engine` object.
+    :param engine: A :class:`Endpoint` object.
     """
     def __init__(self, engine):
         self._loaded = False
