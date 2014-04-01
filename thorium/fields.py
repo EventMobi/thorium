@@ -1,192 +1,7 @@
-import numbers
-import datetime
-from . import errors
+from . import errors, validators, NotSet
 
 
-#Field Validators
-class FieldValidator(object):
-
-    def __init__(self, field):
-        self._field = field
-
-    def validate(self, value, cast=False):
-        if self._field.flags['notnull'] and value is None:
-            raise errors.ValidationError('{0} cannot be null'.format(self._field))
-        elif value is NotSet:
-            return value
-        elif value is not None:
-            value = self._type_validation(value, cast)
-        return value
-
-    def _type_validation(self, value, cast):
-        if not self.valid(value):
-            if cast:
-                try:
-                    value = self.attempt_cast(value)
-                except (ValueError, TypeError):
-                    self.raise_validation_error(value)
-            else:
-                self.raise_validation_error(value)
-
-        self.additional_validation(value)
-        return value
-
-    def valid(self, value):
-        raise NotImplementedError()
-
-    def attempt_cast(self, value):
-        raise NotImplementedError()
-
-    def raise_validation_error(self, value):
-        raise NotImplementedError()
-
-    def additional_validation(self, value):
-        pass
-
-
-class CharValidator(FieldValidator):
-
-    def valid(self, value):
-        return isinstance(value, str)
-
-    def attempt_cast(self, value):
-        return str(value)
-
-    def raise_validation_error(self, value):
-        raise errors.ValidationError('{0} expects a string, got {1}'.format(self._field, value))
-
-    def additional_validation(self, value):
-        if self._field.flags['max_length'] and len(value) > self._field.flags['max_length']:
-            raise errors.ValidationError('Max length of {0} is {1}, given value was {2}'.format(
-                self._field,
-                self._field.flags['max_length'],
-                len(value))
-            )
-
-
-class IntValidator(FieldValidator):
-
-    def valid(self, value):
-        return isinstance(value, numbers.Integral) and not isinstance(value, bool)
-
-    def attempt_cast(self, value):
-        return int(value)
-
-    def raise_validation_error(self, value):
-        raise errors.ValidationError('{0} expects an int or long, got {1}'.format(self._field, value))
-
-
-class DecimalValidator(FieldValidator):
-
-    def valid(self, value):
-        return isinstance(value, numbers.Real) and not isinstance(value, bool)
-
-    def attempt_cast(self, value):
-        return float(value)
-
-    def raise_validation_error(self, value):
-        raise errors.ValidationError('{0} expects a number, got {1}'.format(self._field, value))
-
-
-class DateTimeValidator(FieldValidator):
-
-    def valid(self, value):
-        return isinstance(value, datetime.datetime)
-
-    def attempt_cast(self, value):
-        if isinstance(value, str):
-            return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
-        elif isinstance(value, numbers.Integral) and not isinstance(value, bool):
-            return datetime.datetime.utcfromtimestamp(value)
-        else:
-            raise errors.ValidationError('{0} failed to convert {1}, which is an unsupported type for datetime '
-                                         'conversion. Please use a utc timestamp in seconds or a string with '
-                                         'format %Y-%m-%dT%H:%M:%S'.format(self._field, value))
-
-    def raise_validation_error(self, value):
-        raise errors.ValidationError('{0} expects a date, got {1}'.format(self._field, value))
-
-
-class BoolValidator(FieldValidator):
-
-    def valid(self, value):
-        return isinstance(value, bool)
-
-    def attempt_cast(self, value):
-        if value in {True, 1, '1', 'true', 'True', 'TRUE'}:
-            return True
-        elif value in {False, 0, '0', 'false', 'False', 'FALSE'}:
-            return False
-        else:
-            self.raise_validation_error(value)
-
-    def raise_validation_error(self, value):
-        raise errors.ValidationError('{0} expects True or False, got {1}'.format(self._field, value))
-
-
-class ListValidator(FieldValidator):
-
-    def valid(self, value):
-        return isinstance(value, list)
-
-    def attempt_cast(self, value):
-        return list(value)
-
-    def raise_validation_error(self, value):
-        raise errors.ValidationError('{0} expects a list, got {1}'.format(self._field, value))
-
-    def additional_validation(self, value):
-        item_type = self._field.flags['item_type']
-        if item_type:
-            for index, item in enumerate(value):
-                try:
-                    value[index] = item_type.set(item, cast=True)  # Validates and casts list items
-                except errors.ValidationError as e:
-                    raise errors.ValidationError('An item within {0} raised exception: {1}'.format(self._field, e))
-
-
-class DictValidator(FieldValidator):
-
-    def valid(self, value):
-        return isinstance(value, dict)
-
-    def attempt_cast(self, value):
-        return dict(value)
-
-    def raise_validation_error(self, value):
-        raise errors.ValidationError('{0} expects a dict, got {1}'.format(self._field, value))
-
-
-class SetValidator(FieldValidator):
-
-    def valid(self, value):
-        return isinstance(value, set)
-
-    def attempt_cast(self, value):
-        return set(value)
-
-    def raise_validation_error(self, value):
-        raise errors.ValidationError('{0} expects a set, got {1}'.format(self._field, value))
-
-
-class NotSet(object):
-
-    def __eq__(self, other):
-        return isinstance(other, self.__class__)
-
-    def __bool__(self):
-        return False
-
-    def __str__(self):
-        return 'NotSet'
-
-    def __repr__(self):
-        return 'NotSet'
-
-NotSet = NotSet()
-
-
-class TypedField(object):
+class ResourceField(object):
     validator_type = None
     order_counter = 0
 
@@ -194,8 +9,8 @@ class TypedField(object):
         self.flags = {'notnull': notnull, 'readonly': readonly, 'default': default, 'writeonly': writeonly}
         self.name = 'noname'
 
-        self.order_value = TypedField.order_counter
-        TypedField.order_counter += 1
+        self.order_value = ResourceField.order_counter
+        ResourceField.order_counter += 1
 
         # a hook to allow subclasses to add their own unique parameters
         self.set_unique_attributes(**kwargs)
@@ -212,14 +27,14 @@ class TypedField(object):
         if value == NotSet:
             self._value = NotSet
         else:
-            self._value = self._validator.validate(value, cast)
+            self._value = self.validate(value, cast)
         return self._value
 
     def get(self):
         return self._value
 
-    def validate(self, cast=False):
-        return self._validator.validate(self._value, cast)
+    def validate(self, value, cast=False):
+        return self._validator.validate(value, cast)
 
     def to_default(self):
         return self.set(self.flags['default'])
@@ -230,7 +45,7 @@ class TypedField(object):
     def is_readonly(self):
         return self.flags['readonly']
 
-    def set_unique_attributes(self):
+    def set_unique_attributes(self, **kwargs):
         pass
 
     def _get_validator(self):
@@ -238,31 +53,26 @@ class TypedField(object):
             vt_cls = self.validator_type
             return vt_cls(self)
         else:
-            raise NotImplementedError('Base class TypedField has no validator')
-
-
-#Resource Fields
-class ResourceField(TypedField):
-    pass
+            raise NotImplementedError('Base class ResourceField has no validator')
 
 
 class CharField(ResourceField):
-    validator_type = CharValidator
+    validator_type = validators.CharValidator
 
     def set_unique_attributes(self, max_length=None):
         self.flags['max_length'] = max_length
 
 
 class IntField(ResourceField):
-    validator_type = IntValidator
+    validator_type = validators.IntValidator
 
 
 class DecimalField(ResourceField):
-    validator_type = DecimalValidator
+    validator_type = validators.DecimalValidator
 
 
 class DateTimeField(ResourceField):
-    validator_type = DateTimeValidator
+    validator_type = validators.DateTimeValidator
 
     def set(self, value, cast=True, check_readonly=False):
         """
@@ -272,11 +82,11 @@ class DateTimeField(ResourceField):
 
 
 class BoolField(ResourceField):
-    validator_type = BoolValidator
+    validator_type = validators.BoolValidator
 
 
 class ListField(ResourceField):
-    validator_type = ListValidator
+    validator_type = validators.ListValidator
 
     def set_unique_attributes(self, item_type=NotSet):
         if item_type:
@@ -288,69 +98,11 @@ class ListField(ResourceField):
 
 
 class DictField(ResourceField):
-    validator_type = DictValidator
+    validator_type = validators.DictValidator
 
 
 class SetField(ResourceField):
-    validator_type = SetValidator
+    validator_type = validators.SetValidator
 
     def set(self, value, cast=True):
         return super().set(value, cast)
-
-
-#Resource Params
-class ResourceParam(TypedField):
-
-    def set(self, value, cast=True):
-        """
-        ResourceParam defaults cast to True since params always come in as strings.
-        """
-        return super().set(value, cast)
-
-
-class CharParam(ResourceParam):
-    validator_type = CharValidator
-
-    def set(self, value, cast=False):
-        """
-        CharParam defaults cast to False since params always come in as strings.
-        """
-        return super().set(value, cast)
-
-    def set_unique_attributes(self, max_length=None):
-        self.flags['max_length'] = max_length
-
-
-class IntParam(ResourceParam):
-    validator_type = IntValidator
-
-
-class DecimalParam(ResourceParam):
-    validator_type = DecimalValidator
-
-
-class DateTimeParam(ResourceParam):
-    validator_type = DateTimeValidator
-
-
-class BoolParam(ResourceParam):
-    validator_type = BoolValidator
-
-
-class ListParam(ResourceParam):
-    validator_type = ListValidator
-
-    def set(self, value, cast=False):
-        if isinstance(value, str):
-            value = value.split(',')
-        return super().set(value, cast)
-
-    def set_unique_attributes(self, item_type=None):
-        if item_type:
-            if item_type == NotSet or not isinstance(item_type, ResourceParam):
-                raise errors.ValidationError('ListParam must have an item_type set to a valid ResourceParam')
-            self.flags['item_type'] = item_type
-        else:
-            self.flags['item_type'] = None
-
-

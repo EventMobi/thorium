@@ -1,4 +1,4 @@
-from . import errors, fields
+from . import errors, fields, NotSet
 import copy
 import collections
 
@@ -15,7 +15,6 @@ class ResourceMetaClass(type):
             mcs._validate_format(mcs, resource_name, attrs)
 
         attrs['_fields'] = mcs._get_fields(bases, attrs)
-        attrs['query_parameters'] = mcs._get_params(attrs)
         return super().__new__(mcs, resource_name, bases, attrs)
 
     #Note: will likely need some sort of sorted dictionary to maintain field order
@@ -47,18 +46,6 @@ class ResourceMetaClass(type):
         def set_field_property(self, value):
             return self._set(self._fields[name], value)
         return set_field_property
-
-    @staticmethod
-    def _get_params(attrs):
-        params = {}
-        if 'Params' in attrs:
-            p_attrs = attrs.pop('Params').__dict__
-            for name, param in list(p_attrs.items()):
-                if isinstance(param, fields.ResourceParam):
-                    param.name = name
-                    params[name] = param
-
-        return params
 
     @staticmethod
     def _validate_format(mcs, resource_name, attrs):
@@ -151,9 +138,9 @@ class Resource(object, metaclass=ResourceMetaClass):
     def clear(self):
         for name, field in self._fields.items():
             if self._partial:
-                self._set(field, fields.NotSet)
+                self._set(field, NotSet)
             else:
-                if field.flags['default'] == fields.NotSet:
+                if field.flags['default'] == NotSet:
                     self._set(field, None)
                 else:
                     field.to_default()
@@ -190,16 +177,16 @@ class Resource(object, metaclass=ResourceMetaClass):
                 continue
 
             # Check override for the value first
-            value = fields.NotSet
+            value = NotSet
             if override:
-                value = override.get(name, fields.NotSet)
+                value = override.get(name, NotSet)
 
             # If we don't have a value from override, attempt to get it from source obj
-            if value is fields.NotSet:
-                value = getattr(obj, name, fields.NotSet)
+            if value is NotSet:
+                value = getattr(obj, name, NotSet)
 
             # If we still don't have a value, then continue
-            if value is fields.NotSet:
+            if value is NotSet:
                 continue
 
             self._set(field, value)
@@ -252,6 +239,6 @@ class Resource(object, metaclass=ResourceMetaClass):
         return self._partial
 
     def _set(self, field, value):
-        if not self._partial and value == fields.NotSet:
+        if not self._partial and value == NotSet:
             raise errors.ValidationError('Attempted to set field {0} of a non-partial resource to NotSet'.format(field))
         return field.set(value)
