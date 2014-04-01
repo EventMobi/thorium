@@ -20,6 +20,7 @@ class ThoriumFlask(Thorium):
         for r in routes:
             if r.path:
                 fep = FlaskEndpoint(r.dispatcher, self.exception_handler, self._flask_app.config)
+                fep.__name__ = r.name
                 self._flask_app.add_url_rule(r.path, r.name, fep.endpoint_target, methods=VALID_METHODS)
 
 
