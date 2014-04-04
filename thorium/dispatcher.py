@@ -50,7 +50,10 @@ class DispatcherBase(object):
 
         self.pre_request(engine=engine)
 
+        # Call into the endpoint
         method_response = dispatch_method()
+
+        # Override default response
         if method_response:
             response = method_response
 
@@ -70,18 +73,23 @@ class DispatcherBase(object):
 
 
 class CollectionDispatcher(DispatcherBase):
-    """ A subclass of :class:`.DispatcherBase` to handle requests made on individual :class:`.Resource`'s """
+    """ A subclass of :class:`.DispatcherBase` to handle requests made on collections of :class:`.Resource`'s """
     request_type = 'collection'
 
     def pre_request(self, engine):
         engine.pre_request_collection()
 
     def build_response_obj(self, request):
-        return CollectionResponse(request)
+        method = request.method.lower()
+        if method == 'post':
+            response = DetailResponse(request)
+        else:
+            response = CollectionResponse(request)
+        return response
 
 
 class DetailDispatcher(DispatcherBase):
-    """ A subclass of :class:`.DispatcherBase` to handle requests made on collections of :class:`.Resource`'s """
+    """ A subclass of :class:`.DispatcherBase` to handle requests made on individual :class:`.Resource`'s """
     request_type = 'detail'
 
     def pre_request(self, engine):
