@@ -1,4 +1,5 @@
 import json
+from collections import OrderedDict
 
 
 class SerializerBase(object):
@@ -14,7 +15,13 @@ class SerializerBase(object):
 
     @staticmethod
     def _build_envelope(response_type, status, error, data, meta):
-        return {'type': response_type, 'status': status, 'error': error, 'data': data, 'meta': meta}
+        envelope = OrderedDict()
+        envelope['type'] = response_type
+        envelope['status'] = status
+        envelope['error'] = error
+        envelope['data'] = data
+        envelope['meta'] = meta
+        return envelope
 
     def _serialize_data(self, data):
         raise NotImplementedError('This method must be implemented by a subclass.')

@@ -1,3 +1,6 @@
+from collections import OrderedDict
+
+
 class Response(object):
 
     def __init__(self, request):
@@ -40,7 +43,7 @@ class DetailResponse(Response):
     def get_response_data(self):
         data = None
         if self.resource:
-            data = {n: v.get() for n, v in self.resource.all_fields()}
+            data = OrderedDict(((n, v.get()) for n, v in self.resource.all_fields()))
         return data
 
 
@@ -55,7 +58,7 @@ class CollectionResponse(Response):
         data = []
         if self.resources:
             for res in self.resources:
-                data.append({n: v.get() for n, v in res.all_fields()})
+                data.append(OrderedDict(((n, v.get()) for n, v in res.all_fields())))
         return data
 
 
