@@ -3,7 +3,7 @@ import unittest
 from thorium import ThoriumFlask, RouteManager, Resource, fields, Endpoint, params, routing, Parameters
 import json
 import datetime
-
+from collections import OrderedDict
 
 class PersonResource(Resource):
     id = fields.IntField(default=None)
@@ -96,6 +96,26 @@ class TestThoriumFlask(unittest.TestCase):
         }
         rv = self.c.post('/api/event/1/people', data=json.dumps(data, default=handler), content_type='application/json')
         self.assertEqual(rv.status_code, 400)
+
+    def test_envelope_field_order(self):
+        rv = self.c.open('/api/event/1/people/1', method='GET')
+        self.assertEqual(rv.status_code, 200)
+        od = json.loads(rv.data.decode(), object_pairs_hook=OrderedDict)
+        self.assertEqual(od.popitem(last=False)[0], 'type')
+        self.assertEqual(od.popitem(last=False)[0], 'status')
+        self.assertEqual(od.popitem(last=False)[0], 'error')
+        self.assertEqual(od.popitem(last=False)[0], 'data')
+        self.assertEqual(od.popitem(last=False)[0], 'meta')
+
+    def test_field_order_matches_resource(self):
+        rv = self.c.open('/api/event/1/people/1', method='GET')
+        self.assertEqual(rv.status_code, 200)
+        od = json.loads(rv.data.decode(), object_pairs_hook=OrderedDict)
+        data = od['data']
+        self.assertEqual(data.popitem(last=False)[0], 'id')
+        self.assertEqual(data.popitem(last=False)[0], 'name')
+        self.assertEqual(data.popitem(last=False)[0], 'birth_date')
+        self.assertEqual(data.popitem(last=False)[0], 'admin')
 
 
 class TestResourceSpeed(unittest.TestCase):
