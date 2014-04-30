@@ -4,12 +4,14 @@ thorium/__init__.py
 thorium/auth.py
 thorium/autorestdoc.py
 thorium/crossdomain_decorator.py
+thorium/datastructures.py
 thorium/dispatcher.py
-thorium/engine.py
+thorium/endpoint.py
 thorium/errors.py
 thorium/exception_handler.py
 thorium/fields.py
 thorium/logging.py
+thorium/params.py
 thorium/request.py
 thorium/resources.py
 thorium/response.py
@@ -17,3 +19,4 @@ thorium/routing.py
 thorium/serializer.py
 thorium/thorium.py
 thorium/thoriumflask.py
+thorium/validators.py

@@ -162,6 +162,8 @@ class Resource(object, metaclass=ResourceMetaClass):
         only the attributes in the mapping dictionary will be copied. An optional override dictionary
         is used to set values explicitly.
         """
+        if not override:
+            override = {}
         for name, field in self.all_fields():
 
             # If explicate_mapping only names within the mapping will be considered
@@ -169,7 +171,8 @@ class Resource(object, metaclass=ResourceMetaClass):
                 continue
 
             # Convert name to mapped name if available, else use Resource's existing name
-            if mapping:
+            # If there's an override, don't use its mapping
+            if mapping and not name in override:
                 name = mapping.get(name, name)
 
             # A None value for name indicates that we shouldn't map this field
@@ -193,13 +196,15 @@ class Resource(object, metaclass=ResourceMetaClass):
 
         return self
 
-    def to_obj(self, obj, mapping=None, explicit_mapping=False):
+    def to_obj(self, obj, mapping=None, explicit_mapping=False, override=None):
         """
         Maps the fields from the resource to an object based on identical names. Optional mapping
         parameter allows for discrepancies in naming with resource names being the
         key and the object attribute name to map to being the value. If explicit_mapping is True,
         only the attributes in the mapping dictionary will be copied.
         """
+        if not override:
+            override = {}
         for name, field in self.valid_fields():
 
             # If explicate_mapping only names within the mapping will be considered
@@ -207,7 +212,8 @@ class Resource(object, metaclass=ResourceMetaClass):
                 continue
 
             # Convert name to mapped name if available, else use Resource's existing name
-            if mapping:
+            # If there's an override, don't use its mapping
+            if mapping and not name in override:
                 name = mapping.get(name, name)
 
             # A None value for name indicates that we shouldn't map this field
@@ -218,8 +224,14 @@ class Resource(object, metaclass=ResourceMetaClass):
             if not hasattr(obj, name):
                 continue
 
+            # Check override for the value first
+            value = override.get(name, NotSet)
+
+            if value is NotSet:
+                value = field.get()
+
             # Set target obj value from Resource value
-            setattr(obj, name, field.get())
+            setattr(obj, name, value)
 
         return obj
 
