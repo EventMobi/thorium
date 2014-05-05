@@ -35,10 +35,9 @@ class TestNotSet(TestCase):
 class TestFieldValidator(TestCase):
 
     def setUp(self):
-        field = mock.MagicMock()
-        field.flags = {}
-        field.flags['notnull'] = True
-        self.validator = validators.FieldValidator(field)
+        self._field = mock.MagicMock()
+        self._field.flags = {'notnull': True}
+        self.validator = validators.FieldValidator(self._field)
 
     def test_validate(self):
         self.assertRaises(NotImplementedError, self.validator.validate, 10)
@@ -50,10 +49,8 @@ class TestFieldValidator(TestCase):
         self.assertEqual(self.validator.validate(NotSet), NotSet)
 
     def test_validate_with_nullable_field(self):
-        field = mock.MagicMock()
-        field.flags = {}
-        field.flags['notnull'] = False
-        validator_nullable = validators.FieldValidator(field)
+        self._field.flags = {'notnull': False}
+        validator_nullable = validators.FieldValidator(self._field)
         self.assertEqual(validator_nullable.validate(None), None)
 
     def test_validate_returns_value(self):
@@ -69,11 +66,9 @@ class TestFieldValidator(TestCase):
 class TestCharValidator(TestCase):
 
     def setUp(self):
-        char_field = mock.MagicMock(fields.CharField)
-        char_field.flags = {}
-        char_field.flags['max_length'] = 10
-        char_field.flags['notnull'] = True
-        self.validator = validators.CharValidator(char_field)
+        self.char_field = mock.MagicMock(fields.CharField)
+        self.char_field.flags = {'max_length': 10, 'notnull': True, 'options': None}
+        self.validator = validators.CharValidator(self.char_field)
 
     def test_validate(self):
         result = self.validator.validate('test1')
@@ -95,7 +90,9 @@ class TestCharValidator(TestCase):
 class TestIntValidator(TestCase):
 
     def setUp(self):
-        self.validator = validators.IntValidator(mock.MagicMock())
+        self._field = mock.MagicMock(fields.IntField)
+        self._field.flags = {'options': None}
+        self.validator = validators.IntValidator(self._field)
 
     def test_validate(self):
         result = self.validator.validate(42)
@@ -118,7 +115,9 @@ class TestIntValidator(TestCase):
 class TestDateTimeValidator(TestCase):
 
     def setUp(self):
-        self.validator = validators.DateTimeValidator(mock.MagicMock())
+        self._field = mock.MagicMock(fields.DateTimeField)
+        self._field.flags = {'options': None}
+        self.validator = validators.DateTimeValidator(self._field)
 
     def test_validate(self):
         dt = datetime.datetime.utcnow()
@@ -138,7 +137,9 @@ class TestDateTimeValidator(TestCase):
 class TestDecimalValidator(TestCase):
 
     def setUp(self):
-        self.validator = validators.DecimalValidator(mock.MagicMock())
+        self._field = mock.MagicMock(fields.DecimalField)
+        self._field.flags = {'options': None}
+        self.validator = validators.DecimalValidator(self._field)
 
     def test_validate(self):
         result = self.validator.validate(4.2)
@@ -157,7 +158,9 @@ class TestDecimalValidator(TestCase):
 class TestBoolValidator(TestCase):
 
     def setUp(self):
-        self.validator = validators.BoolValidator(mock.MagicMock())
+        self.field_mock = mock.MagicMock()
+        self.field_mock.flags = {'options': None}
+        self.validator = validators.BoolValidator(self.field_mock)
 
     def test_validate(self):
         result = self.validator.validate(True)
@@ -195,11 +198,9 @@ class TestBoolValidator(TestCase):
 class TestListValidator(TestCase):
 
     def setUp(self):
-        list_field = mock.MagicMock(fields.ListField)
-        list_field.flags = {}
-        list_field.flags['item_type'] = fields.IntField()
-        list_field.flags['notnull'] = True
-        self.validator = validators.ListValidator(list_field)
+        self.list_field = mock.MagicMock(fields.ListField)
+        self.list_field.flags = {'item_type': fields.IntField(), 'notnull': True, 'options': None}
+        self.validator = validators.ListValidator(self.list_field)
 
     def test_validate(self):
         self.assertEqual(self.validator.validate([]), [])
@@ -342,6 +343,26 @@ class TestCharField(TestCase):
         self.assertRaises(errors.ValidationError, self.field.set, datetime.datetime.utcnow())
         self.assertRaises(errors.ValidationError, self.field.set, True)
 
+    def test_field_options(self):
+        self.field.flags['options'] = {'a', 'b', 1, 2}
+        self.assertEqual(self.field.set('a'), 'a')
+        self.assertEqual(self.field.set('b'), 'b')
+        self.assertEqual(self.field.set(None), None)
+        self.assertEqual(self.field.set(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.set, 'c')
+        self.assertRaises(errors.ValidationError, self.field.set, 'd')
+        self.assertRaises(errors.ValidationError, self.field.set, 1)
+        self.assertRaises(errors.ValidationError, self.field.set, 2)
+        self.field.flags['options'] = ['a', 'b', 1, 2]
+        self.assertEqual(self.field.set('a'), 'a')
+        self.assertEqual(self.field.set('b'), 'b')
+        self.assertEqual(self.field.set(None), None)
+        self.assertEqual(self.field.set(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.set, 'c')
+        self.assertRaises(errors.ValidationError, self.field.set, 'd')
+        self.assertRaises(errors.ValidationError, self.field.set, 1)
+        self.assertRaises(errors.ValidationError, self.field.set, 2)
+
 
 class TestIntField(TestCase):
 
@@ -361,6 +382,26 @@ class TestIntField(TestCase):
         self.assertRaises(errors.ValidationError, self.field.set, 'abc')
         self.assertRaises(errors.ValidationError, self.field.set, datetime.datetime.utcnow())
         self.assertRaises(errors.ValidationError, self.field.set, True)
+
+    def test_field_options(self):
+        self.field.flags['options'] = {'a', 'b', 1, 2}
+        self.assertEqual(self.field.set(1), 1)
+        self.assertEqual(self.field.set(2), 2)
+        self.assertEqual(self.field.set(None), None)
+        self.assertEqual(self.field.set(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.set, 'c')
+        self.assertRaises(errors.ValidationError, self.field.set, 'd')
+        self.assertRaises(errors.ValidationError, self.field.set, 3)
+        self.assertRaises(errors.ValidationError, self.field.set, 4)
+        self.field.flags['options'] = ['a', 'b', 1, 2]
+        self.assertEqual(self.field.set(1), 1)
+        self.assertEqual(self.field.set(2), 2)
+        self.assertEqual(self.field.set(None), None)
+        self.assertEqual(self.field.set(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.set, 'c')
+        self.assertRaises(errors.ValidationError, self.field.set, 'd')
+        self.assertRaises(errors.ValidationError, self.field.set, 3)
+        self.assertRaises(errors.ValidationError, self.field.set, 4)
 
 
 class TestBoolField(TestCase):
@@ -382,6 +423,25 @@ class TestBoolField(TestCase):
         self.assertRaises(errors.ValidationError, self.field.set, datetime.datetime.utcnow())
         self.assertRaises(errors.ValidationError, self.field.set, 10)
 
+    def test_field_options(self):
+        self.field.flags['options'] = {'a', 'b', False}
+        self.assertEqual(self.field.set(False), False)
+        self.assertEqual(self.field.set(None), None)
+        self.assertEqual(self.field.set(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.set, 'c')
+        self.assertRaises(errors.ValidationError, self.field.set, 'd')
+        self.assertRaises(errors.ValidationError, self.field.set, True)
+        self.assertRaises(errors.ValidationError, self.field.set, 0)
+        self.assertRaises(errors.ValidationError, self.field.set, 1)
+        self.field.flags['options'] = ['a', 'b', 1, False]
+        self.assertEqual(self.field.set(True), True)  # True in {1} returns True
+        self.assertEqual(self.field.set(False), False)
+        self.assertEqual(self.field.set(None), None)
+        self.assertEqual(self.field.set(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.set, 'c')
+        self.assertRaises(errors.ValidationError, self.field.set, 'd')
+        self.assertRaises(errors.ValidationError, self.field.set, 0)
+
 
 class TestDecimalField(TestCase):
 
@@ -402,6 +462,30 @@ class TestDecimalField(TestCase):
         self.assertRaises(errors.ValidationError, self.field.set, datetime.datetime.utcnow())
         self.assertRaises(errors.ValidationError, self.field.set, True)
 
+    def test_field_options(self):
+        self.field.flags['options'] = {'a', 'b', 1.3, 2.4}
+        self.assertEqual(self.field.set(1.3), 1.3)
+        self.assertEqual(self.field.set(2.4), 2.4)
+        self.assertEqual(self.field.set(None), None)
+        self.assertEqual(self.field.set(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.set, 'c')
+        self.assertRaises(errors.ValidationError, self.field.set, 'd')
+        self.assertRaises(errors.ValidationError, self.field.set, 3)
+        self.assertRaises(errors.ValidationError, self.field.set, 4)
+        self.assertRaises(errors.ValidationError, self.field.set, 2.44)
+        self.assertRaises(errors.ValidationError, self.field.set, 2)
+        self.field.flags['options'] = ['a', 'b', 1.3, 2.4]
+        self.assertEqual(self.field.set(1.3), 1.3)
+        self.assertEqual(self.field.set(2.4), 2.4)
+        self.assertEqual(self.field.set(None), None)
+        self.assertEqual(self.field.set(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.set, 'a')
+        self.assertRaises(errors.ValidationError, self.field.set, 'b')
+        self.assertRaises(errors.ValidationError, self.field.set, 3)
+        self.assertRaises(errors.ValidationError, self.field.set, 4)
+        self.assertRaises(errors.ValidationError, self.field.set, 2.44)
+        self.assertRaises(errors.ValidationError, self.field.set, 2)
+
 
 class TestDateTimeField(TestCase):
 
@@ -421,6 +505,16 @@ class TestDateTimeField(TestCase):
         self.assertRaises(errors.ValidationError, self.field.set, 'abc')
         self.assertRaises(errors.ValidationError, self.field.set, 10, False)
         self.assertRaises(errors.ValidationError, self.field.set, True)
+
+    def test_field_options(self):
+        dt = datetime.datetime(2011, 10, 12)
+        self.field.flags['options'] = {'a', 3435, dt}
+        self.assertEqual(self.field.set(dt), dt)
+        self.assertEqual(self.field.set(None), None)
+        self.assertEqual(self.field.set(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.set, datetime.datetime.utcnow())
+        self.assertRaises(errors.ValidationError, self.field.set, 'a')
+        self.assertRaises(errors.ValidationError, self.field.set, 3435)
 
 
 class TestListField(TestCase):
@@ -516,6 +610,18 @@ class TestListField(TestCase):
     def test_field_list_item_type_dict(self):
         pass
 
+    def test_field_options(self):
+        self.field.flags['options'] = ['a', 3, [1, 2], ['a', 'b']]
+        self.assertEqual(self.field.set([1, 2]), [1, 2])
+        self.assertEqual(self.field.set(['a', 'b']), ['a', 'b'])
+        self.assertEqual(self.field.set(None), None)
+        self.assertEqual(self.field.set(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.set, 'a')
+        self.assertRaises(errors.ValidationError, self.field.set, 3)
+        self.assertRaises(errors.ValidationError, self.field.set, [])
+        self.assertRaises(errors.ValidationError, self.field.set, ['a'])
+        self.assertRaises(errors.ValidationError, self.field.set, ['a', 'b', 'c'])
+
 
 class TestCharParam(TestCase):
 
@@ -545,6 +651,26 @@ class TestCharParam(TestCase):
         self.assertRaises(errors.ValidationError, self.field.validate, datetime.datetime.utcnow())
         self.assertRaises(errors.ValidationError, self.field.validate, True)
 
+    def test_param_options(self):
+        self.field.flags['options'] = {'a', 'b', 1, 2}
+        self.assertEqual(self.field.validate('a'), 'a')
+        self.assertEqual(self.field.validate('b'), 'b')
+        self.assertEqual(self.field.validate(None), None)
+        self.assertEqual(self.field.validate(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.validate, 'c')
+        self.assertRaises(errors.ValidationError, self.field.validate, 'd')
+        self.assertRaises(errors.ValidationError, self.field.validate, 1)
+        self.assertRaises(errors.ValidationError, self.field.validate, 2)
+        self.field.flags['options'] = ['a', 'b', 1, 2]
+        self.assertEqual(self.field.validate('a'), 'a')
+        self.assertEqual(self.field.validate('b'), 'b')
+        self.assertEqual(self.field.validate(None), None)
+        self.assertEqual(self.field.validate(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.validate, 'c')
+        self.assertRaises(errors.ValidationError, self.field.validate, 'd')
+        self.assertRaises(errors.ValidationError, self.field.validate, 1)
+        self.assertRaises(errors.ValidationError, self.field.validate, 2)
+
 
 class TestIntParam(TestCase):
 
@@ -563,6 +689,26 @@ class TestIntParam(TestCase):
     def test_param_invalid_values(self):
         self.assertRaises(errors.ValidationError, self.field.validate, 'abc')
         self.assertRaises(errors.ValidationError, self.field.validate, datetime.datetime.utcnow())
+
+    def test_param_options(self):
+        self.field.flags['options'] = {'a', 'b', 1, 2}
+        self.assertEqual(self.field.validate(1), 1)
+        self.assertEqual(self.field.validate(2), 2)
+        self.assertEqual(self.field.validate(None), None)
+        self.assertEqual(self.field.validate(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.validate, 'c')
+        self.assertRaises(errors.ValidationError, self.field.validate, 'd')
+        self.assertRaises(errors.ValidationError, self.field.validate, 3)
+        self.assertRaises(errors.ValidationError, self.field.validate, 4)
+        self.field.flags['options'] = ['a', 'b', 1, 2]
+        self.assertEqual(self.field.validate(1), 1)
+        self.assertEqual(self.field.validate(2), 2)
+        self.assertEqual(self.field.validate(None), None)
+        self.assertEqual(self.field.validate(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.validate, 'c')
+        self.assertRaises(errors.ValidationError, self.field.validate, 'd')
+        self.assertRaises(errors.ValidationError, self.field.validate, 3)
+        self.assertRaises(errors.ValidationError, self.field.validate, 4)
 
 
 class TestBoolParam(TestCase):
@@ -584,7 +730,24 @@ class TestBoolParam(TestCase):
         self.assertRaises(errors.ValidationError, self.field.validate, datetime.datetime.utcnow())
         self.assertRaises(errors.ValidationError, self.field.validate, 10)
 
-
+    def test_param_options(self):
+        self.field.flags['options'] = {'a', 'b', False}
+        self.assertEqual(self.field.validate(False), False)
+        self.assertEqual(self.field.validate(None), None)
+        self.assertEqual(self.field.validate(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.validate, 'c')
+        self.assertRaises(errors.ValidationError, self.field.validate, 'd')
+        self.assertRaises(errors.ValidationError, self.field.validate, True)
+        self.assertRaises(errors.ValidationError, self.field.validate, 1)
+        self.field.flags['options'] = ['a', 'b', 1, False]
+        self.assertEqual(self.field.validate(True), True)  # True in {1} returns True
+        self.assertEqual(self.field.validate(False), False)
+        self.assertEqual(self.field.validate(None), None)
+        self.assertEqual(self.field.validate(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.validate, 'c')
+        self.assertRaises(errors.ValidationError, self.field.validate, 'd')
+    
+        
 class TestDecimalParam(TestCase):
 
     def setUp(self):
@@ -602,6 +765,30 @@ class TestDecimalParam(TestCase):
     def test_param_invalid_values(self):
         self.assertRaises(errors.ValidationError, self.field.validate, 'abc')
         self.assertRaises(errors.ValidationError, self.field.validate, datetime.datetime.utcnow())
+
+    def test_param_options(self):
+        self.field.flags['options'] = {'a', 'b', 1.3, 2.4}
+        self.assertEqual(self.field.validate(1.3), 1.3)
+        self.assertEqual(self.field.validate(2.4), 2.4)
+        self.assertEqual(self.field.validate(None), None)
+        self.assertEqual(self.field.validate(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.validate, 'c')
+        self.assertRaises(errors.ValidationError, self.field.validate, 'd')
+        self.assertRaises(errors.ValidationError, self.field.validate, 3)
+        self.assertRaises(errors.ValidationError, self.field.validate, 4)
+        self.assertRaises(errors.ValidationError, self.field.validate, 2.44)
+        self.assertRaises(errors.ValidationError, self.field.validate, 2)
+        self.field.flags['options'] = ['a', 'b', 1.3, 2.4]
+        self.assertEqual(self.field.validate(1.3), 1.3)
+        self.assertEqual(self.field.validate(2.4), 2.4)
+        self.assertEqual(self.field.validate(None), None)
+        self.assertEqual(self.field.validate(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.validate, 'a')
+        self.assertRaises(errors.ValidationError, self.field.validate, 'b')
+        self.assertRaises(errors.ValidationError, self.field.validate, 3)
+        self.assertRaises(errors.ValidationError, self.field.validate, 4)
+        self.assertRaises(errors.ValidationError, self.field.validate, 2.44)
+        self.assertRaises(errors.ValidationError, self.field.validate, 2)
 
 
 class TestDateTimeParam(TestCase):
@@ -624,6 +811,16 @@ class TestDateTimeParam(TestCase):
         self.assertRaises(errors.ValidationError, self.field.validate, 10, False)
         self.assertRaises(errors.ValidationError, self.field.validate, True)
         
+    def test_param_options(self):
+        dt = datetime.datetime(2011, 10, 12)
+        self.field.flags['options'] = {'a', 3435, dt}
+        self.assertEqual(self.field.validate(dt), dt)
+        self.assertEqual(self.field.validate(None), None)
+        self.assertEqual(self.field.validate(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.validate, datetime.datetime.utcnow())
+        self.assertRaises(errors.ValidationError, self.field.validate, 'a')
+        self.assertRaises(errors.ValidationError, self.field.validate, 3435)
+    
         
 class TestListParam(TestCase):
 
@@ -704,3 +901,15 @@ class TestListParam(TestCase):
         self.assertEqual(param.validate([]), [])
         self.assertEqual(param.validate([[1, 2, 3], [True, False], [1.2]]), [[1, 2, 3], [1, 0], [1]])
         self.assertRaises(errors.ValidationError, param.validate, [[1, 2, 3], 4, [1.2]])
+
+    def test_param_options(self):
+        self.param.flags['options'] = ['a', 3, [1, 2], ['a', 'b']]
+        self.assertEqual(self.param.validate([1, 2]), [1, 2])
+        self.assertEqual(self.param.validate(['a', 'b']), ['a', 'b'])
+        self.assertEqual(self.param.validate(None), None)
+        self.assertEqual(self.param.validate(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.param.validate, 'a')
+        self.assertRaises(errors.ValidationError, self.param.validate, 3)
+        self.assertRaises(errors.ValidationError, self.param.validate, [])
+        self.assertRaises(errors.ValidationError, self.param.validate, ['a'])
+        self.assertRaises(errors.ValidationError, self.param.validate, ['a', 'b', 'c'])

@@ -9,12 +9,30 @@ class FieldValidator(object):
         self._field = field
 
     def validate(self, value, cast=False):
-        if self._field.flags['notnull'] and value is None:
-            raise errors.ValidationError('{0} cannot be null'.format(self._field))
-        elif value is NotSet:
-            return value
-        elif value is not None:
-            value = self._type_validation(value, cast)
+
+        # NotSet is valid
+        if value is NotSet:
+            return NotSet
+
+        # If value is None check whether field is nullable, if so raise an exception, if not return None
+        if value is None:
+            if self._field.flags['notnull']:
+                raise errors.ValidationError('{0} cannot be null'.format(self._field))
+            else:
+                return None
+
+        # Check the type of the value matches the type of the field
+        value = self._type_validation(value, cast)
+
+        # Check that the value is an acceptable option of the field
+        if self._field.flags['options'] and value not in self._field.flags['options']:
+            raise errors.ValidationError(
+                '{field} value of {value} is not acceptable, must be one of: ({options})'.format(
+                    field=self._field,
+                    value=value,
+                    options=', '.join([str(o) for o in self._field.flags['options']]))
+            )
+
         return value
 
     def _type_validation(self, value, cast):
