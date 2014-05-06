@@ -12,6 +12,7 @@ class Endpoint(object):
     """
 
     _authenticator_classes = None
+    resource = None
 
     def __init__(self, request, response):
         self.request = request

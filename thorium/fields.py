@@ -5,8 +5,15 @@ class ResourceField(object):
     validator_type = None
     order_counter = 0
 
-    def __init__(self, default=NotSet, notnull=False, readonly=False, writeonly=False, *args, **kwargs):
-        self.flags = {'notnull': notnull, 'readonly': readonly, 'default': default, 'writeonly': writeonly}
+    def __init__(self, default=NotSet, notnull=False, readonly=False, writeonly=False, options=None, *args, **kwargs):
+        self.flags = {
+            'notnull': notnull,
+            'readonly': readonly,
+            'default': default,
+            'writeonly': writeonly,
+            'options': options
+        }
+
         self.name = 'noname'
 
         self.order_value = ResourceField.order_counter
@@ -24,10 +31,7 @@ class ResourceField(object):
         return '{0}:{1}'.format(self.__class__.__name__, self.name)
 
     def set(self, value, cast=False):
-        if value == NotSet:
-            self._value = NotSet
-        else:
-            self._value = self.validate(value, cast)
+        self._value = self.validate(value, cast)
         return self._value
 
     def get(self):

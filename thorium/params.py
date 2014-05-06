@@ -4,8 +4,8 @@ from . import errors, validators, NotSet
 class ResourceParam(object):
     validator_type = None
 
-    def __init__(self, default=NotSet, notnull=False, *args, **kwargs):
-        self.flags = {'notnull': notnull, 'default': default}
+    def __init__(self, default=NotSet, notnull=False, options=None, *args, **kwargs):
+        self.flags = {'notnull': notnull, 'default': default, 'options': options}
         self.name = 'noname'
 
         # a hook to allow subclasses to add their own unique parameters
