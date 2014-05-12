@@ -11,7 +11,7 @@ Thorium Object
    :inherited-members:
 
 Routing
--------
+--------------
 
 .. autoclass:: Route
    :members:
@@ -21,28 +21,38 @@ Routing
    :members:
    :inherited-members:
 
-.. autoclass:: Dispatcher
+Resource
+--------------
+
+.. autoclass:: Resource
    :members:
    :inherited-members:
 
-Engine
-------
+Endpoints
+--------------
 
-.. autoclass:: Engine
+.. autoclass:: Endpoint
    :members:
    :inherited-members:
 
-ResourceInterface
---------
+.. autoclass:: Parameters
+   :members:
+   :inherited-members:
 
-.. autoclass:: ResourceInterface
+Request
+--------------
+
+.. autoclass:: Request
+   :members:
+   :inherited-members:
+
+ThoriumFlask
+--------------
+
+.. autoclass:: ThoriumFlask
    :members:
    :inherited-members:
 
 
-Fields
-------
 
-.. autoclass:: ResourceField
-   :members:
-   :inherited-members:
+
