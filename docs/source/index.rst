@@ -24,10 +24,4 @@ method, this part of the documentation is for you.
    api
 
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
 
