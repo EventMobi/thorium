@@ -299,10 +299,10 @@ class TestResourceField(TestCase):
 
     def test_is_set(self):
         self.assertEqual(self.field._value, NotSet)
-        self.assertEqual(self.field.is_set(), False)
+        self.assertEqual(self.field.is_set, False)
 
         self.field._value = 10
-        self.assertEqual(self.field.is_set(), True)
+        self.assertEqual(self.field.is_set, True)
 
     def test_set_unique_attributes(self):
         self.field.set_unique_attributes()
