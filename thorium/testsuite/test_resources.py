@@ -7,7 +7,7 @@ import datetime
 class SimpleResource(resources.Resource):
     name = fields.CharField(default=None)
     age = fields.IntField(default=None)
-    readonly = fields.IntField(readonly=True, default=None)
+    readonly = fields.IntField(readonly=True)
 
 
 class SimpleObj(object):

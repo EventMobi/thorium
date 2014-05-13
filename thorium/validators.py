@@ -11,7 +11,7 @@ class FieldValidator(object):
     def validate(self, value, cast=False):
 
         # NotSet is valid
-        if value is NotSet:
+        if value == NotSet:
             return NotSet
 
         # If value is None check whether field is nullable, if so raise an exception, if not return None

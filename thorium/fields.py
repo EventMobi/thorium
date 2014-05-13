@@ -43,9 +43,11 @@ class ResourceField(object):
     def to_default(self):
         return self.set(self.flags['default'])
 
+    @property
     def is_set(self):
         return self._value != NotSet
 
+    @property
     def is_readonly(self):
         return self.flags['readonly']
 

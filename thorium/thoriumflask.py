@@ -85,9 +85,10 @@ class FlaskEndpoint(object):
             resource = self.dispatcher.resource_cls.partial(data)
         else:
             resource = self.dispatcher.resource_cls(data)
+
+        # Overrides readonly fields with their default values, not sure if this is the best approach to readonly
         for name, field in resource.all_fields():
-            if field.is_readonly():
+            if field.is_readonly:
                 field.to_default()
-        if not partial:
-            resource.validate_full()
+
         return resource
