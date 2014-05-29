@@ -15,23 +15,23 @@ class ExceptionHandler(object):
         """
         message = e.args[0]
         stack_trace = ''.join(traceback.format_tb(sys.exc_info()[2]))
-        exception_type = type(e)
+        exception_type = str(type(e))
         time_stamp = datetime.datetime.now().isoformat()
         host_name = socket.gethostname()
 
         json_envelope = {
             "type": "exception",
-            "time_stamp" : time_stamp,
-            "host_name" : host_name,
+            "time_stamp": time_stamp,
+            "host_name": host_name,
             "url": url,
             "method": method,
             "message": message,
-            "stack_trace": json.dumps(stack_trace),
-            "exception_type": exception_type,
+            "stack_trace": stack_trace,
+            "exception_type":  exception_type,
             "comment": "this is a comment"
         }
 
-        self.logger.error(json_envelope,exc_info=0)
+        self.logger.error(json.dumps(json_envelope), exc_info=0)
 
         return self.handle_http_exception(InternalSeverError(), request)
 
