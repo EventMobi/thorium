@@ -84,8 +84,7 @@ class ResourceMetaClass(type):
                 setattr(meta, 'collection', collection)
 
 
-class Resource(object):
-    __metaclass__ = ResourceMetaClass
+class Resource(object, metaclass=ResourceMetaClass):
 
     def __new__(cls, *args, **kwargs):
         obj = super().__new__(cls)
