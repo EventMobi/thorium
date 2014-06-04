@@ -1,0 +1,13 @@
+# WARNING:
+# CircleCi have dual-core, 4GB RAM machines
+# However, if a step does not output to stdout/stderr for > 3 mins, the build will be cancelled and failed
+
+machine:
+  python:
+    version: 3.3.2
+
+dependencies:
+# All commands run within CircleCi's virtualenv `venv`
+
+  pre:
+    - pip install Flask
