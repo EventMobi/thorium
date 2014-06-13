@@ -17,13 +17,15 @@ class Thorium(object):
         '-' * 80
     )
 
+    exception_cls = ExceptionHandler
+
     def __init__(self, settings, route_manager, debug=False):
         self._logger = None
         self.logger_name = 'thorium'
         self._settings = settings or {}
         self._route_manager = route_manager
         self.debug_on = debug
-        self.exception_handler = ExceptionHandler(self.logger)
+        self.exception_handler = self.exception_cls(self.logger)
         self._bind_routes()
 
     @property
