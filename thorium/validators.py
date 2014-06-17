@@ -105,6 +105,25 @@ class DecimalValidator(FieldValidator):
         raise errors.ValidationError('{0} expects a number, got {1}'.format(self._field, value))
 
 
+class DateValidator(FieldValidator):
+
+    def valid(self, value):
+        return isinstance(value, datetime.date)
+
+    def attempt_cast(self, value):
+        if isinstance(value, str):
+            return datetime.datetime.strptime(value, "%Y-%m-%d").date()
+        elif isinstance(value, numbers.Integral) and not isinstance(value, bool):
+            return datetime.datetime.utcfromtimestamp(value).date()
+        else:
+            raise errors.ValidationError('{0} failed to convert {1}, which is an unsupported type for date '
+                                         'conversion. Please use a string with '
+                                         'format %Y-%m-%d'.format(self._field, value))
+
+    def raise_validation_error(self, value):
+        raise errors.ValidationError('{0} expects a date, got {1}'.format(self._field, value))
+
+
 class DateTimeValidator(FieldValidator):
 
     def valid(self, value):
