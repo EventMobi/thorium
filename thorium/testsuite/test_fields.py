@@ -843,6 +843,37 @@ class TestDecimalParam(TestCase):
         self.assertRaises(errors.ValidationError, self.field.validate, 2)
 
 
+class TestDateParam(TestCase):
+
+    def setUp(self):
+        self.field = params.DateParam()
+
+    def test_inheritance(self):
+        self.assertTrue(isinstance(self.field, params.ResourceParam))
+
+    def test_validator_type(self):
+        self.assertEqual(self.field.validator_type, validators.DateValidator)
+
+    def test_param_usage(self):
+        dt = datetime.date.today()
+        self.assertEqual(self.field.validate(dt), dt)
+
+    def test_param_invalid_values(self):
+        self.assertRaises(errors.ValidationError, self.field.validate, 'abc')
+        self.assertRaises(errors.ValidationError, self.field.validate, 10, False)
+        self.assertRaises(errors.ValidationError, self.field.validate, True)
+
+    def test_param_options(self):
+        dt = datetime.date(2011, 10, 12)
+        self.field.flags['options'] = {'a', 3435, dt}
+        self.assertEqual(self.field.validate(dt), dt)
+        self.assertEqual(self.field.validate(None), None)
+        self.assertEqual(self.field.validate(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.validate, datetime.date.today())
+        self.assertRaises(errors.ValidationError, self.field.validate, 'a')
+        self.assertRaises(errors.ValidationError, self.field.validate, 3435)
+
+
 class TestDateTimeParam(TestCase):
 
     def setUp(self):
