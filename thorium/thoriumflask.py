@@ -71,6 +71,11 @@ class FlaskEndpoint(object):
 
                 else:
                     raise errors.BadRequestError('Currently only json is supported, use application/json mimetype')
+            if flaskrequest.args:
+                query_params = flaskrequest.args.to_dict()
+                for param in query_params.keys():
+                    if param not in self.dispatcher.parameters_cls._params.keys():
+                        raise errors.BadRequestError(param + ' is not a supported query parameter.')
 
             return Request(dispatcher=self.dispatcher, method=flaskrequest.method, identifiers=flaskrequest.view_args,
                            query_params=flaskrequest.args.to_dict(),
