@@ -509,6 +509,36 @@ class TestDecimalField(TestCase):
         self.assertRaises(errors.ValidationError, self.field.set, 2)
 
 
+class TestDateField(TestCase):
+
+    def setUp(self):
+        self.field = fields.DateField()
+
+    def test_inheritance(self):
+        self.assertTrue(isinstance(self.field, fields.ResourceField))
+
+    def test_validator_type(self):
+        self.assertEqual(self.field.validator_type, validators.DateValidator)
+
+    def test_field_usage(self):
+        self.assertEqual(self.field.set(datetime.date.today()), self.field.get())
+
+    def test_field_invalid_values(self):
+        self.assertRaises(errors.ValidationError, self.field.set, 'abc')
+        self.assertRaises(errors.ValidationError, self.field.set, 10, False)
+        self.assertRaises(errors.ValidationError, self.field.set, True)
+
+    def test_field_options(self):
+        dt = datetime.date(2011, 10, 12)
+        self.field.flags['options'] = {'a', 3435, dt}
+        self.assertEqual(self.field.set(dt), dt)
+        self.assertEqual(self.field.set(None), None)
+        self.assertEqual(self.field.set(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.set, datetime.date.today())
+        self.assertRaises(errors.ValidationError, self.field.set, 'a')
+        self.assertRaises(errors.ValidationError, self.field.set, 3435)
+
+
 class TestDateTimeField(TestCase):
 
     def setUp(self):
