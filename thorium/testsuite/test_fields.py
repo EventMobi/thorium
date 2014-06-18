@@ -112,6 +112,28 @@ class TestIntValidator(TestCase):
         self.assertRaises(errors.ValidationError, self.validator.validate, datetime.datetime)
 
 
+class TestDateValidator(TestCase):
+
+    def setUp(self):
+        self._field = mock.MagicMock(fields.DateField)
+        self._field.flags = {'options': None}
+        self.validator = validators.DateValidator(self._field)
+
+    def test_validate(self):
+        dt = datetime.date.today()
+        result = self.validator.validate(dt)
+        self.assertEqual(dt, result)
+
+    def test_str_invalid(self):
+        self.assertRaises(errors.ValidationError, self.validator.validate, 'abc')
+
+    def test_bool_invalid(self):
+        self.assertRaises(errors.ValidationError, self.validator.validate, True)
+
+    def test_int_invalid(self):
+        self.assertRaises(errors.ValidationError, self.validator.validate, 1)
+
+
 class TestDateTimeValidator(TestCase):
 
     def setUp(self):
