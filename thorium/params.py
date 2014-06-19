@@ -56,6 +56,10 @@ class DecimalParam(ResourceParam):
     validator_type = validators.DecimalValidator
 
 
+class DateParam(ResourceParam):
+    validator_type = validators.DateValidator
+
+
 class DateTimeParam(ResourceParam):
     validator_type = validators.DateTimeValidator
 

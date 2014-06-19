@@ -77,6 +77,16 @@ class DecimalField(ResourceField):
     validator_type = validators.DecimalValidator
 
 
+class DateField(ResourceField):
+    validator_type = validators.DateValidator
+
+    def set(self, value, cast=True, check_readonly=True):
+        """
+        DateField defaults cast to True since serialized data won't be in a python datetime format.
+        """
+        return super().set(value, cast)
+
+
 class DateTimeField(ResourceField):
     validator_type = validators.DateTimeValidator
 
