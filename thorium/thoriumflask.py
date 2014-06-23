@@ -57,6 +57,7 @@ class FlaskEndpoint(object):
         try:
             resource = None
             resources = []
+            thorium_params = None
             if flaskrequest.data:
                 if flaskrequest.mimetype == 'application/json':
                     if flaskrequest.json:
@@ -72,13 +73,11 @@ class FlaskEndpoint(object):
                 else:
                     raise errors.BadRequestError('Currently only json is supported, use application/json mimetype')
             if flaskrequest.args:
-                query_params = flaskrequest.args.to_dict()
-                for param in query_params.keys():
-                    if param not in self.dispatcher.parameters_cls._params.keys():
-                        raise errors.BadRequestError(param + ' is not a supported query parameter.')
+                flask_params = flaskrequest.args.to_dict()
+                thorium_params = self.dispatcher.parameters_cls.validate(input_params=flask_params)
 
             return Request(dispatcher=self.dispatcher, method=flaskrequest.method, identifiers=flaskrequest.view_args,
-                           query_params=flaskrequest.args.to_dict(),
+                           query_params=thorium_params,
                            mimetype=flaskrequest.mimetype, resource=resource, resources=resources,
                            url=flaskrequest.url)
         except (errors.ValidationError, WerkzeugBadRequest) as e:

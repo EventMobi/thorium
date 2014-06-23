@@ -94,6 +94,9 @@ class Parameters(object, metaclass=ParametersMetaClass):
     @classmethod
     def validate(cls, input_params):
         params_dict = {}
+        for name, param in input_params.items():
+            if name not in cls._params:
+                raise errors.BadRequestError(name + ' is not a supported query parameter.')
         for name, param in cls._params.items():
             if name in input_params:
                 params_dict[name] = param.validate(input_params[name])

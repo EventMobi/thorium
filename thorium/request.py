@@ -4,7 +4,7 @@ class Request(object):
         self.method = method
         self.identifiers = identifiers
         self.resource_cls = dispatcher.resource_cls
-        self.params = dispatcher.parameters_cls.validate(query_params) if dispatcher.parameters_cls else None
+        self.params = query_params
         self.mimetype = mimetype
         self.resource = resource
         self.resources = resources
