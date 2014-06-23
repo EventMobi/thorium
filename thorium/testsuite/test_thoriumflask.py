@@ -80,6 +80,14 @@ class TestThoriumFlask(unittest.TestCase):
         self.assertEqual(items[0]['admin'], True)
         self.assertEqual(items[0]['id'], 42)
 
+    def test_get_with_query_param(self):
+        rv = self.c.open('/api/event/1/people?times=1', method='GET')
+        self.assertEqual(rv.status_code, 200)
+        rv = self.c.open('/api/event/1/people?invalid=1', method='GET')
+        self.assertEqual(rv.status_code, 400)
+        rv = self.c.open('/api/event/1/people?times=1&invalid=1', method='GET')
+        self.assertEqual(rv.status_code, 400)
+
     def test_post_simple(self):
         data = {
             'name': 'Snoopy',

@@ -72,8 +72,11 @@ class FlaskEndpoint(object):
                 else:
                     raise errors.BadRequestError('Currently only json is supported, use application/json mimetype')
 
+            flask_params = flaskrequest.args.to_dict() if flaskrequest.args else {}
+            thorium_params = self.dispatcher.parameters_cls.validate(flask_params) if self.dispatcher.parameters_cls else None
+
             return Request(dispatcher=self.dispatcher, method=flaskrequest.method, identifiers=flaskrequest.view_args,
-                           query_params=flaskrequest.args.to_dict(),
+                           query_params=thorium_params,
                            mimetype=flaskrequest.mimetype, resource=resource, resources=resources,
                            url=flaskrequest.url)
         except (errors.ValidationError, WerkzeugBadRequest) as e:
