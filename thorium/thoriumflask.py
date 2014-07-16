@@ -92,6 +92,6 @@ class FlaskEndpoint(object):
         # Overrides readonly fields with their default values, not sure if this is the best approach to readonly
         for name, field in resource.all_fields():
             if field.is_readonly:
-                field.to_default()
+                resource.field_to_default(field)
 
         return resource
