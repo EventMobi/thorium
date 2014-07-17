@@ -207,7 +207,7 @@ class Resource(object, metaclass=ResourceMetaClass):
 
     def validate_full(self):
         for field in self._fields.values():
-            if self._values[field.name] is NotSet and not field.is_readonly:
+            if self._values[field.name] == NotSet and not field.is_readonly:
                 raise errors.ValidationError('Field {0} is NotSet, expected full resource.'.format(field))
 
     def field_to_default(self, field):

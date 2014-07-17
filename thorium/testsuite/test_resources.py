@@ -102,6 +102,25 @@ class TestSimpleResource(TestCase):
         self.assertNotIn('age', valid_fields)
         self.assertEqual(valid_fields['name'].get(), 'Trillian')
 
+    def test_field_to_default(self):
+        res = SimpleResource.partial(name='Aristotle')
+        res._fields['age'].flags['default'] = 2014
+        self.assertEqual(res._values['age'], NotSet)
+        res.field_to_default(res._fields['age'])
+        self.assertEqual(res._values['age'], 2014)
+
+    def test_all_values(self):
+        data = {
+            'name': 'Bob',
+            'age': 401,
+            'readonly': 1
+        }
+        self.resource.from_dict(data)
+        values = self.resource.all_values()
+        self.assertTrue(isinstance(values, types.GeneratorType))
+        values = dict(values)
+        self.assertDictEqual(values, data)
+
     def test_resource_to_obj(self):
         self.resource.name = 'Marvin'
         self.resource.age = 9299992939
