@@ -104,10 +104,11 @@ class TestSimpleResource(TestCase):
 
     def test_field_to_default(self):
         res = SimpleResource.partial(name='Aristotle')
-        res._fields['age'].flags['default'] = 2014
-        self.assertEqual(res._values['age'], NotSet)
-        res.field_to_default(res._fields['age'])
-        self.assertEqual(res._values['age'], 2014)
+        self.assertEqual(res._values['name'], 'Aristotle')
+        self.assertEqual(res.name, 'Aristotle')
+        res.field_to_default(res._fields['name'])
+        self.assertEqual(res._values['name'], None)
+        self.assertEqual(res.name, None)
 
     def test_all_values(self):
         data = {
