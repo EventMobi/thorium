@@ -10,11 +10,8 @@ class ResourceMetaClass(type):
     #Note: attrs comes in alphabetical order, unsure how to maintain declared order of fields
     def __new__(mcs, resource_name, bases, attrs):
 
-        # validate Resource's children but not Resource
-        if resource_name != 'Resource':
-            mcs._validate_format(mcs, resource_name, attrs)
-
         attrs['_fields'] = mcs._get_fields(bases, attrs)
+
         return super().__new__(mcs, resource_name, bases, attrs)
 
     #Note: will likely need some sort of sorted dictionary to maintain field order
@@ -38,7 +35,7 @@ class ResourceMetaClass(type):
     @staticmethod
     def _gen_get_prop(name):
         def get_field_property(self):
-            return self._fields[name].get()
+            return self._values[name]
         return get_field_property
 
     @staticmethod
@@ -47,48 +44,12 @@ class ResourceMetaClass(type):
             return self._set(self._fields[name], value)
         return set_field_property
 
-    @staticmethod
-    def _validate_format(mcs, resource_name, attrs):
-        if 'Meta' in attrs:
-            meta = attrs['Meta']
-
-            detail = getattr(meta, 'detail', {})
-            collection = getattr(meta, 'collection', {})
-
-            detail_methods = detail.get('methods')
-            if detail_methods:
-                if not detail_methods.issubset(VALID_METHODS):
-                    raise Exception('detail_methods: {dm} must be a subset of the '
-                                    'valid methods: {VM}'.format(dm=detail_methods, VM=VALID_METHODS))
-            else:
-                detail['methods'] = set()
-                setattr(meta, 'detail', detail)
-
-            collection_methods = collection.get('methods')
-            if collection_methods:
-                if not collection_methods.issubset(VALID_METHODS):
-                    raise Exception('collection_methods {cm} must be a subset of the '
-                                    'valid methods: {VM}'.format(cm=collection_methods, VM=VALID_METHODS))
-            else:
-                collection['methods'] = set()
-                setattr(meta, 'collection', collection)
-
-            detail_endpoint = detail.get('endpoint')
-            if not detail_endpoint:
-                detail['endpoint'] = None
-                setattr(meta, 'detail', detail)
-
-            collection_endpoint = collection.get('endpoint')
-            if not collection_endpoint:
-                collection['endpoint'] = None
-                setattr(meta, 'collection', collection)
-
 
 class Resource(object, metaclass=ResourceMetaClass):
 
     def __new__(cls, *args, **kwargs):
         obj = super().__new__(cls)
-        obj._fields = copy.deepcopy(obj._fields)
+        obj._values = collections.OrderedDict(((name, field.flags['default']) for name, field in obj._fields.items()))
         return obj
 
     def __init__(self, *args, **kwargs):
@@ -143,7 +104,7 @@ class Resource(object, metaclass=ResourceMetaClass):
                 if field.flags['default'] == NotSet:
                     self._set(field, None)
                 else:
-                    field.to_default()
+                    self.field_to_default(field)
 
     def from_dict(self, data):
         for name, field in self._fields.items():
@@ -152,7 +113,7 @@ class Resource(object, metaclass=ResourceMetaClass):
         return self
 
     def to_dict(self):
-        return {name: field.get() for name, field in self.valid_fields()}
+        return {name: self._values[field.name] for name, field in self.valid_fields()}
 
     def from_obj(self, obj, mapping=None, explicit_mapping=False, override=None):
         """
@@ -228,7 +189,7 @@ class Resource(object, metaclass=ResourceMetaClass):
             value = override.get(name, NotSet)
 
             if value is NotSet:
-                value = field.get()
+                value = self._values[field.name]
 
             # Set target obj value from Resource value
             setattr(obj, name, value)
@@ -236,15 +197,21 @@ class Resource(object, metaclass=ResourceMetaClass):
         return obj
 
     def valid_fields(self):
-        return ((name, field) for name, field in self._fields.items() if field.is_set)
+        return ((name, field) for name, field in self._fields.items() if self._values[field.name] != NotSet)
 
     def all_fields(self):
         return ((name, field) for name, field in self._fields.items())
 
+    def all_values(self):
+        return ((name, value) for name, value in self._values.items())
+
     def validate_full(self):
         for field in self._fields.values():
-            if not field.is_set and not field.is_readonly:
+            if self._values[field.name] == NotSet and not field.is_readonly:
                 raise errors.ValidationError('Field {0} is NotSet, expected full resource.'.format(field))
+
+    def field_to_default(self, field):
+        self._values[field.name] = field.flags['default']
 
     @property
     def is_partial(self):
@@ -253,4 +220,5 @@ class Resource(object, metaclass=ResourceMetaClass):
     def _set(self, field, value):
         if not self._partial and not field.is_readonly and value == NotSet:
             raise errors.ValidationError('Attempted to set field {0} of a non-partial resource to NotSet'.format(field))
-        return field.set(value)
+        self._values[field.name] = field.set(value)
+        return self._values[field.name]
