@@ -25,31 +25,21 @@ class ResourceField(object):
         # create validator
         self._validator = self._get_validator()
         self.flags['default'] = self._validator.validate(default, cast=False)
-        self._value = self.flags['default']
+        #self._value = self.flags['default']
 
     def __str__(self):
         return '{0}:{1}'.format(self.__class__.__name__, self.name)
 
-    def set(self, value, cast=False):
-        self._value = self.validate(value, cast)
-        return self._value
-
-    def get(self):
-        return self._value
-
     def validate(self, value, cast=False):
         return self._validator.validate(value, cast)
-
-    def to_default(self):
-        return self.set(self.flags['default'])
-
-    @property
-    def is_set(self):
-        return self._value != NotSet
 
     @property
     def is_readonly(self):
         return self.flags['readonly']
+
+    @property
+    def default(self):
+        return self.flags['default']
 
     def set_unique_attributes(self, **kwargs):
         pass
@@ -80,21 +70,17 @@ class DecimalField(ResourceField):
 class DateField(ResourceField):
     validator_type = validators.DateValidator
 
-    def set(self, value, cast=True, check_readonly=True):
-        """
-        DateField defaults cast to True since serialized data won't be in a python datetime format.
-        """
-        return super().set(value, cast)
+    # overrides cast default to being True
+    def validate(self, value, cast=True):
+        return super().validate(value, cast)
 
 
 class DateTimeField(ResourceField):
     validator_type = validators.DateTimeValidator
 
-    def set(self, value, cast=True, check_readonly=False):
-        """
-        DateTimeField defaults cast to True since serialized data won't be in a python datetime format.
-        """
-        return super().set(value, cast)
+    # overrides cast default to being True
+    def validate(self, value, cast=True):
+        return super().validate(value, cast)
 
 
 class BoolField(ResourceField):
@@ -120,5 +106,6 @@ class DictField(ResourceField):
 class SetField(ResourceField):
     validator_type = validators.SetValidator
 
-    def set(self, value, cast=True):
-        return super().set(value, cast)
+    # overrides cast default to being True
+    def validate(self, value, cast=True):
+        return super().validate(value, cast)

@@ -89,38 +89,37 @@ class TestSimpleResource(TestCase):
         valid_fields = dict(valid_fields)
         self.assertIn('name', valid_fields)
         self.assertNotIn('age', valid_fields)
-        self.assertEqual(valid_fields['name'].get(), 'Arthur')
+        self.assertEqual(dict(res.items())['name'], 'Arthur')
 
     def test_valid_fields_with_defaults_is_not_set(self):
         res = SimpleResource.partial(name='Trillian')
-        res._fields['age'].default = 0
+        dict(res.all_fields())['age'].flags['default'] = 0
         self.assertEqual(res.age, NotSet)
         valid_fields = res.valid_fields()
         self.assertTrue(isinstance(valid_fields, types.GeneratorType))
         valid_fields = dict(valid_fields)
         self.assertIn('name', valid_fields)
         self.assertNotIn('age', valid_fields)
-        self.assertEqual(valid_fields['name'].get(), 'Trillian')
+        self.assertEqual(dict(res.items())['name'], 'Trillian')
 
-    def test_field_to_default(self):
+    def test_to_default(self):
         res = SimpleResource.partial(name='Aristotle')
         self.assertEqual(res._values['name'], 'Aristotle')
         self.assertEqual(res.name, 'Aristotle')
-        res.field_to_default(res._fields['name'])
+        res.to_default('name')
         self.assertEqual(res._values['name'], None)
         self.assertEqual(res.name, None)
 
-    def test_all_values(self):
+    def test_items(self):
         data = {
             'name': 'Bob',
             'age': 401,
             'readonly': 1
         }
         self.resource.from_dict(data)
-        values = self.resource.all_values()
-        self.assertTrue(isinstance(values, types.GeneratorType))
-        values = dict(values)
-        self.assertDictEqual(values, data)
+        items = self.resource.items()
+        items = dict(items)
+        self.assertDictEqual(items, data)
 
     def test_resource_to_obj(self):
         self.resource.name = 'Marvin'
@@ -141,6 +140,11 @@ class TestSimpleResource(TestCase):
         so.name = 'somename'
         so.age = 'Not an age'
         self.assertRaises(errors.ValidationError, self.resource.from_obj, so)
+
+    def test_seperate_resource_instsances_do_not_share_data(self):
+        s1 = SimpleResource(name='a')
+        s2 = SimpleResource(name='b')
+        self.assertEqual(s1.name, 'a')
 
 
 class ComplexResource(resources.Resource):

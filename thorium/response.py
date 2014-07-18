@@ -43,7 +43,7 @@ class DetailResponse(Response):
     def get_response_data(self):
         data = None
         if self.resource:
-            data = OrderedDict(((n, v) for n, v in self.resource.all_values()))
+            data = OrderedDict(self.resource.sorted_items())
         return data
 
 
@@ -58,7 +58,7 @@ class CollectionResponse(Response):
         data = []
         if self.resources:
             for res in self.resources:
-                data.append(OrderedDict(((n, v) for n, v in res.all_values())))
+                data.append(OrderedDict(res.sorted_items()))
         return data
 
 
