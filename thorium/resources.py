@@ -217,6 +217,9 @@ class Resource(object, metaclass=ResourceMetaClass):
     def is_partial(self):
         return self._partial
 
+    def is_set(self, field_name):
+        return self._fields[field_name].is_set
+
     def _set(self, field, value):
         if not self._partial and not field.is_readonly and value == NotSet:
             raise errors.ValidationError('Attempted to set field {0} of a non-partial resource to NotSet'.format(field))
