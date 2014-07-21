@@ -3,10 +3,14 @@ from . import errors, validators, NotSet
 
 class ResourceParam(object):
     validator_type = None
+    order_counter = 0
 
     def __init__(self, default=NotSet, notnull=False, options=None, *args, **kwargs):
         self.flags = {'notnull': notnull, 'default': default, 'options': options}
         self.name = 'noname'
+
+        self.order_value = ResourceParam.order_counter
+        ResourceParam.order_counter += 1
 
         # a hook to allow subclasses to add their own unique parameters
         self.set_unique_attributes(**kwargs)
