@@ -5,6 +5,7 @@ import json
 import datetime
 from collections import OrderedDict
 
+
 class PersonResource(Resource):
     id = fields.IntField(default=None)
     name = fields.CharField()
@@ -124,6 +125,14 @@ class TestThoriumFlask(unittest.TestCase):
         self.assertEqual(data.popitem(last=False)[0], 'name')
         self.assertEqual(data.popitem(last=False)[0], 'birth_date')
         self.assertEqual(data.popitem(last=False)[0], 'admin')
+
+    def test_post_empty_body(self):
+        rv = self.c.post('/api/event/1/people', data=json.dumps({}, default=handler), content_type='application/json')
+        self.assertEqual(rv.status_code, 400)
+
+    def test_post_no_body(self):
+        rv = self.c.post('/api/event/1/people', data=None, content_type='application/json')
+        self.assertEqual(rv.status_code, 400)
 
 
 class TestResourceSpeed(unittest.TestCase):

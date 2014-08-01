@@ -57,17 +57,17 @@ class FlaskEndpoint(object):
         try:
             resource = None
             resources = []
-            if flaskrequest.data:
+            if flaskrequest.method.lower() in {'post', 'patch', 'put'}:
                 if flaskrequest.mimetype == 'application/json':
-                    if flaskrequest.json:
-                        partial = True if flaskrequest.method == 'PATCH' else False
+                    json_data = flaskrequest.json or {}
+                    partial = True if flaskrequest.method == 'PATCH' else False
 
-                        #hack for single or list resources
-                        if isinstance(flaskrequest.json, list):
-                            for i in flaskrequest.json:
-                                resources.append(self._create_resource(i, partial))
-                        else:
-                            resource = self._create_resource(flaskrequest.json, partial)
+                    #hack for single or list resources
+                    if isinstance(json_data, list):
+                        for i in json_data:
+                            resources.append(self._create_resource(i, partial))
+                    else:
+                        resource = self._create_resource(json_data, partial)
 
                 else:
                     raise errors.BadRequestError('Currently only json is supported, use application/json mimetype')
