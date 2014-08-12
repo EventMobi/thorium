@@ -62,15 +62,24 @@ class Resource(object, metaclass=ResourceMetaClass):
 
     # is there a better way to do this?
     @classmethod
-    def init_from_obj(cls, obj, partial=False, mapping=None, explicit_mapping=False, override=None):
+    def init_from_obj(cls, obj, partial=False, mapping=None, explicit_mapping=False, override=None, cast=False):
         mapping = mapping if mapping else {}
         resource = cls.__new__(cls)
         resource._partial = partial
         if resource._partial:
             resource.clear()
-        resource.from_obj(obj, mapping, explicit_mapping, override)
-        if not resource._partial:
-            resource.validate_full()
+        resource.from_obj(obj, mapping, explicit_mapping, override, cast)
+        resource.validate()
+        return resource
+
+    @classmethod
+    def init_from_dict(cls, data, partial=False, cast=False):
+        resource = cls.__new__(cls)
+        resource._partial = partial
+        if resource._partial:
+            resource.clear()
+        resource.from_dict(data, cast)
+        resource.validate()
         return resource
 
     @classmethod
@@ -85,15 +94,17 @@ class Resource(object, metaclass=ResourceMetaClass):
             self.from_dict(args[0])
         elif args:
             raise Exception('Resource initiation accepts only a dictionary or fields by keyword.')
-
         if kwargs:
             self.from_dict(kwargs)
-
-        if not self._partial:
-            self.validate_full()
+        self.validate()
 
     def clear(self):
         for name, field in self.all_fields():
+
+            # do nothing with required fields
+            if field.is_required:
+                continue
+
             if self._partial:
                 self._set(name, NotSet)
             else:
@@ -102,16 +113,16 @@ class Resource(object, metaclass=ResourceMetaClass):
                 else:
                     self.to_default(name)
 
-    def from_dict(self, data):
+    def from_dict(self, data, cast=False):
         for name, field in self.all_fields():
             if name in data:
-                self._set(name, data[name])
+                self._set(name, data[name], cast)
         return self
 
     def to_dict(self):
         return dict(self.valid_items())
 
-    def from_obj(self, obj, mapping=None, explicit_mapping=False, override=None):
+    def from_obj(self, obj, mapping=None, explicit_mapping=False, override=None, cast=False):
         """
         Maps the public attributes from a object to the resource fields based on identical names.
         Optional mapping parameter allows for discrepancies in naming with resource names being the
@@ -149,7 +160,7 @@ class Resource(object, metaclass=ResourceMetaClass):
             if value is NotSet:
                 continue
 
-            self._set(field.name, value)
+            self._set(field.name, value, cast)
 
         return self
 
@@ -192,8 +203,9 @@ class Resource(object, metaclass=ResourceMetaClass):
 
         return obj
 
-    def all_fields(self):
-        return self._fields.items()
+    @classmethod
+    def all_fields(cls):
+        return cls._fields.items()
 
     def valid_fields(self):
         return ((name, field) for name, field in self.all_fields() if self.is_set(name))
@@ -207,10 +219,22 @@ class Resource(object, metaclass=ResourceMetaClass):
     def valid_items(self):
         return ((name, field) for name, field in self.items() if self.is_set(name))
 
-    def validate_full(self):
+    def validate(self):
+        if self._partial:
+            self._validate_partial()
+        else:
+            self._validate_full()
+
+    def _validate_full(self):
         for name, field in self._fields.items():
             if not self.is_set(name) and not field.is_readonly:
                 raise errors.ValidationError('Field {0} is NotSet, expected full resource.'.format(field))
+
+    def _validate_partial(self):
+        for name, field in self._fields.items():
+            if not self.is_set(name) and field.is_required:
+                raise errors.ValidationError('Field {0} is required, cannot be NotSet even on a partial resource.'
+                                             .format(field))
 
     def to_default(self, field_name):
         self._set(field_name, self._fields[field_name].default)
@@ -222,11 +246,11 @@ class Resource(object, metaclass=ResourceMetaClass):
     def is_set(self, field_name):
         return self._get(field_name) != NotSet
 
-    def _set(self, field_name, value):
+    def _set(self, field_name, value, cast=False):
         field = self._fields[field_name]
         if not self._partial and not field.is_readonly and value == NotSet:
             raise errors.ValidationError('Attempted to set field {0} of a non-partial resource to NotSet'.format(field))
-        self._values[field_name] = field.validate(value)
+        self._values[field_name] = field.validate(value, cast=cast)
         return self._values[field_name]
 
     def _get(self, field_name):

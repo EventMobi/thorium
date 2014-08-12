@@ -483,7 +483,6 @@ class TestDateField(TestCase):
 
     def test_field_invalid_values(self):
         self.assertRaises(errors.ValidationError, self.field.validate, 'abc')
-        self.assertRaises(errors.ValidationError, self.field.validate, 10, False)
         self.assertRaises(errors.ValidationError, self.field.validate, True)
 
     def test_field_options(self):
@@ -514,7 +513,6 @@ class TestDateTimeField(TestCase):
 
     def test_field_invalid_values(self):
         self.assertRaises(errors.ValidationError, self.field.validate, 'abc')
-        self.assertRaises(errors.ValidationError, self.field.validate, 10, False)
         self.assertRaises(errors.ValidationError, self.field.validate, True)
 
     def test_field_options(self):
@@ -561,6 +559,7 @@ class TestListField(TestCase):
         self.assertEqual(field.validate((), cast=True), [])
         self.assertEqual(field.validate((1, 2, 3), cast=True), [1, 2, 3])
         self.assertEqual(field.validate(('1', '2', '3'), cast=True), [1, 2, 3])
+        self.assertEqual(field.validate('1,2,3', cast=True), [1, 2, 3])
         self.assertRaises(errors.ValidationError, field.validate, 'abc')
         self.assertRaises(errors.ValidationError, field.validate, ['abc', 'efd'])
         self.assertRaises(errors.ValidationError, field.validate, ())
@@ -575,6 +574,7 @@ class TestListField(TestCase):
         self.assertEqual(field.validate((), cast=True), [])
         self.assertEqual(field.validate(('1', '2', '3'), cast=True), ['1', '2', '3'])
         self.assertEqual(field.validate((1, 2, 3), cast=True), ['1', '2', '3'])
+        self.assertEqual(field.validate('1,2,3', cast=True), ['1', '2', '3'])
         self.assertRaises(errors.ValidationError, field.validate, ())
         self.assertRaises(errors.ValidationError, field.validate, (1, 2, 3))
 
@@ -632,7 +632,6 @@ class TestListField(TestCase):
         self.assertRaises(errors.ValidationError, self.field.validate, [])
         self.assertRaises(errors.ValidationError, self.field.validate, ['a'])
         self.assertRaises(errors.ValidationError, self.field.validate, ['a', 'b', 'c'])
-
 
 class TestCharParam(TestCase):
 

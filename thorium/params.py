@@ -6,7 +6,7 @@ class ResourceParam(object):
     order_counter = 0
 
     def __init__(self, default=NotSet, notnull=False, options=None, *args, **kwargs):
-        self.flags = {'notnull': notnull, 'default': default, 'options': options}
+        self.flags = {'notnull': notnull, 'default': default, 'options': options, 'required': False}
         self.name = 'noname'
 
         self.order_value = ResourceParam.order_counter
