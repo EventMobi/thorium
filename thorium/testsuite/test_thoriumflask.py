@@ -13,8 +13,8 @@ class PersonResource(Resource):
     admin = fields.BoolField()
 
 
-class CollectionParams(Parameters):
-    times = params.IntParam(default=1)
+class CollectionParams(Resource):
+    times = fields.IntField(required=True, default=1)
 
 
 @routing.collection('/api/event/<int:event_id>/people', methods=('get', 'post'), params=CollectionParams)
@@ -35,7 +35,7 @@ class PersonEndpoint(Endpoint):
         self.response.resource = person
 
     def get_collection(self):
-        for x in range(self.request.params['times']):
+        for x in range(self.request.params.times):
             person = self.request.resource_cls(self.data)
             self.response.resources.append(person)
 

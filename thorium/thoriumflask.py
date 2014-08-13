@@ -1,9 +1,8 @@
-import json
 import traceback
 from . import Thorium, errors
 from .request import Request
 from .resources import VALID_METHODS
-from .response import DetailResponse, CollectionResponse
+from .parameters import ParametersMetaClass
 from flask import Response as FlaskResponse, request as flaskrequest
 from .crossdomain_decorator import crossdomain
 from werkzeug.exceptions import BadRequest as WerkzeugBadRequest
@@ -47,7 +46,7 @@ class FlaskEndpoint(object):
             return FlaskResponse(response=error_body, status=e.status_code,
                                  headers=e.headers, content_type='application/json')
         except Exception as e:
-            #traceback.print_exc()
+            traceback.print_exc()
             error_body = self.exception_handler.handle_general_exception(url, method, e, request)
             if self.flask_config['DEBUG']:  # if flask debug raise exception instead of returning json response
                 raise e
@@ -72,14 +71,11 @@ class FlaskEndpoint(object):
                 else:
                     raise errors.BadRequestError('Currently only json is supported, use application/json mimetype')
 
-            flask_params = flaskrequest.args.to_dict() if flaskrequest.args else {}
-            thorium_params = self.dispatcher.parameters_cls.validate(flask_params) if self.dispatcher.parameters_cls else None
-
             return Request(dispatcher=self.dispatcher, method=flaskrequest.method, identifiers=flaskrequest.view_args,
-                           query_params=thorium_params,
-                           mimetype=flaskrequest.mimetype, resource=resource, resources=resources,
-                           url=flaskrequest.url)
+                           query_params=self._build_parameters(), mimetype=flaskrequest.mimetype, resource=resource,
+                           resources=resources, url=flaskrequest.url)
         except (errors.ValidationError, WerkzeugBadRequest) as e:
+            traceback.print_exc()
             raise errors.BadRequestError(message=e.args[0] if e.args else None)
 
     #This probably shouldn't be here, not explicitly flask related
@@ -95,3 +91,22 @@ class FlaskEndpoint(object):
                 resource.to_default(name)
 
         return resource
+
+    def _build_parameters(self):
+        if not self.dispatcher.parameters_cls:
+            return None
+
+        flask_params = flaskrequest.args.to_dict() if flaskrequest.args else {}
+
+        if isinstance(self.dispatcher.parameters_cls, ParametersMetaClass):
+            return self.dispatcher.parameters_cls.validate(flask_params)
+        else:
+            self._validate_no_extra_query_params(flask_params)
+            flask_params.update(flaskrequest.view_args)
+            return self.dispatcher.parameters_cls.init_from_dict(data=flask_params, partial=True, cast=True)
+
+    def _validate_no_extra_query_params(self, flask_params):
+        param_fields = dict(self.dispatcher.parameters_cls.all_fields())
+        for name, param in flask_params.items():
+            if name not in param_fields:
+                raise errors.ValidationError(name + ' is not a supported query parameter.')

@@ -5,13 +5,16 @@ class ResourceField(object):
     validator_type = None
     order_counter = 0
 
-    def __init__(self, default=NotSet, notnull=False, readonly=False, writeonly=False, options=None, *args, **kwargs):
+    def __init__(self, default=NotSet, notnull=False, readonly=False, writeonly=False, options=None, cast=None,
+                 required=False, *args, **kwargs):
         self.flags = {
             'notnull': notnull,
             'readonly': readonly,
             'default': default,
             'writeonly': writeonly,
-            'options': options
+            'options': options,
+            'cast': cast,
+            'required': required
         }
 
         self.name = 'noname'
@@ -31,11 +34,16 @@ class ResourceField(object):
         return '{0}:{1}'.format(self.__class__.__name__, self.name)
 
     def validate(self, value, cast=False):
+        cast = self.flags['cast'] if self.flags['cast'] is not None else cast
         return self._validator.validate(value, cast)
 
     @property
     def is_readonly(self):
         return self.flags['readonly']
+
+    @property
+    def is_required(self):
+        return self.flags['required']
 
     @property
     def default(self):
@@ -70,17 +78,17 @@ class DecimalField(ResourceField):
 class DateField(ResourceField):
     validator_type = validators.DateValidator
 
-    # overrides cast default to being True
-    def validate(self, value, cast=True):
-        return super().validate(value, cast)
+    # default cast to True
+    def __init__(self, *args, cast=True, **kwargs):
+        super().__init__(*args, cast=cast, **kwargs)
 
 
 class DateTimeField(ResourceField):
     validator_type = validators.DateTimeValidator
 
-    # overrides cast default to being True
-    def validate(self, value, cast=True):
-        return super().validate(value, cast)
+    # default cast to True
+    def __init__(self, *args, cast=True, **kwargs):
+        super().__init__(*args, cast=cast, **kwargs)
 
 
 class BoolField(ResourceField):
@@ -105,7 +113,3 @@ class DictField(ResourceField):
 
 class SetField(ResourceField):
     validator_type = validators.SetValidator
-
-    # overrides cast default to being True
-    def validate(self, value, cast=True):
-        return super().validate(value, cast)

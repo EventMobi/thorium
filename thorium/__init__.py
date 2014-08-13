@@ -5,7 +5,9 @@ from .datastructures import NotSet
 
 from .resources import Resource
 
-from .endpoint import Endpoint, Parameters
+from .endpoint import Endpoint
+
+from .parameters import Parameters
 
 from .routing import Route, RouteManager
 
