@@ -7,6 +7,9 @@ class SampleAuthenticator(auth.Authenticator):
     def _authenticate(self):
         return self.request
 
+    def _authorize(self):
+        return self.request
+
     @auth.validation
     def good_auth(self):
         return True
