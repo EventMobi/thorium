@@ -3,7 +3,6 @@ class Request(object):
     def __init__(self, dispatcher, method, identifiers, query_params, mimetype, resource, resources, url):
         self.method = method
         self.identifiers = identifiers
-        self.resource_cls = dispatcher.resource_cls
         self.params = query_params
         self.mimetype = mimetype
         self.resource = resource

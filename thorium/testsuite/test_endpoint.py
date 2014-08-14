@@ -2,7 +2,7 @@ from unittest import TestCase, mock
 from thorium import Endpoint, Request, auth, errors
 
 
-class TestEngine(TestCase):
+class TestEndpoint(TestCase):
 
     def setUp(self):
         self.request = mock.MagicMock(spec=Request)

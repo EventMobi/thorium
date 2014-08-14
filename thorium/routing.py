@@ -59,9 +59,9 @@ class RouteManager(object):
             self.add_route(route)
 
 
-def collection(path, methods, params=None):
+def collection(path, methods, parameters_cls=None):
     def wrapped(cls):
-        route = build_route(dispatcher.CollectionDispatcher, cls, params, path, methods)
+        route = build_route(dispatcher.CollectionDispatcher, cls, parameters_cls, path, methods)
         if hasattr(cls, 'routes'):
             cls.routes.append(route)
         else:
@@ -70,9 +70,9 @@ def collection(path, methods, params=None):
     return wrapped
 
 
-def detail(path, methods, params=None):
+def detail(path, methods, parameters_cls=None):
     def wrapped(cls):
-        route = build_route(dispatcher.DetailDispatcher, cls, params, path, methods)
+        route = build_route(dispatcher.DetailDispatcher, cls, parameters_cls, path, methods)
         if hasattr(cls, 'routes'):
             cls.routes.append(route)
         else:
@@ -82,12 +82,12 @@ def detail(path, methods, params=None):
 
 
 def build_route(dispatcher_cls, endpoint_cls, parameters_cls, path, methods):
-    if not hasattr(endpoint_cls, 'resource') or not isinstance(endpoint_cls.resource, ResourceMetaClass):
+    if not hasattr(endpoint_cls, 'Resource') or not isinstance(endpoint_cls.Resource, ResourceMetaClass):
         raise Exception('Endpoint {0} expects attribute resource to have a valid Resource object.'
                         .format(endpoint_cls.__name__))
 
     dsp = dispatcher_cls(endpoint_cls=endpoint_cls,
-                         resource_cls=endpoint_cls.resource,
+                         resource_cls=endpoint_cls.Resource,
                          parameters_cls=parameters_cls,
                          allowed_methods=set(methods))
     route = Route(name='{0}_{1}'.format(endpoint_cls.__name__, dsp.request_type),

@@ -81,9 +81,9 @@ class FlaskEndpoint(object):
     #This probably shouldn't be here, not explicitly flask related
     def _create_resource(self, data, partial):
         if partial:
-            resource = self.dispatcher.resource_cls.partial(data)
+            resource = self.dispatcher.Resource.partial(data)
         else:
-            resource = self.dispatcher.resource_cls(data)
+            resource = self.dispatcher.Resource(data)
 
         # Overrides readonly fields with their default values, not sure if this is the best approach to readonly
         for name, field in resource.all_fields():
@@ -93,20 +93,20 @@ class FlaskEndpoint(object):
         return resource
 
     def _build_parameters(self):
-        if not self.dispatcher.parameters_cls:
+        if not self.dispatcher.Parameters:
             return None
 
         flask_params = flaskrequest.args.to_dict() if flaskrequest.args else {}
 
-        if isinstance(self.dispatcher.parameters_cls, ParametersMetaClass):
-            return self.dispatcher.parameters_cls.validate(flask_params)
+        if isinstance(self.dispatcher.Parameters, ParametersMetaClass):
+            return self.dispatcher.Parameters.validate(flask_params)
         else:
             self._validate_no_extra_query_params(flask_params)
             flask_params.update(flaskrequest.view_args)
-            return self.dispatcher.parameters_cls.init_from_dict(data=flask_params, partial=True, cast=True)
+            return self.dispatcher.Parameters.init_from_dict(data=flask_params, partial=True, cast=True)
 
     def _validate_no_extra_query_params(self, flask_params):
-        param_fields = dict(self.dispatcher.parameters_cls.all_fields())
+        param_fields = dict(self.dispatcher.Parameters.all_fields())
         for name, param in flask_params.items():
             if name not in param_fields:
                 raise errors.ValidationError(name + ' is not a supported query parameter.')

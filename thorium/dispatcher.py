@@ -19,9 +19,9 @@ class DispatcherBase(object):
     """
 
     def __init__(self, endpoint_cls, resource_cls, parameters_cls, allowed_methods):
-        self.endpoint_cls = endpoint_cls
-        self.resource_cls = resource_cls
-        self.parameters_cls = parameters_cls
+        self.Endpoint = endpoint_cls
+        self.Resource = resource_cls
+        self.Parameters = parameters_cls
         self.allowed_methods = {method.upper() for method in allowed_methods}
 
     def dispatch(self, request):
@@ -35,12 +35,12 @@ class DispatcherBase(object):
         #ensure valid method
         if request.method not in self.allowed_methods:
             msg = 'Method {0} not available on {1} {2} resource.'\
-                .format(request.method, self.resource_cls.__name__, self.request_type)
+                .format(request.method, self.Resource.__name__, self.request_type)
             raise errors.MethodNotAllowedError(message=msg, headers={'Allow': ', '.join(self.allowed_methods)})
 
         response = self.build_response_obj(request=request)
 
-        engine = self.endpoint_cls(request=request, response=response)
+        engine = self.Endpoint(request=request, response=response)
 
         dispatch_method = self.get_dispatch_method(engine=engine)
 
