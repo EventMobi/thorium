@@ -17,7 +17,7 @@ class CollectionParams(Resource):
     times = fields.IntField(required=True, default=1)
 
 
-@routing.collection('/api/event/<int:event_id>/people', methods=('get', 'post'), params=CollectionParams)
+@routing.collection('/api/event/<int:event_id>/people', methods=('get', 'post'), parameters_cls=CollectionParams)
 @routing.detail('/api/event/<int:event_id>/people/<int:id>', ('get', 'put', 'patch'))
 class PersonEndpoint(Endpoint):
     Resource = PersonResource
