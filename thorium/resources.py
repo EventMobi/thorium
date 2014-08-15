@@ -49,7 +49,7 @@ class Resource(object, metaclass=ResourceMetaClass):
         return obj
 
     def __init__(self, *args, **kwargs):
-        self._partial = False
+        self._partial = getattr(self, '_partial', False)
         self._init(*args, **kwargs)
 
     @classmethod

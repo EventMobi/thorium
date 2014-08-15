@@ -17,10 +17,10 @@ class CollectionParams(Resource):
     times = fields.IntField(required=True, default=1)
 
 
-@routing.collection('/api/event/<int:event_id>/people', methods=('get', 'post'), params=CollectionParams)
+@routing.collection('/api/event/<int:event_id>/people', methods=('get', 'post'), parameters_cls=CollectionParams)
 @routing.detail('/api/event/<int:event_id>/people/<int:id>', ('get', 'put', 'patch'))
 class PersonEndpoint(Endpoint):
-    resource = PersonResource
+    Resource = PersonResource
 
     def pre_request(self):
         self.data = {
@@ -31,12 +31,12 @@ class PersonEndpoint(Endpoint):
         }
 
     def get_detail(self):
-        person = self.request.resource_cls(self.data)
+        person = PersonResource(self.data)
         self.response.resource = person
 
     def get_collection(self):
         for x in range(self.request.params.times):
-            person = self.request.resource_cls(self.data)
+            person = PersonResource(self.data)
             self.response.resources.append(person)
 
     def post_collection(self):
