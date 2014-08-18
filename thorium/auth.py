@@ -96,8 +96,11 @@ class Authenticator(object, metaclass=AuthenticatorMetaClass):
         self.method = method.__func__
         if self.method not in self._no_auth_methods:
             self.try_load()
-            if not self._authenticate() or not self._authorize():
+            if not self._authenticate():
                 raise errors.UnauthorizedError()
+
+            if not self._authorize():
+                raise errors.ForbiddenError()
 
         if self.method in self._validators:
             self.try_load()
