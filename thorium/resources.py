@@ -62,13 +62,13 @@ class Resource(object, metaclass=ResourceMetaClass):
 
     # is there a better way to do this?
     @classmethod
-    def init_from_obj(cls, obj, partial=False, mapping=None, explicit_mapping=False, override=None, cast=False):
+    def init_from_obj(cls, obj, partial=False, mapping=None, override=None, cast=False):
         mapping = mapping if mapping else {}
         resource = cls.__new__(cls)
         resource._partial = partial
         if resource._partial:
             resource.clear()
-        resource.from_obj(obj, mapping, explicit_mapping, override, cast)
+        resource.from_obj(obj, mapping, override, cast)
         resource.validate()
         return resource
 
@@ -122,7 +122,7 @@ class Resource(object, metaclass=ResourceMetaClass):
     def to_dict(self):
         return dict(self.valid_items())
 
-    def from_obj(self, obj, mapping=None, explicit_mapping=False, override=None, cast=False):
+    def from_obj(self, obj, mapping=None, override=None, cast=False):
         """
         Maps the public attributes from a object to the resource fields based on identical names.
         Optional mapping parameter allows for discrepancies in naming with resource names being the
@@ -132,39 +132,35 @@ class Resource(object, metaclass=ResourceMetaClass):
         """
         if not override:
             override = {}
-        for name, field in self.all_fields():
 
-            # If explicate_mapping only names within the mapping will be considered
-            if explicit_mapping and name not in mapping:
-                continue
+        for field_name, _ in self.all_fields():
+            mapped_name = field_name
 
-            # Convert name to mapped name if available, else use Resource's existing name
-            # If there's an override, don't use its mapping
-            if mapping and not name in override:
-                name = mapping.get(name, name)
+            # first attempt to find value in override
+            value = override.get(field_name, NotSet)
 
-            # A None value for name indicates that we shouldn't map this field
-            if not name:
-                continue
+            # if value isn't overridden, get it from the obj
+            if value == NotSet:
 
-            # Check override for the value first
-            value = NotSet
-            if override:
-                value = override.get(name, NotSet)
+                # Convert name to mapped name if available, else use Resource's existing name
+                if mapping and field_name in mapping:
+                    mapped_name = mapping[field_name]
 
-            # If we don't have a value from override, attempt to get it from source obj
-            if value is NotSet:
-                value = getattr(obj, name, NotSet)
+                    # A None value for name indicates that we shouldn't map this field
+                    if not mapped_name:
+                        continue
 
-            # If we still don't have a value, then continue
-            if value is NotSet:
-                continue
+                value = getattr(obj, mapped_name, NotSet)
 
-            self._set(field.name, value, cast)
+                # If we still don't have a value, then skip this field
+                if value is NotSet:
+                    continue
+
+            self._set(field_name, value, cast)
 
         return self
 
-    def to_obj(self, obj, mapping=None, explicit_mapping=False, override=None):
+    def to_obj(self, obj, mapping=None, override=None):
         """
         Maps the fields from the resource to an object based on identical names. Optional mapping
         parameter allows for discrepancies in naming with resource names being the
@@ -173,33 +169,41 @@ class Resource(object, metaclass=ResourceMetaClass):
         """
         if not override:
             override = {}
-        for name, field in self.valid_fields():
 
-            # If explicate_mapping only names within the mapping will be considered
-            if explicit_mapping and name not in mapping:
-                continue
+        # Gets the names of all fields with set values, then adds any included in the override
+        # This allows even NotSet values to be overridden
+        field_names = {n for n, f in self.valid_fields()} | set(override.keys())
 
-            # Convert name to mapped name if available, else use Resource's existing name
-            # If there's an override, don't use its mapping
-            if mapping and not name in override:
-                name = mapping.get(name, name)
+        for field_name in field_names:
+            mapped_name = field_name
 
-            # A None value for name indicates that we shouldn't map this field
-            if not name:
-                continue
+            # first attempt to find value in override
+            value = override.get(field_name, NotSet)
 
-            # Ensure that target obj has an attribute with a matching name
-            if not hasattr(obj, name):
-                continue
+            # if value isn't overridden, get it from the field
+            if value == NotSet:
 
-            # Check override for the value first
-            value = override.get(name, NotSet)
+                # Convert name to mapped name if available, else use Resource's existing name
+                if mapping and field_name in mapping:
+                    mapped_name = mapping[field_name]
 
-            if value is NotSet:
-                value = self._get(field.name)
+                    # A None value for name indicates that we should skip this field
+                    if not mapped_name:
+                        continue
+
+                # Ensure that target obj has an attribute with a matching name
+                if not hasattr(obj, mapped_name):
+                    continue
+
+                # get the value from the field
+                value = self._get(field_name)
+
+                # if we still don't have a value, skip this field
+                if value == NotSet:
+                    continue
 
             # Set target obj value from Resource value
-            setattr(obj, name, value)
+            setattr(obj, mapped_name, value)
 
         return obj
 
