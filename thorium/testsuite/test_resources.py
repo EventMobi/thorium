@@ -387,23 +387,3 @@ class TestComplexResource(TestCase):
         self.assertEqual(self.full.admin, co.administrator)
         self.assertEqual(self.full.birth_date, co.birth)
 
-    def test_obj_to_resource_with_explicit_mapping(self):
-        co = ComplexObj()
-        co.name = 'Timmy!'
-        co.administrator = False
-        co.birth = datetime.datetime.now()
-        co.somethingelse = 'abc'
-        res = ComplexResource.partial().from_obj(co, co.resource_mapping, explicit_mapping=True)
-        self.assertNotEqual(res.name, co.name)
-        self.assertEqual(res.name, NotSet)
-        self.assertEqual(res.admin, co.administrator)
-        self.assertEqual(res.birth_date, co.birth)
-        self.assertFalse(hasattr(res, 'somethingelse'))
-
-    def test_resource_to_object_with_explicit_mapping(self):
-        co = self.full.to_obj(ComplexObj(), ComplexObj.resource_mapping, explicit_mapping=True)
-        self.assertNotEqual(self.full.name, co.name)
-        self.assertIsNone(co.name)
-        self.assertEqual(self.full.admin, co.administrator)
-        self.assertEqual(self.full.birth_date, co.birth)
-
