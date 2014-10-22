@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name='Thorium',
-      version='0.1.37',
+      version='0.1.38',
       description='A Python framework for simple RESTful API interfaces',
       author='Ryan Easterbrook',
       author_email='ryan@eventmobi.com',
