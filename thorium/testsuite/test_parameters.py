@@ -1,7 +1,5 @@
-import types
-from unittest import TestCase, mock
+from unittest import TestCase
 from thorium import params, Parameters
-import datetime
 
 
 class SimpleParams(Parameters):

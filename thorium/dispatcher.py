@@ -2,13 +2,6 @@ from . import errors
 from .response import DetailResponse, CollectionResponse
 from .serializer import JsonSerializer
 
-#Taken from Tastypie, check that:
-        #the requested HTTP method is in allowed_methods (method_check),
-        #the class has a method that can handle the request (get_list),
-        #the user is authenticated (is_authenticated),
-        #the user is authorized (is_authorized),
-        #the user has not exceeded their throttle (throttle_check).
-
 
 class DispatcherBase(object):
     """ The Dispatcher holds a :class:`.ResourceInterface` and :class:`.Endpoint` pairing and is associated

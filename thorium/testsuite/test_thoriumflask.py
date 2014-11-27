@@ -1,6 +1,6 @@
 from flask import Flask
 import unittest
-from thorium import ThoriumFlask, RouteManager, Resource, fields, Endpoint, params, routing, Parameters
+from thorium import ThoriumFlask, RouteManager, Resource, fields, Endpoint, routing
 import json
 import datetime
 from collections import OrderedDict

@@ -24,16 +24,21 @@ class FieldValidator(object):
         # Check the type of the value matches the type of the field
         value = self._type_validation(value, cast)
 
-        # Check that the value is an acceptable option of the field
-        if self._field.flags['options'] and value not in self._field.flags['options']:
-            raise errors.ValidationError(
-                '{field} value of {value} is not acceptable, must be one of: ({options})'.format(
-                    field=self._field,
-                    value=value,
-                    options=', '.join([str(o) for o in self._field.flags['options']]))
-            )
+        self._validate_options(value)
 
         return value
+
+    def valid(self, value):
+        raise NotImplementedError()
+
+    def attempt_cast(self, value):
+        raise NotImplementedError()
+
+    def raise_validation_error(self, value):
+        raise NotImplementedError()
+
+    def additional_validation(self, value):
+        pass
 
     def _type_validation(self, value, cast):
         if not self.valid(value):
@@ -48,17 +53,14 @@ class FieldValidator(object):
         self.additional_validation(value)
         return value
 
-    def valid(self, value):
-        raise NotImplementedError()
-
-    def attempt_cast(self, value):
-        raise NotImplementedError()
-
-    def raise_validation_error(self, value):
-        raise NotImplementedError()
-
-    def additional_validation(self, value):
-        pass
+    def _validate_options(self, value):
+        if self._field.flags['options'] and value not in self._field.flags['options']:
+            raise errors.ValidationError(
+                '{field} value of {value} is not acceptable, must be one of: ({options})'.format(
+                    field=self._field,
+                    value=value,
+                    options=', '.join([str(o) for o in self._field.flags['options']]))
+            )
 
 
 class CharValidator(FieldValidator):
@@ -184,6 +186,16 @@ class ListValidator(FieldValidator):
                 except errors.ValidationError as e:
                     raise errors.ValidationError('An item within {0} raised exception: {1}'.format(self._field, e))
 
+    def _validate_options(self, value):
+        if self._field.flags['options']:
+            if not set(value).issubset(set(self._field.flags['options'])):
+                raise errors.ValidationError(
+                    '{field} value of {value} is not acceptable, list items must be one of: ({options})'.format(
+                        field=self._field,
+                        value=value,
+                        options=', '.join([str(o) for o in self._field.flags['options']]))
+                )
+
 
 class DictValidator(FieldValidator):
 
@@ -207,3 +219,13 @@ class SetValidator(FieldValidator):
 
     def raise_validation_error(self, value):
         raise errors.ValidationError('{0} expects a set, got {1}'.format(self._field, value))
+
+    def _validate_options(self, value):
+        if self._field.flags['options']:
+            if not value.issubset(set(self._field.flags['options'])):
+                raise errors.ValidationError(
+                    '{field} value of {value} is not acceptable, set items must be one of: ({options})'.format(
+                        field=self._field,
+                        value=value,
+                        options=', '.join([str(o) for o in self._field.flags['options']]))
+                )

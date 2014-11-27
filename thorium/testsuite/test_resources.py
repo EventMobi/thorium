@@ -1,5 +1,5 @@
 import types
-from unittest import TestCase, mock
+from unittest import TestCase
 from thorium import resources, fields, errors, NotSet
 import datetime
 

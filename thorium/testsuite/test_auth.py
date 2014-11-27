@@ -1,5 +1,5 @@
-from unittest import TestCase, mock
-from thorium import auth, Request, errors
+from unittest import TestCase
+from thorium import auth, errors
 
 
 class SampleAuthenticator(auth.Authenticator):

@@ -15,3 +15,5 @@ from .request import Request
 
 from .thoriumflask import ThoriumFlask
 
+from . import fields
+
