@@ -2,12 +2,12 @@ from setuptools import setup
 
 setup(
     name='Thorium',
-    version='0.1.39',
+    version='0.1.40',
     description='A Python framework for RESTful API interfaces in Flask',
     author='Ryan Easterbrook',
     author_email='ryan@eventmobi.com',
     url='https://github.com/EventMobi/thorium',
-    packages=['thorium'],
+    packages=['thorium', 'thorium.ext'],
     install_requires=['Flask==0.10.1'],
     license='BSD',
     classifiers=[
