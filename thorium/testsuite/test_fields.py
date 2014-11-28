@@ -622,16 +622,19 @@ class TestListField(TestCase):
         pass
 
     def test_field_options(self):
-        self.field.flags['options'] = ['a', 3, [1, 2], ['a', 'b']]
+        self.field.flags['options'] = ['a', 3, 1, 2, 'b']
         self.assertEqual(self.field.validate([1, 2]), [1, 2])
+        self.assertEqual(self.field.validate(['a']), ['a'])
         self.assertEqual(self.field.validate(['a', 'b']), ['a', 'b'])
         self.assertEqual(self.field.validate(None), None)
         self.assertEqual(self.field.validate(NotSet), NotSet)
+        self.assertEqual(self.field.validate([]), [])
         self.assertRaises(errors.ValidationError, self.field.validate, 'a')
         self.assertRaises(errors.ValidationError, self.field.validate, 3)
-        self.assertRaises(errors.ValidationError, self.field.validate, [])
-        self.assertRaises(errors.ValidationError, self.field.validate, ['a'])
-        self.assertRaises(errors.ValidationError, self.field.validate, ['a', 'b', 'c'])
+        self.assertRaises(
+            errors.ValidationError, self.field.validate, ['a', 'b', 'c']
+        )
+
 
 class TestCharParam(TestCase):
 
@@ -944,13 +947,15 @@ class TestListParam(TestCase):
         self.assertRaises(errors.ValidationError, param.validate, [[1, 2, 3], 4, [1.2]])
 
     def test_param_options(self):
-        self.param.flags['options'] = ['a', 3, [1, 2], ['a', 'b']]
+        self.param.flags['options'] = ['a', 'b', 1, 2, 3]
+        self.assertEqual(self.param.validate([]), [])
         self.assertEqual(self.param.validate([1, 2]), [1, 2])
+        self.assertEqual(self.param.validate(['a']), ['a'])
         self.assertEqual(self.param.validate(['a', 'b']), ['a', 'b'])
         self.assertEqual(self.param.validate(None), None)
         self.assertEqual(self.param.validate(NotSet), NotSet)
-        self.assertRaises(errors.ValidationError, self.param.validate, 'a')
-        self.assertRaises(errors.ValidationError, self.param.validate, 3)
-        self.assertRaises(errors.ValidationError, self.param.validate, [])
-        self.assertRaises(errors.ValidationError, self.param.validate, ['a'])
-        self.assertRaises(errors.ValidationError, self.param.validate, ['a', 'b', 'c'])
+        self.assertRaises(errors.ValidationError, self.param.validate, 'c')
+        self.assertRaises(errors.ValidationError, self.param.validate, 4)
+        self.assertRaises(
+            errors.ValidationError, self.param.validate, ['a', 'b', 'c']
+        )
