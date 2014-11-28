@@ -1,8 +1,8 @@
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='Thorium',
-    version='0.1.38',
+    version='0.1.39',
     description='A Python framework for RESTful API interfaces in Flask',
     author='Ryan Easterbrook',
     author_email='ryan@eventmobi.com',
