@@ -69,6 +69,8 @@ class CharValidator(FieldValidator):
         return isinstance(value, str)
 
     def attempt_cast(self, value):
+        if hasattr(value, 'isoformat'):
+            return value.isoformat()
         return str(value)
 
     def raise_validation_error(self, value):
