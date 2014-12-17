@@ -1,10 +1,13 @@
 import traceback
+
 from . import Thorium, errors
 from .request import Request
-from .resources import VALID_METHODS
+from .resources import VALID_METHODS, VALID_QUERY_PARAMETERS
 from .parameters import ParametersMetaClass
-from flask import Response as FlaskResponse, request as flaskrequest
 from .crossdomain_decorator import crossdomain
+
+from flask import Response as FlaskResponse, request as flaskrequest
+
 from werkzeug.exceptions import BadRequest as WerkzeugBadRequest
 
 
@@ -108,5 +111,5 @@ class FlaskEndpoint(object):
     def _validate_no_extra_query_params(self, flask_params):
         param_fields = dict(self.dispatcher.Parameters.all_fields())
         for name, param in flask_params.items():
-            if name not in param_fields:
+            if name not in (param_fields or VALID_QUERY_PARAMETERS):
                 raise errors.ValidationError(name + ' is not a supported query parameter.')

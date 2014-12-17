@@ -1,8 +1,7 @@
 from . import errors, fields, NotSet
-import copy
-import collections
 
 VALID_METHODS = {'get', 'post', 'put', 'patch', 'delete', 'options'}
+VALID_QUERY_PARAMETERS = {'sort', 'offset', 'limit'}
 
 
 class ResourceMetaClass(type):
