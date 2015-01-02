@@ -1,5 +1,9 @@
+# -*- coding: utf-8 -*-
+
 import numbers
 import datetime
+import uuid
+
 from . import errors, NotSet
 
 
@@ -142,7 +146,26 @@ class DateTimeValidator(FieldValidator):
                                          'format %Y-%m-%dT%H:%M:%S'.format(self._field, value))
 
     def raise_validation_error(self, value):
-        raise errors.ValidationError('{0} expects a date, got {1}'.format(self._field, value))
+        error_msg = '{0} expects a date, got {1}'.format(self._field, value)
+        raise errors.ValidationError(error_msg)
+
+
+class UUIDValidator(FieldValidator):
+
+    def valid(self, value):
+        return isinstance(value, uuid.UUID)
+
+    def attempt_cast(self, value):
+        if isinstance(value, str):
+            return uuid.UUID(value)
+        elif isinstance(value, bytes):
+            return uuid.UUID(bytes=value)
+        else:
+            raise errors.ValidationError('Invalid type. Cannot cast to UUID.')
+
+    def raise_validation_error(self, value):
+        error_msg = '{0} expects a uuid, got {1}'.format(self._field, value)
+        raise errors.ValidationError(error_msg)
 
 
 class BoolValidator(FieldValidator):
