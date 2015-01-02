@@ -9,5 +9,5 @@ machine:
 dependencies:
 # All commands run within CircleCi's virtualenv `venv`
 
-  pre:
-    - pip install Flask
+  override:
+    - python setup.py develop
