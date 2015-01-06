@@ -1,4 +1,8 @@
+# -*- coding: utf-8 -*-
+
 import json
+import uuid
+
 from collections import OrderedDict
 
 
@@ -24,7 +28,8 @@ class SerializerBase(object):
         return envelope
 
     def _serialize_data(self, data):
-        raise NotImplementedError('This method must be implemented by a subclass.')
+        err_msg = 'This method must be implemented by a subclass.'
+        raise NotImplementedError(err_msg)
 
 
 class JsonSerializer(SerializerBase):
@@ -36,5 +41,8 @@ class JsonSerializer(SerializerBase):
 def handler(obj):
     if hasattr(obj, 'isoformat'):
         return obj.isoformat()
+    if isinstance(obj, uuid.UUID):
+        return str(obj)
     else:
-        raise TypeError('Object of type %s with value of %s is not JSON serializable' % (type(obj), repr(obj)))
+        err_msg = 'Object of type %s with value of %s is not JSON serializable'
+        raise TypeError(err_msg % (type(obj), repr(obj)))
