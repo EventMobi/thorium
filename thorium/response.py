@@ -1,8 +1,13 @@
+# -*- coding: utf-8 -*-
+
 from collections import OrderedDict
 from operator import attrgetter
+
 from . import errors
 
+
 class Response(object):
+
     def __init__(self, request):
         self.meta = {}
         self.headers = {}
@@ -31,10 +36,12 @@ class Response(object):
 
     def get_response_data(self):
         raise NotImplementedError(
-            'This method must be overridden by subclass.')
+            'This method must be overridden by subclass.'
+        )
 
 
 class DetailResponse(Response):
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.response_type = 'detail'
@@ -48,17 +55,15 @@ class DetailResponse(Response):
 
 
 class CollectionResponse(Response):
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.response_type = 'collection'
         self.resources = []
         request = kwargs.get('request')
-        self.sort = request.params.sort if hasattr(request.params,
-                                                   'sort') else None
-        self.offset = request.params.page if hasattr(request.params,
-                                                   'offset') else None
-        self.limit = request.params.per_page if hasattr(request.params,
-                                                           'limit') else None
+        self.sort = getattr(request.params, 'sort', None)
+        self.offset = getattr(request.params, 'offset', None)
+        self.limit = getattr(request.params, 'limit', None)
 
     def get_response_data(self):
         data = []
@@ -72,27 +77,29 @@ class CollectionResponse(Response):
     def _sort(self):
         if self.sort:
             reverse = self._check_and_strip_first_char()
-            sort_by = self.sort.split(
-                ',')  # split query parameters into a list
+            sort_by = self.sort.split(',')
             try:
                 self.resources.sort(key=attrgetter(*sort_by),
                                     reverse=reverse)
             except:
-                raise errors.BadRequestError('Sort parameter doens\'t exist as a field')
+                raise errors.BadRequestError(
+                    "Sort parameter doesn't exist as a field"
+                )
 
     def _paginate(self):
         if self.offset and self.limit:
+            start = self.offset - 1
             end = self.offset + self.limit + 1
-            self.resources = self.resources[self.offset:end]
+            self.resources = self.resources[start:end]
 
     def _check_and_strip_first_char(self):
         reverse = True if self.sort.startswith('-') else False
-        self.sort = self.sort.strip('+')
-        self.sort = self.sort.strip('-')
+        self.sort = self.sort.lstrip('+-')
         return reverse
 
 
 class ErrorResponse(Response):
+
     def __init__(self, http_error, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.response_type = 'error'

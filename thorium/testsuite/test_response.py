@@ -1,6 +1,9 @@
+# -*- coding: utf-8 -*-
+
 from unittest import TestCase, mock
-from thorium.response import Response, DetailResponse, CollectionResponse, \
-    ErrorResponse
+
+from thorium.response import (Response, DetailResponse, CollectionResponse,
+                              ErrorResponse)
 from thorium.errors import MethodNotAllowedError
 from thorium import Resource, fields
 
@@ -11,6 +14,7 @@ class SimpleResource(Resource):
 
 
 class TestResponse(TestCase):
+
     def setUp(self):
         self.request_mock = mock.MagicMock()
         self.response = Response(request=self.request_mock)
@@ -26,6 +30,7 @@ class TestResponse(TestCase):
 
 
 class TestDetailResponse(TestCase):
+
     def setUp(self):
         self.request_mock = mock.MagicMock()
         self.response = DetailResponse(request=self.request_mock)
@@ -48,6 +53,7 @@ class TestDetailResponse(TestCase):
 
 
 class TestCollectionResponse(TestCase):
+
     def setUp(self):
         self.request_mock = mock.MagicMock()
         del self.request_mock.params.sort
@@ -85,8 +91,7 @@ class TestCollectionResponse(TestCase):
         self.response.resources = [SimpleResource(id=1, name='a'),
                                    SimpleResource(id=2, name='c'),
                                    SimpleResource(id=4, name='b'),
-                                   SimpleResource(id=3, name='b')
-        ]
+                                   SimpleResource(id=3, name='b')]
         self.response.sort = '+name,id'
         data = self.response.get_response_data()
         self.assertEqual(data[0], {'id': 1, 'name': 'a'})
@@ -103,11 +108,12 @@ class TestCollectionResponse(TestCase):
         self.response.limit = 2
         self.response.offset = 2
         data = self.response.get_response_data()
-        self.assertEqual(data[0], {'id': 3, 'name': 'b'})
-        self.assertEqual(data[1], {'id': 1, 'name': 'a'})
+        self.assertEqual(data[0], {'id': 2, 'name': 'c'})
+        self.assertEqual(data[1], {'id': 3, 'name': 'b'})
 
 
 class TestErrorResponse(TestCase):
+
     def setUp(self):
         self.request_mock = mock.MagicMock()
         self.error = MethodNotAllowedError()

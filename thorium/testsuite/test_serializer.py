@@ -1,6 +1,10 @@
+# -*- coding: utf-8 -*-
+
 import unittest
 import json
+
 from unittest import mock
+
 from thorium.response import CollectionResponse, DetailResponse, ErrorResponse
 from thorium.serializer import JsonSerializer
 from thorium.errors import MethodNotAllowedError
@@ -18,9 +22,10 @@ class TestJsonSerializer(unittest.TestCase):
         self.serializer = JsonSerializer()
         self.data = {'id': 1, 'name': 'Jim'}
         self.request = mock.MagicMock()
+        self.request.params = None
 
     def test_serialize_collection_response(self):
-        collection_response = CollectionResponse(self.request)
+        collection_response = CollectionResponse(request=self.request)
         collection_response.resources = [SimpleResource(self.data)]
         serialized_data = self.serializer.serialize_response(collection_response)
         data = json.loads(serialized_data)
@@ -31,10 +36,10 @@ class TestJsonSerializer(unittest.TestCase):
             "meta": {},
             "data": [self.data]
         }
-        self.assertEqual(data, expected_data)
+        self.assertDictEqual(data, expected_data)
 
     def test_serialize_empty_collection_response(self):
-        collection_response = CollectionResponse(self.request)
+        collection_response = CollectionResponse(request=self.request)
         serialized_data = self.serializer.serialize_response(collection_response)
         data = json.loads(serialized_data)
         expected_data = {
