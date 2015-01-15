@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from . import errors, validators, NotSet
 
 
@@ -5,8 +7,9 @@ class ResourceField(object):
     validator_type = None
     order_counter = 0
 
-    def __init__(self, default=NotSet, notnull=False, readonly=False, writeonly=False, options=None, cast=None,
-                 required=False, *args, **kwargs):
+    def __init__(self, default=NotSet, notnull=False, readonly=False,
+                 writeonly=False, options=None, cast=None, required=False,
+                 mutable=True, *args, **kwargs):
         self.flags = {
             'notnull': notnull,
             'readonly': readonly,
@@ -14,7 +17,8 @@ class ResourceField(object):
             'writeonly': writeonly,
             'options': options,
             'cast': cast,
-            'required': required
+            'required': required,
+            'mutable': mutable,
         }
 
         self.name = 'noname'
@@ -44,6 +48,10 @@ class ResourceField(object):
     @property
     def is_required(self):
         return self.flags['required']
+
+    @property
+    def is_mutable(self):
+        return self.flags['mutable']
 
     @property
     def default(self):
