@@ -60,10 +60,9 @@ class CollectionResponse(Response):
         super().__init__(*args, **kwargs)
         self.response_type = 'collection'
         self.resources = []
-        request = kwargs.get('request')
-        self.sort = getattr(request.params, 'sort', None)
-        self.offset = getattr(request.params, 'offset', None)
-        self.limit = getattr(request.params, 'limit', None)
+        self.sort = getattr(self.request.params, 'sort', None)
+        self.offset = getattr(self.request.params, 'offset', None)
+        self.limit = getattr(self.request.params, 'limit', None)
 
     def get_response_data(self):
         data = []
@@ -78,24 +77,47 @@ class CollectionResponse(Response):
         if self.sort:
             reverse = self._check_and_strip_first_char()
             sort_by = self.sort.split(',')
-            try:
-                self.resources.sort(key=attrgetter(*sort_by),
-                                    reverse=reverse)
-            except:
-                raise errors.BadRequestError(
-                    "Sort parameter doesn't exist as a field"
-                )
+            for field in sort_by:
+                if not hasattr(self.resources[0], field):
+                    raise errors.BadRequestError(
+                        'Cannot sort by field `{}`. It does not exist in the '
+                        'resource.'.format(field)
+                    )
+            self.resources.sort(key=attrgetter(*sort_by), reverse=reverse)
 
     def _paginate(self):
-        if self.offset and self.limit:
-            start = self.offset - 1
-            end = self.offset + self.limit + 1
+        if self.offset is not None and self.limit is not None:
+            self._validate_offset_and_limit()
+            if self.offset < 0:
+                raise errors.BadRequestError('Offset cannot be negative.')
+            if self.limit < 1:
+                raise errors.BadRequestError('Limit must be greater than 1.')
+            self.meta['offset'] = self.offset
+            self.meta['limit'] = self.limit
+            start = self.offset
+            end = self.offset + self.limit
             self.resources = self.resources[start:end]
 
     def _check_and_strip_first_char(self):
-        reverse = True if self.sort.startswith('-') else False
+        if not self.sort.startswith('+') and not self.sort.startswith('-'):
+            raise errors.BadRequestError('Sort requires direction to sort by.')
+        self.meta['sort'] = self.sort
+        reverse = self.sort.startswith('-')
         self.sort = self.sort.lstrip('+-')
         return reverse
+
+    def _validate_offset_and_limit(self):
+        try:
+            if isinstance(self.offset, bool) or isinstance(self.limit, bool):
+                raise TypeError
+            self.offset = int(self.offset)
+            self.limit = int(self.limit)
+        except (ValueError, TypeError):
+            raise errors.BadRequestError(
+                'Both `offset` and `limit` must be valid numbers. Could not '
+                'cast offset of `{0}` or limit of `{1}`.'
+                .format(self.offset, self.limit)
+            )
 
 
 class ErrorResponse(Response):
