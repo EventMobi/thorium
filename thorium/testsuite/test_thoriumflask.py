@@ -1,9 +1,15 @@
-from flask import Flask
+# -*- coding: utf-8 -*-
+
 import unittest
-from thorium import ThoriumFlask, RouteManager, Resource, fields, Endpoint, routing
 import json
 import datetime
+
 from collections import OrderedDict
+
+from flask import Flask
+
+from thorium import (ThoriumFlask, RouteManager, Resource, fields, Endpoint,
+                     routing)
 
 
 class PersonResource(Resource):
@@ -17,8 +23,11 @@ class CollectionParams(Resource):
     times = fields.IntField(required=True, default=1)
 
 
-@routing.collection('/api/event/<int:event_id>/people', methods=('get', 'post'), parameters_cls=CollectionParams)
-@routing.detail('/api/event/<int:event_id>/people/<int:id>', ('get', 'put', 'patch'))
+@routing.collection(path='/api/event/<int:event_id>/people',
+                    methods=('get', 'post'),
+                    parameters_cls=CollectionParams)
+@routing.detail(path='/api/event/<int:event_id>/people/<int:id>',
+                methods=('get', 'put', 'patch'))
 class PersonEndpoint(Endpoint):
     Resource = PersonResource
 
@@ -36,6 +45,7 @@ class PersonEndpoint(Endpoint):
 
     def get_collection(self):
         for x in range(self.request.params.times):
+            self.data['id'] = x
             person = PersonResource(self.data)
             self.response.resources.append(person)
 
@@ -79,7 +89,7 @@ class TestThoriumFlask(unittest.TestCase):
         self.assertEqual(len(items), 1)
         self.assertEqual(items[0]['name'], 'Timmy')
         self.assertEqual(items[0]['admin'], True)
-        self.assertEqual(items[0]['id'], 42)
+        self.assertEqual(items[0]['id'], 0)
 
     def test_get_with_query_param(self):
         rv = self.c.open('/api/event/1/people?times=1', method='GET')
@@ -89,13 +99,116 @@ class TestThoriumFlask(unittest.TestCase):
         rv = self.c.open('/api/event/1/people?times=1&invalid=1', method='GET')
         self.assertEqual(rv.status_code, 400)
 
+    def test_get_with_sort(self):
+        rv = self.c.open('/api/event/1/people?times=5&sort=-id', method='GET')
+        self.assertEqual(rv.status_code, 200)
+        body = json.loads(rv.data.decode())
+        items = body['data']
+        meta = body['meta']
+        self.assertDictEqual(meta, {'sort': '-id'})
+        self.assertIsInstance(items, list)
+        self.assertEqual(len(items), 5)
+        for x in range(5):
+            self.assertDictEqual(items[x], {
+                'id': 4 - x,
+                'name': 'Timmy',
+                'birth_date': '1974-03-13T00:00:00',
+                'admin': True
+            })
+
+    def test_get_with_sort_multiple(self):
+        rv = self.c.open('/api/event/1/people?times=5&sort=-name,id',
+                         method='GET')
+        self.assertEqual(rv.status_code, 200)
+        body = json.loads(rv.data.decode())
+        items = body['data']
+        meta = body['meta']
+        self.assertDictEqual(meta, {'sort': '-name,id'})
+        self.assertEqual(len(items), 5)
+        for x in range(5):
+            self.assertDictEqual(items[x], {
+                'id': 4 - x,
+                'name': 'Timmy',
+                'birth_date': '1974-03-13T00:00:00',
+                'admin': True
+            })
+
+    def test_get_with_sort_invalid(self):
+        rv = self.c.open('/api/event/1/people?times=5&sort=id', method='GET')
+        self.assertEqual(rv.status_code, 400)
+
+        rv = self.c.open('/api/event/1/people?times=5&sort=+YO', method='GET')
+        self.assertEqual(rv.status_code, 400)
+
+        rv = self.c.open('/api/event/1/people?times=5&sort=id,name',
+                         method='GET')
+        self.assertEqual(rv.status_code, 400)
+
+        rv = self.c.open('/api/event/1/people?times=5&sort=+id,None',
+                         method='GET')
+        self.assertEqual(rv.status_code, 400)
+
+    def test_get_with_pagination(self):
+        rv = self.c.open('/api/event/1/people?times=5&offset=2&limit=2',
+                         method='GET')
+        self.assertEqual(rv.status_code, 200)
+        body = json.loads(rv.data.decode())
+        items = body['data']
+        meta = body['meta']
+        self.assertDictEqual(meta, {'offset': 2, 'limit': 2})
+        self.assertEqual(len(items), 2)
+        self.assertEqual(items[0]['id'], 2)
+        self.assertEqual(items[1]['id'], 3)
+
+        rv = self.c.open('/api/event/1/people?times=5&offset=5&limit=10',
+                         method='GET')
+        self.assertEqual(rv.status_code, 200)
+        body = json.loads(rv.data.decode())
+        items = body['data']
+        meta = body['meta']
+        self.assertDictEqual(meta, {'offset': 5, 'limit': 10})
+        self.assertEqual(items, [])
+
+    def test_get_with_pagination_invalid(self):
+        rv = self.c.open('/api/event/1/people?times=5&offset=-1&limit=5',
+                         method='GET')
+        self.assertEqual(rv.status_code, 400)
+
+        rv = self.c.open('/api/event/1/people?times=5&offset=0&limit=0',
+                         method='GET')
+        self.assertEqual(rv.status_code, 400)
+
+        rv = self.c.open('/api/event/1/people?times=5&offset=True&limit=1',
+                         method='GET')
+        self.assertEqual(rv.status_code, 400)
+
+        rv = self.c.open('/api/event/1/people?times=5&offset=hello&limit=5',
+                         method='GET')
+        self.assertEqual(rv.status_code, 400)
+
+    def test_get_with_sort_and_pagination(self):
+        rv = self.c.open(
+            '/api/event/1/people?times=5&sort=-id&offset=2&limit=2',
+            method='GET'
+        )
+        self.assertEqual(rv.status_code, 200)
+        body = json.loads(rv.data.decode())
+        items = body['data']
+        meta = body['meta']
+        self.assertDictEqual(meta, {'sort': '-id', 'offset': 2, 'limit': 2})
+        self.assertEqual(len(items), 2)
+        self.assertEqual(items[0]['id'], 2)
+        self.assertEqual(items[1]['id'], 1)
+
     def test_post_simple(self):
         data = {
             'name': 'Snoopy',
             'birth_date': datetime.datetime(1974, 3, 13),
             'admin': True
         }
-        rv = self.c.post('/api/event/1/people', data=json.dumps(data, default=handler), content_type='application/json')
+        rv = self.c.post('/api/event/1/people',
+                         data=json.dumps(data, default=handler),
+                         content_type='application/json')
         self.assertEqual(rv.status_code, 201)
 
     def test_post_partial_resource(self):
@@ -103,7 +216,9 @@ class TestThoriumFlask(unittest.TestCase):
             'birth_date': datetime.datetime(1974, 3, 13),
             'admin': True
         }
-        rv = self.c.post('/api/event/1/people', data=json.dumps(data, default=handler), content_type='application/json')
+        rv = self.c.post('/api/event/1/people',
+                         data=json.dumps(data, default=handler),
+                         content_type='application/json')
         self.assertEqual(rv.status_code, 400)
 
     def test_envelope_field_order(self):
@@ -127,11 +242,15 @@ class TestThoriumFlask(unittest.TestCase):
         self.assertEqual(data.popitem(last=False)[0], 'admin')
 
     def test_post_empty_body(self):
-        rv = self.c.post('/api/event/1/people', data=json.dumps({}, default=handler), content_type='application/json')
+        rv = self.c.post('/api/event/1/people',
+                         data=json.dumps({}, default=handler),
+                         content_type='application/json')
         self.assertEqual(rv.status_code, 400)
 
     def test_post_no_body(self):
-        rv = self.c.post('/api/event/1/people', data=None, content_type='application/json')
+        rv = self.c.post('/api/event/1/people',
+                         data=None,
+                         content_type='application/json')
         self.assertEqual(rv.status_code, 400)
 
 
@@ -155,7 +274,8 @@ class TestResourceSpeed(unittest.TestCase):
             times = []
             for x in range(20):
                 start_time = time.time()
-                rv = self.c.open('/api/event/1/people?times={0}'.format(y), method='GET')
+                rv = self.c.open('/api/event/1/people?times={0}'.format(y),
+                                 method='GET')
                 times.append(time.time() - start_time)
                 self.assertEqual(rv.status_code, 200)
             print('{0} - avg time: {1}'.format(y, sum(times) / len(times)))
@@ -165,4 +285,7 @@ def handler(obj):
     if hasattr(obj, 'isoformat'):
         return obj.isoformat()
     else:
-        raise TypeError('Object of type %s with value of %s is not JSON serializable' % (type(obj), repr(obj)))
+        raise TypeError(
+            'Object of type %s with value of %s is not JSON serializable' %
+            (type(obj), repr(obj))
+        )
