@@ -134,14 +134,7 @@ class TestThoriumFlask(unittest.TestCase):
             })
 
     def test_get_with_sort_invalid(self):
-        rv = self.c.open('/api/event/1/people?times=5&sort=id', method='GET')
-        self.assertEqual(rv.status_code, 400)
-
         rv = self.c.open('/api/event/1/people?times=5&sort=+YO', method='GET')
-        self.assertEqual(rv.status_code, 400)
-
-        rv = self.c.open('/api/event/1/people?times=5&sort=id,name',
-                         method='GET')
         self.assertEqual(rv.status_code, 400)
 
         rv = self.c.open('/api/event/1/people?times=5&sort=+id,None',

@@ -99,8 +99,6 @@ class CollectionResponse(Response):
             self.resources = self.resources[start:end]
 
     def _check_and_strip_first_char(self):
-        if not self.sort.startswith('+') and not self.sort.startswith('-'):
-            raise errors.BadRequestError('Sort requires direction to sort by.')
         self.meta['sort'] = self.sort
         reverse = self.sort.startswith('-')
         self.sort = self.sort.lstrip('+-')

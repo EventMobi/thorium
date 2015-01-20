@@ -97,7 +97,7 @@ class TestCollectionResponse(TestCase):
 
     def test_get_response_data_sort_ascending_multiple(self):
         self.response.resources = self.test_data
-        self.response.sort = '+name,id'
+        self.response.sort = 'name,id'
         data = self.response.get_response_data()
         self.assertEqual(len(data), len(self.test_data))
         self.assertEqual(data[0], {'id': 1, 'name': 'a'})
@@ -130,9 +130,6 @@ class TestCollectionResponse(TestCase):
 
     def test_get_response_data_sort_invalid(self):
         self.response.resources = self.test_data
-        self.response.sort = 'id'
-        self.assertRaises(BadRequestError, self.response.get_response_data)
-
         self.response.sort = '+NotAField'
         self.assertRaises(BadRequestError, self.response.get_response_data)
 
