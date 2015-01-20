@@ -52,6 +52,9 @@ class Resource(object, metaclass=ResourceMetaClass):
 
     def __init__(self, *args, **kwargs):
         self._partial = getattr(self, '_partial', False)
+        self.sort = None
+        self.offset = None
+        self.limit = None
         self._init(*args, **kwargs)
 
     @classmethod
