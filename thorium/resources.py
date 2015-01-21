@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
+
 from . import errors, fields, NotSet
-import copy
-import collections
+
 
 VALID_METHODS = {'get', 'post', 'put', 'patch', 'delete', 'options'}
+VALID_QUERY_PARAMETERS = {'sort', 'offset', 'limit'}
 
 
 class ResourceMetaClass(type):
@@ -50,6 +52,9 @@ class Resource(object, metaclass=ResourceMetaClass):
 
     def __init__(self, *args, **kwargs):
         self._partial = getattr(self, '_partial', False)
+        self.sort = None
+        self.offset = None
+        self.limit = None
         self._init(*args, **kwargs)
 
     @classmethod
