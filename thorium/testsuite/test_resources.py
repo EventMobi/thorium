@@ -417,3 +417,9 @@ class TestComplexResource(TestCase):
         self.assertEqual(self.full.admin, co.administrator)
         self.assertEqual(self.full.birth_date, co.birth)
 
+    def test_resource_to_object_not_mutable_field(self):
+        co = ComplexObj()
+        co.birth = datetime.datetime(1995, 1, 1)
+        self.assertRaises(errors.BadRequestError,
+                          self.full.to_obj,
+                          co, co.resource_mapping)

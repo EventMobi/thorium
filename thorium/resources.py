@@ -222,6 +222,20 @@ class Resource(object, metaclass=ResourceMetaClass):
                 if value == NotSet:
                     continue
 
+            # check if field is mutable
+            field = self._fields.get(field_name, None)
+            if mapping:
+                for map_from, map_to in mapping.items():
+                    if field_name == map_to:
+                        field = self._fields[map_from]
+            if (not field.is_mutable and
+                    getattr(obj, mapped_name) not in (None, NotSet, value)):
+                raise errors.BadRequestError(
+                    'Attempted to update value of non-mutable field {0} from '
+                    '{1} to {2}.'
+                    .format(field, getattr(obj, mapped_name), value)
+                )
+
             # Set target obj value from Resource value
             setattr(obj, mapped_name, value)
 
@@ -288,8 +302,8 @@ class Resource(object, metaclass=ResourceMetaClass):
                 self.is_set(field_name) and
                 self._get(field_name) != (field.default or value)):
             raise errors.ValidationError(
-                'Attempted to update value of non-mutable field {0} to {1}.'
-                .format(field, value)
+                'Attempted to update value of non-mutable field {0} from '
+                '{1} to {2}.'.format(field, self._get(field_name), value)
             )
         self._values[field_name] = field.validate(value, cast=cast)
         return self._values[field_name]
