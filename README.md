@@ -1,6 +1,6 @@
 # thorium
 
-A simple RESTful API framework built on Flaski and Python 3.
+A simple RESTful API framework built on Flask and Python 3.
 
 ## Documentation
 
