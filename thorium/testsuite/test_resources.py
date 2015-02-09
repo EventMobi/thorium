@@ -44,11 +44,6 @@ class TestSimpleResource(TestCase):
         }
         self.assertRaises(errors.ValidationError, self.resource.from_dict, data)
 
-        data = {
-            'not_mutable': 123
-        }
-        self.assertRaises(errors.ValidationError, self.resource.from_dict, data)
-
     def test_from_dict_extra_fields(self):
         data = {
             'name': 'Zaphod',
@@ -124,12 +119,6 @@ class TestSimpleResource(TestCase):
         res.to_default('name')
         self.assertEqual(res._values['name'], None)
         self.assertEqual(res.name, None)
-
-    def test_to_default_invalid(self):
-        res = SimpleResource.partial(not_mutable=123)
-        self.assertEqual(res._values['not_mutable'], 123)
-        self.assertEqual(res.not_mutable, 123)
-        self.assertRaises(errors.ValidationError, res.to_default, 'not_mutable')
 
     def test_items(self):
         data = {
@@ -233,7 +222,7 @@ class TestComplexResource(TestCase):
         self.assertEqual(res.name, None)
         self.assertEqual(res.age, None)
         self.assertEqual(res.admin, True)
-        self.assertEqual(res.birth_date, NotSet)
+        self.assertEqual(res.birth_date, None)
 
     def test_resource_init_from_obj_full(self):
         co = ComplexObj()
@@ -337,7 +326,6 @@ class TestComplexResource(TestCase):
         self.assertRaises(errors.ValidationError, setattr, self.full, 'name', NotSet)
         self.assertRaises(errors.ValidationError, setattr, self.full, 'age', NotSet)
         self.assertRaises(errors.ValidationError, setattr, self.full, 'admin', NotSet)
-        self.assertRaises(errors.ValidationError, setattr, self.full, 'birth_date', NotSet)
 
         data = {'name': 'Socrates', 'age': 71, 'admin': NotSet, 'birth_date': datetime.datetime.now()}
         self.assertRaises(errors.ValidationError, ComplexResource, data)
@@ -416,10 +404,3 @@ class TestComplexResource(TestCase):
         self.assertEqual(self.full.name, co.name)
         self.assertEqual(self.full.admin, co.administrator)
         self.assertEqual(self.full.birth_date, co.birth)
-
-    def test_resource_to_object_not_mutable_field(self):
-        co = ComplexObj()
-        co.birth = datetime.datetime(1995, 1, 1)
-        self.assertRaises(errors.BadRequestError,
-                          self.full.to_obj,
-                          co, co.resource_mapping)

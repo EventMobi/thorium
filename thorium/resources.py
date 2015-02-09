@@ -52,9 +52,7 @@ class Resource(object, metaclass=ResourceMetaClass):
 
     def __new__(cls, *args, **kwargs):
         obj = super().__new__(cls)
-        obj._values = {}
-        for name, field in obj.all_fields():
-            obj._values[name] = field.default if field.is_mutable else NotSet
+        obj._values = {name: field.default for name, field in obj.all_fields()}
         return obj
 
     def __init__(self, *args, **kwargs):
@@ -117,8 +115,8 @@ class Resource(object, metaclass=ResourceMetaClass):
     def clear(self):
         for name, field in self.all_fields():
 
-            # do nothing with required or not mutable fields
-            if field.is_required or not field.is_mutable:
+            # do nothing with required fields
+            if field.is_required:
                 continue
 
             if self._partial:
@@ -222,20 +220,6 @@ class Resource(object, metaclass=ResourceMetaClass):
                 if value == NotSet:
                     continue
 
-            # check if field is mutable
-            field = self._fields.get(field_name, None)
-            if mapping:
-                for map_from, map_to in mapping.items():
-                    if field_name == map_to:
-                        field = self._fields[map_from]
-            if (not field.is_mutable and
-                    getattr(obj, mapped_name) not in (None, NotSet, value)):
-                raise errors.BadRequestError(
-                    'Attempted to update value of non-mutable field {0} from '
-                    '{1} to {2}.'
-                    .format(field, getattr(obj, mapped_name), value)
-                )
-
             # Set target obj value from Resource value
             setattr(obj, mapped_name, value)
 
@@ -265,9 +249,7 @@ class Resource(object, metaclass=ResourceMetaClass):
 
     def _validate_full(self):
         for name, field in self._fields.items():
-            if not self.is_set(name) and not field.is_mutable:
-                self.to_default(name)
-            if not self.is_set(name) and not field.is_readonly:
+            if not self.is_set(name) and not field.is_readonly and field.is_mutable:
                 raise errors.ValidationError(
                     'Field {0} is NotSet, expected full resource.'
                     .format(field)
@@ -293,17 +275,10 @@ class Resource(object, metaclass=ResourceMetaClass):
 
     def _set(self, field_name, value, cast=False):
         field = self._fields[field_name]
-        if not self._partial and not field.is_readonly and value == NotSet:
+        if not self._partial and not field.is_readonly and field.is_mutable and value == NotSet:
             raise errors.ValidationError(
                 'Attempted to set field {0} of a non-partial resource to '
                 'NotSet'.format(field)
-            )
-        if (not field.is_mutable and
-                self.is_set(field_name) and
-                self._get(field_name) != (field.default or value)):
-            raise errors.ValidationError(
-                'Attempted to update value of non-mutable field {0} from '
-                '{1} to {2}.'.format(field, self._get(field_name), value)
             )
         self._values[field_name] = field.validate(value, cast=cast)
         return self._values[field_name]
