@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from . import errors, validators, NotSet
 
 
@@ -5,8 +7,9 @@ class ResourceField(object):
     validator_type = None
     order_counter = 0
 
-    def __init__(self, default=NotSet, notnull=False, readonly=False, writeonly=False, options=None, cast=None,
-                 required=False, *args, **kwargs):
+    def __init__(self, default=NotSet, notnull=False, readonly=False,
+                 writeonly=False, options=None, cast=None, required=False,
+                 *args, **kwargs):
         self.flags = {
             'notnull': notnull,
             'readonly': readonly,
@@ -14,7 +17,7 @@ class ResourceField(object):
             'writeonly': writeonly,
             'options': options,
             'cast': cast,
-            'required': required
+            'required': required,
         }
 
         self.name = 'noname'
@@ -50,7 +53,8 @@ class ResourceField(object):
         return self.flags['default']
 
     def set_unique_attributes(self, **kwargs):
-        pass
+        for key, value in kwargs.items():
+            self.flags[key] = value
 
     def _get_validator(self):
         if self.validator_type:

@@ -26,7 +26,7 @@ class TestSimpleResource(TestCase):
         data = {
             'name': 'Fred',
             'age': 9001,
-            'readonly': 10
+            'readonly': 10,
         }
         self.resource.from_dict(data)
         self.assertEqual(self.resource.name, data['name'])
@@ -114,7 +114,7 @@ class TestSimpleResource(TestCase):
         data = {
             'name': 'Bob',
             'age': 401,
-            'readonly': 1
+            'readonly': 1,
         }
         self.resource.from_dict(data)
         items = self.resource.items()
@@ -134,6 +134,8 @@ class TestSimpleResource(TestCase):
         so.name = 'Slartibartfast'
         so.age = 5000050
         self.resource.from_obj(so)
+        self.assertEqual(self.resource.name, so.name)
+        self.assertEqual(self.resource.age, so.age)
 
     def test_obj_to_resource_invalid(self):
         so = SimpleObj()
@@ -307,7 +309,6 @@ class TestComplexResource(TestCase):
         self.assertRaises(errors.ValidationError, setattr, self.full, 'name', NotSet)
         self.assertRaises(errors.ValidationError, setattr, self.full, 'age', NotSet)
         self.assertRaises(errors.ValidationError, setattr, self.full, 'admin', NotSet)
-        self.assertRaises(errors.ValidationError, setattr, self.full, 'birth_date', NotSet)
 
         data = {'name': 'Socrates', 'age': 71, 'admin': NotSet, 'birth_date': datetime.datetime.now()}
         self.assertRaises(errors.ValidationError, ComplexResource, data)
@@ -386,4 +387,3 @@ class TestComplexResource(TestCase):
         self.assertEqual(self.full.name, co.name)
         self.assertEqual(self.full.admin, co.administrator)
         self.assertEqual(self.full.birth_date, co.birth)
-
