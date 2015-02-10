@@ -8,7 +8,6 @@ class SimpleResource(resources.Resource):
     name = fields.CharField(default=None)
     age = fields.IntField(default=None)
     readonly = fields.IntField(readonly=True)
-    not_mutable = fields.IntField(mutable=False, default=0)
 
 
 class SimpleObj(object):
@@ -16,7 +15,6 @@ class SimpleObj(object):
         self.name = None
         self.age = None
         self.extra = None
-        self.not_mutable = None
 
 
 class TestSimpleResource(TestCase):
@@ -29,13 +27,11 @@ class TestSimpleResource(TestCase):
             'name': 'Fred',
             'age': 9001,
             'readonly': 10,
-            'not_mutable': 0
         }
         self.resource.from_dict(data)
         self.assertEqual(self.resource.name, data['name'])
         self.assertEqual(self.resource.age, data['age'])
         self.assertEqual(self.resource.readonly, data['readonly'])
-        self.assertEqual(self.resource.not_mutable, data['not_mutable'])
 
     def test_from_dict_invalid(self):
         data = {
@@ -66,7 +62,6 @@ class TestSimpleResource(TestCase):
         self.resource.from_dict(data)
         self.assertEqual(self.resource.name, data['name'])
         self.assertEqual(self.resource.age, None)
-        self.assertEqual(self.resource.not_mutable, 0)
 
     def test_to_dict(self):
         self.resource.name = 'Jack Daniel'
@@ -76,7 +71,6 @@ class TestSimpleResource(TestCase):
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(self.resource.name, data['name'])
         self.assertEqual(self.resource.age, data['age'])
-        self.assertEqual(self.resource.not_mutable, data['not_mutable'])
 
         data2 = self.resource.to_dict()
         self.assertEqual(data, data2)
@@ -87,7 +81,6 @@ class TestSimpleResource(TestCase):
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(res.name, data['name'])
         self.assertNotIn('age', data)
-        self.assertNotIn('not_mutable', data)
 
     def test_valid_fields(self):
         res = SimpleResource.partial(name='Arthur')
@@ -96,20 +89,17 @@ class TestSimpleResource(TestCase):
         valid_fields = dict(valid_fields)
         self.assertIn('name', valid_fields)
         self.assertNotIn('age', valid_fields)
-        self.assertNotIn('not_mutable', valid_fields)
         self.assertEqual(dict(res.items())['name'], 'Arthur')
 
     def test_valid_fields_with_defaults_is_not_set(self):
         res = SimpleResource.partial(name='Trillian')
         dict(res.all_fields())['age'].flags['default'] = 0
         self.assertEqual(res.age, NotSet)
-        self.assertEqual(res.not_mutable, NotSet)
         valid_fields = res.valid_fields()
         self.assertTrue(isinstance(valid_fields, types.GeneratorType))
         valid_fields = dict(valid_fields)
         self.assertIn('name', valid_fields)
         self.assertNotIn('age', valid_fields)
-        self.assertNotIn('not_mutable', valid_fields)
         self.assertEqual(dict(res.items())['name'], 'Trillian')
 
     def test_to_default(self):
@@ -125,7 +115,6 @@ class TestSimpleResource(TestCase):
             'name': 'Bob',
             'age': 401,
             'readonly': 1,
-            'not_mutable': 0
         }
         self.resource.from_dict(data)
         items = self.resource.items()
@@ -139,25 +128,19 @@ class TestSimpleResource(TestCase):
         self.assertEqual(self.resource.name, so.name)
         self.assertEqual(self.resource.age, so.age)
         self.assertEqual(None, so.extra)
-        self.assertEqual(self.resource.not_mutable, so.not_mutable)
 
     def test_obj_to_resource(self):
         so = SimpleObj()
         so.name = 'Slartibartfast'
         so.age = 5000050
-        so.not_mutable = 0
         self.resource.from_obj(so)
         self.assertEqual(self.resource.name, so.name)
         self.assertEqual(self.resource.age, so.age)
-        self.assertEqual(self.resource.not_mutable, so.not_mutable)
 
     def test_obj_to_resource_invalid(self):
         so = SimpleObj()
         so.name = 'somename'
         so.age = 'Not an age'
-        self.assertRaises(errors.ValidationError, self.resource.from_obj, so)
-
-        so.not_mutable = 123
         self.assertRaises(errors.ValidationError, self.resource.from_obj, so)
 
     def test_seperate_resource_instsances_do_not_share_data(self):
@@ -170,7 +153,7 @@ class ComplexResource(resources.Resource):
     name = fields.CharField(max_length=20)
     age = fields.IntField()
     admin = fields.BoolField(default=True)
-    birth_date = fields.DateTimeField(mutable=False)
+    birth_date = fields.DateTimeField()
 
 
 class ComplexObj(object):

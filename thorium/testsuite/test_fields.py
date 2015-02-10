@@ -37,6 +37,25 @@ class TestNotSet(TestCase):
         self.assertTrue(hit)
 
 
+class TestExtraFlags(TestCase):
+
+    def setUp(self):
+        self.extra = {
+            'extra_bool': True,
+            'extra_str': 'Yes',
+            'extra_int': 100
+        }
+        self.field = fields.IntField(default=99, **self.extra)
+
+    def test_extra_flags(self):
+        self.assertEqual(self.field.flags['extra_bool'],
+                         self.extra['extra_bool'])
+        self.assertEqual(self.field.flags['extra_str'],
+                         self.extra['extra_str'])
+        self.assertEqual(self.field.flags['extra_int'],
+                         self.extra['extra_int'])
+
+
 class TestFieldValidator(TestCase):
 
     def setUp(self):

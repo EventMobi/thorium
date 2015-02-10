@@ -249,7 +249,7 @@ class Resource(object, metaclass=ResourceMetaClass):
 
     def _validate_full(self):
         for name, field in self._fields.items():
-            if not self.is_set(name) and not field.is_readonly and field.is_mutable:
+            if not self.is_set(name) and not field.is_readonly:
                 raise errors.ValidationError(
                     'Field {0} is NotSet, expected full resource.'
                     .format(field)
@@ -275,7 +275,7 @@ class Resource(object, metaclass=ResourceMetaClass):
 
     def _set(self, field_name, value, cast=False):
         field = self._fields[field_name]
-        if not self._partial and not field.is_readonly and field.is_mutable and value == NotSet:
+        if not self._partial and not field.is_readonly and value == NotSet:
             raise errors.ValidationError(
                 'Attempted to set field {0} of a non-partial resource to '
                 'NotSet'.format(field)

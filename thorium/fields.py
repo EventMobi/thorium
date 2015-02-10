@@ -9,7 +9,7 @@ class ResourceField(object):
 
     def __init__(self, default=NotSet, notnull=False, readonly=False,
                  writeonly=False, options=None, cast=None, required=False,
-                 mutable=True, *args, **kwargs):
+                 *args, **kwargs):
         self.flags = {
             'notnull': notnull,
             'readonly': readonly,
@@ -18,7 +18,6 @@ class ResourceField(object):
             'options': options,
             'cast': cast,
             'required': required,
-            'mutable': mutable,
         }
 
         self.name = 'noname'
@@ -50,15 +49,12 @@ class ResourceField(object):
         return self.flags['required']
 
     @property
-    def is_mutable(self):
-        return self.flags['mutable']
-
-    @property
     def default(self):
         return self.flags['default']
 
     def set_unique_attributes(self, **kwargs):
-        pass
+        for key, value in kwargs.items():
+            self.flags[key] = value
 
     def _get_validator(self):
         if self.validator_type:
