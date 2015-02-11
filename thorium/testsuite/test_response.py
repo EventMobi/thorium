@@ -119,7 +119,7 @@ class TestCollectionResponse(TestCase):
 
     def test_get_response_data_sort_descending_multiple(self):
         self.response.resources = self.test_data
-        self.response.sort = '-name,id'
+        self.response.sort = '-name,-id'
         data = self.response.get_response_data()
         self.assertEqual(len(data), len(self.test_data))
         self.assertEqual(data[0], {'id': 5, 'name': 'd'})
