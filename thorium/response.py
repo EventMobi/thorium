@@ -79,18 +79,7 @@ class CollectionResponse(Response):
             sort_by = self.sort.split(',')
             for field in reversed(sort_by):
                 field, reverse = self._check_and_strip_first_char(field)
-                if not hasattr(self.resources[0], field):
-                    raise errors.BadRequestError(
-                        'Cannot sort by field `{}`. It does not exist in the '
-                        'resource.'.format(field)
-                    )
-                elif (isinstance(getattr(self.resources[0], field), dict) or
-                      isinstance(getattr(self.resources[0], field), list) or
-                      isinstance(getattr(self.resources[0], field), set)):
-                    raise errors.BadRequestError(
-                        'Cannot sort by field `{}`. Field type is not sortable.'
-                        .format(field)
-                    )
+                self._validate_sort_field(field)
                 not_sortable, sortable, = [], []
                 for resource in self.resources:
                     if getattr(resource, field) is None:
@@ -117,10 +106,23 @@ class CollectionResponse(Response):
             self.resources = self.resources[start:end]
 
     def _check_and_strip_first_char(self, field):
-        field = field.strip()
         reverse = field.startswith('-')
         field = field.lstrip('+-')
         return field, reverse
+
+    def _validate_sort_field(self, field):
+        if not hasattr(self.resources[0], field):
+            raise errors.BadRequestError(
+                'Cannot sort by field `{}`. It does not exist in the resource.'
+                .format(field)
+            )
+        elif (isinstance(getattr(self.resources[0], field), dict) or
+              isinstance(getattr(self.resources[0], field), list) or
+              isinstance(getattr(self.resources[0], field), set)):
+            raise errors.BadRequestError(
+                'Cannot sort by field `{}`. Field type is not sortable.'
+                .format(field)
+            )
 
     def _validate_offset_and_limit(self):
         try:
