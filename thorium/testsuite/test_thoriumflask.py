@@ -16,7 +16,7 @@ class PersonResource(Resource):
     id = fields.IntField(default=None)
     name = fields.CharField()
     birth_date = fields.DateTimeField()
-    admin = fields.BoolField()
+    admin = fields.BoolField(default=False)
 
 
 class CollectionParams(Resource):
@@ -117,13 +117,31 @@ class TestThoriumFlask(unittest.TestCase):
             })
 
     def test_get_with_sort_multiple(self):
-        rv = self.c.open('/api/event/1/people?times=5&sort=-name,id',
+        rv = self.c.open('/api/event/1/people?times=5&sort=-name,-id',
                          method='GET')
         self.assertEqual(rv.status_code, 200)
         body = json.loads(rv.data.decode())
         items = body['data']
         meta = body['meta']
-        self.assertDictEqual(meta, {'sort': '-name,id'})
+        self.assertDictEqual(meta, {'sort': '-name,-id'})
+        self.assertEqual(len(items), 5)
+        for x in range(5):
+            self.assertDictEqual(items[x], {
+                'id': 4 - x,
+                'name': 'Timmy',
+                'birth_date': '1974-03-13T00:00:00',
+                'admin': True
+            })
+
+    def test_get_with_sort_mixed(self):
+        rv = self.c.open('/api/event/1/people?times=5&sort=name,-id',
+                         method='GET')
+        self.assertEqual(rv.status_code, 200)
+        body = json.loads(rv.data.decode())
+        items = body['data']
+        print(body)
+        meta = body['meta']
+        self.assertDictEqual(meta, {'sort': 'name,-id'})
         self.assertEqual(len(items), 5)
         for x in range(5):
             self.assertDictEqual(items[x], {

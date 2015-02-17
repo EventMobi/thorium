@@ -75,15 +75,22 @@ class CollectionResponse(Response):
 
     def _sort(self):
         if self.sort:
-            reverse = self._check_and_strip_first_char()
+            self.meta['sort'] = self.sort
             sort_by = self.sort.split(',')
-            for field in sort_by:
-                if not hasattr(self.resources[0], field):
-                    raise errors.BadRequestError(
-                        'Cannot sort by field `{}`. It does not exist in the '
-                        'resource.'.format(field)
-                    )
-            self.resources.sort(key=attrgetter(*sort_by), reverse=reverse)
+            for field in reversed(sort_by):
+                field, reverse = self._check_and_strip_first_char(field)
+                self._validate_sort_field(field)
+                not_sortable, sortable, = [], []
+                for resource in self.resources:
+                    if getattr(resource, field) is None:
+                        not_sortable.append(resource)
+                    else:
+                        sortable.append(resource)
+                sortable.sort(key=attrgetter(field), reverse=reverse)
+                if reverse:
+                    self.resources = sortable + not_sortable
+                else:
+                    self.resources = not_sortable + sortable
 
     def _paginate(self):
         if self.offset is not None and self.limit is not None:
@@ -98,11 +105,24 @@ class CollectionResponse(Response):
             end = self.offset + self.limit
             self.resources = self.resources[start:end]
 
-    def _check_and_strip_first_char(self):
-        self.meta['sort'] = self.sort
-        reverse = self.sort.startswith('-')
-        self.sort = self.sort.lstrip('+-')
-        return reverse
+    def _check_and_strip_first_char(self, field):
+        reverse = field.startswith('-')
+        field = field.lstrip('+-')
+        return field, reverse
+
+    def _validate_sort_field(self, field):
+        if not hasattr(self.resources[0], field):
+            raise errors.BadRequestError(
+                'Cannot sort by field `{}`. It does not exist in the resource.'
+                .format(field)
+            )
+        elif (isinstance(getattr(self.resources[0], field), dict) or
+              isinstance(getattr(self.resources[0], field), list) or
+              isinstance(getattr(self.resources[0], field), set)):
+            raise errors.BadRequestError(
+                'Cannot sort by field `{}`. Field type is not sortable.'
+                .format(field)
+            )
 
     def _validate_offset_and_limit(self):
         try:

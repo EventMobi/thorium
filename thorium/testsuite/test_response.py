@@ -13,6 +13,14 @@ class SimpleResource(Resource):
     name = fields.CharField()
 
 
+class ComplexResource(Resource):
+    id = fields.IntField(notnull=True)
+    name = fields.CharField(default='noname')
+    items = fields.ListField(item_type=fields.IntField())
+    hash_map = fields.DictField(notnull=True)
+    unique = fields.SetField()
+
+
 class TestResponse(TestCase):
 
     def setUp(self):
@@ -67,6 +75,16 @@ class TestCollectionResponse(TestCase):
             SimpleResource(id=3, name='d'),
             SimpleResource(id=5, name='d'),
         ]
+        self.test_data_none = [
+            SimpleResource(id=1, name='a'),
+            SimpleResource(id=1, name=None),
+            SimpleResource(id=3, name='b'),
+        ]
+        self.test_data_complex = [
+            ComplexResource(id=3, items=[], hash_map={'one': 1}, unique=set()),
+            ComplexResource(id=1, items=[1], hash_map={}, unique=None),
+            ComplexResource(id=2, items=None, hash_map={}, unique={1, 2})
+        ]
 
     def test_attributes(self):
         self.assertEqual(self.response.status_code, 200)
@@ -119,7 +137,7 @@ class TestCollectionResponse(TestCase):
 
     def test_get_response_data_sort_descending_multiple(self):
         self.response.resources = self.test_data
-        self.response.sort = '-name,id'
+        self.response.sort = '-name,-id'
         data = self.response.get_response_data()
         self.assertEqual(len(data), len(self.test_data))
         self.assertEqual(data[0], {'id': 5, 'name': 'd'})
@@ -128,9 +146,37 @@ class TestCollectionResponse(TestCase):
         self.assertEqual(data[3], {'id': 4, 'name': 'b'})
         self.assertEqual(data[4], {'id': 1, 'name': 'a'})
 
+    def test_get_response_data_sort_mixed(self):
+        self.response.resources = self.test_data
+        self.response.sort = '-name,+id'
+        data = self.response.get_response_data()
+        self.assertEqual(len(data), len(self.test_data))
+        self.assertEqual(data[0], {'id': 3, 'name': 'd'})
+        self.assertEqual(data[1], {'id': 5, 'name': 'd'})
+        self.assertEqual(data[2], {'id': 2, 'name': 'c'})
+        self.assertEqual(data[3], {'id': 4, 'name': 'b'})
+        self.assertEqual(data[4], {'id': 1, 'name': 'a'})
+
+    def test_get_response_data_sort_with_none(self):
+        self.response.resources = self.test_data_none
+        self.response.sort = 'name,-id'
+        data = self.response.get_response_data()
+        self.assertEqual(len(data), len(self.test_data_none))
+        self.assertEqual(data[0], {'id': 1, 'name': None})
+        self.assertEqual(data[1], {'id': 1, 'name': 'a'})
+        self.assertEqual(data[2], {'id': 3, 'name': 'b'})
+
     def test_get_response_data_sort_invalid(self):
         self.response.resources = self.test_data
         self.response.sort = '+NotAField'
+        self.assertRaises(BadRequestError, self.response.get_response_data)
+
+        self.response.resources = self.test_data_complex
+        self.response.sort = '-items'
+        self.assertRaises(BadRequestError, self.response.get_response_data)
+        self.response.sort = 'hash_map'
+        self.assertRaises(BadRequestError, self.response.get_response_data)
+        self.response.sort = 'unique'
         self.assertRaises(BadRequestError, self.response.get_response_data)
 
     def test_get_response_data_paginate(self):
@@ -143,7 +189,7 @@ class TestCollectionResponse(TestCase):
 
     def test_get_response_data_paginate_cast(self):
         self.response.resources = self.test_data
-        self.response.sort = '+id'
+        self.response.sort = 'id'
         self.response.offset = '2'
         self.response.limit = '2'
         data = self.response.get_response_data()
