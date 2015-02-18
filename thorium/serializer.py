@@ -41,8 +41,10 @@ class JsonSerializer(SerializerBase):
 def handler(obj):
     if hasattr(obj, 'isoformat'):
         return obj.isoformat()
-    if isinstance(obj, uuid.UUID):
+    elif isinstance(obj, uuid.UUID):
         return str(obj)
+    elif isinstance(obj, bytes):
+        return obj.decode('utf-8')
     else:
         err_msg = 'Object of type %s with value of %s is not JSON serializable'
         raise TypeError(err_msg % (type(obj), repr(obj)))
