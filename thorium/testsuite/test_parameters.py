@@ -6,6 +6,13 @@ class SimpleParams(Parameters):
     name = params.CharParam(default=None)
     req = params.IntParam(notnull=True)
     tags = params.JSONParam()
+    schema_test = params.JSONParam(schema={
+        'type': 'object',
+        'properties':{
+            'string': {'type': 'string'},
+            'number': {'type': 'number'}
+        }
+    })
 
 
 class TestSimpleParams(TestCase):
@@ -34,4 +41,19 @@ class TestSimpleParams(TestCase):
 
     def test_validate_invalid_json(self):
         data = { 'tags': '{new:true, id_invalid: \'1\'}' }
+        self.assertRaises(errors.ValidationError, SimpleParams.validate, data)
+
+    def test_schema_json_valid(self):
+        result = SimpleParams.validate({
+            'schema_test': '{"string":"hi", "number": 1}'
+        })
+
+        self.assertEqual(result['schema_test']['string'], 'hi')
+        self.assertEqual(result['schema_test']['number'], 1)
+
+    def test_schema_json_invalid(self):
+        data = {
+            'schema_test': '{"string":1, "number": 2}'
+        }
+
         self.assertRaises(errors.ValidationError, SimpleParams.validate, data)

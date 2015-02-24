@@ -4,6 +4,7 @@ import numbers
 import datetime
 import uuid
 import json
+import jsonschema
 
 from . import errors, NotSet
 
@@ -264,3 +265,12 @@ class JSONValidator(FieldValidator):
 
     def raise_validation_error(self, value):
         raise errors.ValidationError('Invalid JSON')
+
+    def additional_validation(self, value):
+        if 'json_schema' in self._field.flags:
+            try:
+                jsonschema.validate(value, self._field.flags['json_schema'])
+            except jsonschema.exceptions.ValidationError as err:
+                raise errors.ValidationError(
+                    'JSON validation error: {0}'.format(str(err))
+                )

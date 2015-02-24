@@ -84,4 +84,12 @@ class ListParam(ResourceParam):
             self.flags['item_type'] = None
 
 class JSONParam(ResourceParam):
+    """A JSON resource param type.
+
+    :param schema: Optional dict with JSON schema as per json-schema.org
+    """
     validator_type = validators.JSONValidator
+
+    def set_unique_attributes(self, schema=None):
+        if schema:
+            self.flags['json_schema'] = schema
