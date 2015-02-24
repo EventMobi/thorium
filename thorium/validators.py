@@ -3,6 +3,7 @@
 import numbers
 import datetime
 import uuid
+import json
 
 from . import errors, NotSet
 
@@ -252,3 +253,14 @@ class SetValidator(FieldValidator):
                         value=value,
                         options=', '.join([str(o) for o in self._field.flags['options']]))
                 )
+
+class JSONValidator(FieldValidator):
+
+    def valid(self, value):
+        return isinstance(value, dict)
+
+    def attempt_cast(self, value):
+        return json.loads(value)
+
+    def raise_validation_error(self, value):
+        raise errors.ValidationError('Invalid JSON')

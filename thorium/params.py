@@ -83,4 +83,5 @@ class ListParam(ResourceParam):
         else:
             self.flags['item_type'] = None
 
-
+class JSONParam(ResourceParam):
+    validator_type = validators.JSONValidator
