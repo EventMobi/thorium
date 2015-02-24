@@ -264,7 +264,9 @@ class JSONValidator(FieldValidator):
         return json.loads(value)
 
     def raise_validation_error(self, value):
-        raise errors.ValidationError('Invalid JSON')
+        raise errors.ValidationError(
+            '{0} contains invalid JSON'.format(self._field)
+        )
 
     def additional_validation(self, value):
         if 'json_schema' in self._field.flags:
@@ -272,5 +274,8 @@ class JSONValidator(FieldValidator):
                 jsonschema.validate(value, self._field.flags['json_schema'])
             except jsonschema.exceptions.ValidationError as err:
                 raise errors.ValidationError(
-                    'JSON validation error: {0}'.format(str(err))
+                    '{0} contains malformed JSON: {1}'.format(
+                        self._field,
+                        str(err)
+                    )
                 )
