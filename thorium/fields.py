@@ -125,3 +125,10 @@ class DictField(ResourceField):
 
 class SetField(ResourceField):
     validator_type = validators.SetValidator
+
+class JSONField(ResourceField):
+    validator_type = validators.JSONValidator
+
+    def set_unique_attributes(self, schema=None):
+        if schema:
+            self.flags['json_schema'] = schema
