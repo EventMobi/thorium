@@ -75,7 +75,6 @@ class FlaskEndpoint(object):
                 content_type='application/json',
             )
         except Exception as e:
-            traceback.print_exc()
             error_body = self.exception_handler.handle_general_exception(
                 url=url,
                 method=method,
@@ -124,7 +123,6 @@ class FlaskEndpoint(object):
                 url=flaskrequest.url,
             )
         except (errors.ValidationError, WerkzeugBadRequest) as e:
-            traceback.print_exc()
             raise errors.BadRequestError(message=e.args[0] if e.args else None)
 
     #This probably shouldn't be here, not explicitly flask related
