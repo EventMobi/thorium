@@ -140,12 +140,14 @@ class DateTimeValidator(FieldValidator):
     def attempt_cast(self, value):
         if isinstance(value, str):
             return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
-        elif isinstance(value, numbers.Integral) and not isinstance(value, bool):
+        elif isinstance(value, numbers.Number) and not isinstance(value, bool):
             return datetime.datetime.utcfromtimestamp(value)
         else:
-            raise errors.ValidationError('{0} failed to convert {1}, which is an unsupported type for datetime '
-                                         'conversion. Please use a utc timestamp in seconds or a string with '
-                                         'format %Y-%m-%dT%H:%M:%S'.format(self._field, value))
+            raise errors.ValidationError(
+                '{0} failed to convert {1}, which is an unsupported type for '
+                'datetime conversion. Please use a utc timestamp in seconds or'
+                ' a string with format %Y-%m-%dT%H:%M:%S'
+                .format(self._field, value))
 
     def raise_validation_error(self, value):
         error_msg = '{0} expects a date, got {1}'.format(self._field, value)
