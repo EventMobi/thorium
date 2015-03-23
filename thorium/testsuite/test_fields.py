@@ -213,7 +213,7 @@ class TestDateTimeValidator(TestCase):
 
     def test_invalid_isoformated_datetime(self):
         self.assertRaises(errors.ValidationError, self.validator.validate,
-                          '2015-03-02Z14:41:53.834910')
+                          'asdf')
 
 
 class TestUUIDValidator(TestCase):

@@ -145,7 +145,7 @@ class DateTimeValidator(FieldValidator):
                 return arrow.get(value).datetime.replace(tzinfo=None)
             except arrow.parser.ParserError as e:
                 raise errors.ValidationError(
-                    'Field {0}: '.format(self._field) + str(e)
+                    'Field {0}: {1}'.format(self._field, e)
                 )
         elif isinstance(value, numbers.Number) and not isinstance(value, bool):
             return datetime.datetime.utcfromtimestamp(value)
