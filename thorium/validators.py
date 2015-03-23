@@ -4,7 +4,9 @@ import numbers
 import datetime
 import uuid
 import json
+
 import jsonschema
+import arrow
 
 from . import errors, NotSet
 
@@ -139,7 +141,12 @@ class DateTimeValidator(FieldValidator):
 
     def attempt_cast(self, value):
         if isinstance(value, str):
-            return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
+            try:
+                return arrow.get(value).datetime.replace(tzinfo=None)
+            except arrow.parser.ParserError as e:
+                raise errors.ValidationError(
+                    'Field {0}: '.format(self._field) + str(e)
+                )
         elif isinstance(value, numbers.Number) and not isinstance(value, bool):
             return datetime.datetime.utcfromtimestamp(value)
         else:

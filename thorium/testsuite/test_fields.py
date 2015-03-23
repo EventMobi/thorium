@@ -183,6 +183,23 @@ class TestDateTimeValidator(TestCase):
         result = self.validator.validate(dt)
         self.assertEqual(dt, result)
 
+    def test_isoformated_date_to_datetime(self):
+        dt = datetime.datetime(2015, 3, 2)
+        result = self.validator.validate('2015-03-02', cast=True)
+        self.assertEqual(dt, result)
+
+    def test_isoformated_datetime_to_datetime(self):
+        dt = datetime.datetime(2015, 3, 2, hour=14, minute=41, second=53)
+        result = self.validator.validate('2015-03-02T14:41:53', cast=True)
+        self.assertEqual(dt, result)
+
+    def test_isoformated_datetime_with_microseconds_to_datetime(self):
+        dt = datetime.datetime(2015, 3, 2, hour=14, minute=41, second=53,
+                               microsecond=834910)
+        result = self.validator.validate('2015-03-02T14:41:53.834910',
+                                         cast=True)
+        self.assertEqual(dt, result)
+
     def test_str_invalid(self):
         self.assertRaises(errors.ValidationError, self.validator.validate,
                           'abc')
@@ -193,6 +210,10 @@ class TestDateTimeValidator(TestCase):
 
     def test_int_invalid(self):
         self.assertRaises(errors.ValidationError, self.validator.validate, 1)
+
+    def test_invalid_isoformated_datetime(self):
+        self.assertRaises(errors.ValidationError, self.validator.validate,
+                          '2015-03-02Z14:41:53.834910')
 
 
 class TestUUIDValidator(TestCase):
