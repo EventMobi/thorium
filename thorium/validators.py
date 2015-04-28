@@ -80,7 +80,8 @@ class CharValidator(FieldValidator):
         return str(value)
 
     def raise_validation_error(self, value):
-        raise errors.ValidationError('{0} expects a string, got {1}'.format(self._field, value))
+        err_msg = '{} expects a string, got {}:{}'
+        raise errors.ValidationError(err_msg.format(self._field, type(value), value))
 
     def additional_validation(self, value):
         if self._field.flags['max_length'] and len(value) > self._field.flags['max_length']:
