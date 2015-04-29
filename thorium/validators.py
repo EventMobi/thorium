@@ -161,6 +161,31 @@ class DateTimeValidator(FieldValidator):
         raise errors.ValidationError(error_msg)
 
 
+class TimeValidator(FieldValidator):
+
+    def valid(self, value):
+        return isinstance(value, datetime.time)
+
+    def attempt_cast(self, value):
+        if isinstance(value, str):
+            try:
+                return arrow.get(value, 'HH:mm:ss').time()
+            except arrow.parser.ParserError as e:
+                raise errors.ValidationError(
+                    'Field {0}: {1}'.format(self._field, e)
+                )
+        else:
+            raise errors.ValidationError(
+                '{0} failed to convert {1}, which is an unsupported type for '
+                'time conversion. Please use a'
+                ' string with format HH:mm:ss'
+                .format(self._field, value))
+
+    def raise_validation_error(self, value):
+        error_msg = '{0} expects a time, got {1}'.format(self._field, value)
+        raise errors.ValidationError(error_msg)
+
+
 class UUIDValidator(FieldValidator):
 
     def valid(self, value):

@@ -11,6 +11,7 @@ thorium/errors.py
 thorium/exception_handler.py
 thorium/fields.py
 thorium/logging.py
+thorium/parameters.py
 thorium/params.py
 thorium/request.py
 thorium/resources.py
