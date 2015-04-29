@@ -95,6 +95,14 @@ class DateTimeField(ResourceField):
         super().__init__(*args, cast=cast, **kwargs)
 
 
+class TimeField(ResourceField):
+    validator_type = validators.TimeValidator
+
+    # default cast to True
+    def __init__(self, *args, cast=True, **kwargs):
+        super().__init__(*args, cast=cast, **kwargs)
+
+
 class UUIDField(ResourceField):
     validator_type = validators.UUIDValidator
 

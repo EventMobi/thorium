@@ -216,6 +216,27 @@ class TestDateTimeValidator(TestCase):
                           'asdf')
 
 
+class TestTimeValidator(TestCase):
+
+    def setUp(self):
+        self._field = mock.MagicMock(fields.TimeField)
+        self._field.flags = {'options': None}
+        self.validator = validators.TimeValidator(self._field)
+
+    def test_validate(self):
+        t = datetime.time(10, 0, 0)
+        result = self.validator.validate(t)
+        self.assertEqual(t, result)
+
+    def test_str_formatted_time(self):
+        result = self.validator.validate('10:00:00', cast=True)
+        self.assertEqual(result, datetime.time(10, 0, 0))
+
+    def test_str_invalid(self):
+        self.assertRaises(errors.ValidationError, self.validator.validate,
+                          '100000')
+
+
 class TestUUIDValidator(TestCase):
 
     def setUp(self):
@@ -637,6 +658,37 @@ class TestDateTimeField(TestCase):
         self.assertEqual(self.field.validate(NotSet), NotSet)
         self.assertRaises(errors.ValidationError, self.field.validate,
                           datetime.datetime.utcnow())
+        self.assertRaises(errors.ValidationError, self.field.validate, 'a')
+        self.assertRaises(errors.ValidationError, self.field.validate, 3435)
+
+
+class TestTimeField(TestCase):
+
+    def setUp(self):
+        self.field = fields.TimeField()
+
+    def test_inheritance(self):
+        self.assertTrue(isinstance(self.field, fields.ResourceField))
+
+    def test_validator_type(self):
+        self.assertEqual(self.field.validator_type, validators.TimeValidator)
+
+    def test_field_usage(self):
+        self.assertEqual(self.field.validate(datetime.time(10, 0, 0)),
+                         datetime.time(10, 0, 0))
+
+    def test_field_invalid_values(self):
+        self.assertRaises(errors.ValidationError, self.field.validate, 'abc')
+        self.assertRaises(errors.ValidationError, self.field.validate, True)
+
+    def test_field_options(self):
+        t = datetime.time(10, 0, 0)
+        self.field.flags['options'] = {'a', 3435, t}
+        self.assertEqual(self.field.validate(t), t)
+        self.assertEqual(self.field.validate(None), None)
+        self.assertEqual(self.field.validate(NotSet), NotSet)
+        self.assertRaises(errors.ValidationError, self.field.validate,
+                          datetime.date.today())
         self.assertRaises(errors.ValidationError, self.field.validate, 'a')
         self.assertRaises(errors.ValidationError, self.field.validate, 3435)
 
