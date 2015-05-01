@@ -67,8 +67,9 @@ class ResourceField(object):
 class CharField(ResourceField):
     validator_type = validators.CharValidator
 
-    def set_unique_attributes(self, max_length=None):
+    def set_unique_attributes(self, max_length=None, regex=None):
         self.flags['max_length'] = max_length
+        self.flags['regex'] = re.compile(regex) if regex else regex
 
 
 class IntField(ResourceField):

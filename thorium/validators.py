@@ -4,6 +4,7 @@ import numbers
 import datetime
 import uuid
 import json
+import re
 
 import jsonschema
 import arrow
@@ -83,12 +84,18 @@ class CharValidator(FieldValidator):
         raise errors.ValidationError('{0} expects a string, got {1}'.format(self._field, value))
 
     def additional_validation(self, value):
-        if self._field.flags['max_length'] and len(value) > self._field.flags['max_length']:
-            raise errors.ValidationError('Max length of {0} is {1}, given value was {2}'.format(
+        max_length = self._field.flags['max_length']
+        if max_length and len(value) > max_length:
+            err_msg = 'Max length of {0} is {1}, given value was {2}'.format(
                 self._field,
-                self._field.flags['max_length'],
-                len(value))
+                max_length,
+                len(value),
             )
+            raise errors.ValidationError(err_msg)
+        regex = self._field.flags.get('regex')
+        if regex and not regex.match(value):
+            err_msg = '%s failed to match: %r' % (value, regex)
+            raise errors.ValidationError(err_msg)
 
 
 class IntValidator(FieldValidator):

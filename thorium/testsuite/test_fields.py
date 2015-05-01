@@ -3,6 +3,7 @@
 import datetime
 import types
 import uuid
+import re
 
 from unittest import TestCase, mock
 
@@ -95,6 +96,7 @@ class TestCharValidator(TestCase):
         self.char_field.flags = {
             'max_length': 10,
             'notnull': True,
+            'regex': re.compile(r'test\d+'),
             'options': None
         }
         self.validator = validators.CharValidator(self.char_field)
@@ -117,6 +119,10 @@ class TestCharValidator(TestCase):
     def test_max_length(self):
         self.assertRaises(errors.ValidationError, self.validator.validate,
                           'longer than 10 characters')
+
+    def test_regex_validation(self):
+        self.assertRaises(errors.ValidationError, self.validator.validate,
+                          'testA')
 
 
 class TestIntValidator(TestCase):
