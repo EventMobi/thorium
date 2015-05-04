@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import re
+
 from . import errors, validators, NotSet
 
 
