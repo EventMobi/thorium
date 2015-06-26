@@ -50,35 +50,33 @@ class RouteManager(object):
 
         return self._routes
 
-    def register_endpoint(self, endpoint_cls):
-        if not hasattr(endpoint_cls, 'routes') or not isinstance(endpoint_cls.routes, list):
-            raise Exception('Endpoint {0} expects attribute routes to be a list of Route objects.'
-                            .format(endpoint_cls.__name__))
+    def collection(self, path, methods, parameters_cls=None):
+        def wrapped(cls):
+            route = build_route(dispatcher.CollectionDispatcher,
+                                cls,
+                                parameters_cls,
+                                path,
+                                methods)
+            self._routes.append(route)
+            if hasattr(cls, 'routes'):
+                cls.routes.append(route)
+            else:
+                cls.routes = [route]
+            return cls
+        return wrapped
 
-        for route in endpoint_cls.routes:
-            self.add_route(route)
-
-
-def collection(path, methods, parameters_cls=None):
-    def wrapped(cls):
-        route = build_route(dispatcher.CollectionDispatcher, cls, parameters_cls, path, methods)
-        if hasattr(cls, 'routes'):
-            cls.routes.append(route)
-        else:
-            cls.routes = [route]
-        return cls
-    return wrapped
-
-
-def detail(path, methods, parameters_cls=None):
-    def wrapped(cls):
-        route = build_route(dispatcher.DetailDispatcher, cls, parameters_cls, path, methods)
-        if hasattr(cls, 'routes'):
-            cls.routes.append(route)
-        else:
-            cls.routes = [route]
-        return cls
-    return wrapped
+    def detail(self, path, methods, parameters_cls=None):
+        def wrapped(cls):
+            route = build_route(dispatcher.DetailDispatcher,
+                                cls,
+                                parameters_cls, path, methods)
+            self._routes.append(route)
+            if hasattr(cls, 'routes'):
+                cls.routes.append(route)
+            else:
+                cls.routes = [route]
+            return cls
+        return wrapped
 
 
 def build_route(dispatcher_cls, endpoint_cls, parameters_cls, path, methods):
