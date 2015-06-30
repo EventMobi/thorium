@@ -8,8 +8,15 @@ from collections import OrderedDict
 
 from flask import Flask
 
-from thorium import (ThoriumFlask, RouteManager, Resource, fields, Endpoint,
-                     routing)
+from thorium import (
+    ThoriumFlask,
+    RouteManager,
+    Resource,
+    fields,
+    Endpoint,
+)
+
+routing = RouteManager()
 
 
 class PersonResource(Resource):
@@ -60,12 +67,10 @@ class PersonEndpoint(Endpoint):
 class TestThoriumFlask(unittest.TestCase):
 
     def setUp(self):
-        route_manager = RouteManager()
-        route_manager.register_endpoint(PersonEndpoint)
         self.flask_app = Flask(__name__)
         ThoriumFlask(
             settings={},
-            route_manager=route_manager,
+            route_manager=routing,
             flask_app=self.flask_app
         )
         self.c = self.flask_app.test_client()
@@ -268,12 +273,10 @@ class TestThoriumFlask(unittest.TestCase):
 class TestResourceSpeed(unittest.TestCase):
 
     def setUp(self):
-        route_manager = RouteManager()
-        route_manager.register_endpoint(PersonEndpoint)
         self.flask_app = Flask(__name__)
         ThoriumFlask(
             settings={},
-            route_manager=route_manager,
+            route_manager=routing,
             flask_app=self.flask_app
         )
         self.c = self.flask_app.test_client()
