@@ -5,6 +5,8 @@ import uuid
 
 from collections import OrderedDict
 
+from .datastructures import NotSet
+
 
 class SerializerBase(object):
 
@@ -14,6 +16,11 @@ class SerializerBase(object):
                                     error=response.error,
                                     data=response.get_response_data(),
                                     meta=response.meta)
+        if body['meta']['pagination'] is not None:
+            if body['meta']['pagination']['limit'] is NotSet:
+                body['meta']['pagination']['limit'] = None
+            if body['meta']['pagination']['offset'] is NotSet:
+                body['meta']['pagination']['offset'] = None
         serialized_body = self._serialize_data(body)
         return serialized_body
 

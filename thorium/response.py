@@ -9,7 +9,9 @@ from . import errors
 class Response(object):
 
     def __init__(self, request):
-        self.meta = {}
+        self.meta = {
+            'pagination': None,
+        }
         self.headers = {}
         self.request = request
         self.error = None
@@ -61,8 +63,12 @@ class CollectionResponse(Response):
         self.response_type = 'collection'
         self.resources = []
         self.sort = getattr(self.request.params, 'sort', None)
-        self.offset = getattr(self.request.params, 'offset', None)
-        self.limit = getattr(self.request.params, 'limit', None)
+        self.meta['pagination'] = {
+            'paginated': False,
+            'limit': getattr(self.request.params, 'limit', None),
+            'offset': getattr(self.request.params, 'offset', None),
+            'record_count': 0,
+        }
 
     def get_response_data(self):
         data = []
@@ -93,17 +99,21 @@ class CollectionResponse(Response):
                     self.resources = not_sortable + sortable
 
     def _paginate(self):
-        if self.offset is not None and self.limit is not None:
-            self._validate_offset_and_limit()
-            if self.offset < 0:
-                raise errors.BadRequestError('Offset cannot be negative.')
-            if self.limit < 1:
-                raise errors.BadRequestError('Limit must be greater than 1.')
-            self.meta['offset'] = self.offset
-            self.meta['limit'] = self.limit
-            start = self.offset
-            end = self.offset + self.limit
-            self.resources = self.resources[start:end]
+        if self.meta['pagination']['paginated']:
+            return
+        if  (self.meta['pagination']['offset'] is None or
+             self.meta['pagination']['limit'] is None):
+            return
+        self._validate_offset_and_limit()
+        if self.meta['pagination']['offset'] < 0:
+            raise errors.BadRequestError('Offset cannot be negative.')
+        if self.meta['pagination']['limit'] < 1:
+            raise errors.BadRequestError('Limit must be greater than 1.')
+        self.meta['offset'] = self.meta['pagination']['offset']
+        self.meta['limit'] = self.meta['pagination']['limit']
+        start = self.meta['offset']
+        end = self.meta['pagination']['offset'] + self.meta['pagination']['limit']
+        self.resources = self.resources[start:end]
 
     def _check_and_strip_first_char(self, field):
         reverse = field.startswith('-')
@@ -126,15 +136,21 @@ class CollectionResponse(Response):
 
     def _validate_offset_and_limit(self):
         try:
-            if isinstance(self.offset, bool) or isinstance(self.limit, bool):
+            pagin = self.meta['pagination']
+            if (isinstance(pagin['offset'], bool) or
+                    isinstance(pagin['limit'], bool)):
                 raise TypeError
-            self.offset = int(self.offset)
-            self.limit = int(self.limit)
+
+            if pagin['offset'] is None and pagin['limit'] is None:
+                return
+            pagin['offset'] = int(pagin['offset'])
+            pagin['limit'] = int(pagin['limit'])
         except (ValueError, TypeError):
             raise errors.BadRequestError(
                 'Both `offset` and `limit` must be valid numbers. Could not '
                 'cast offset of `{0}` or limit of `{1}`.'
-                .format(self.offset, self.limit)
+                .format(self.meta['pagination']['offset'],
+                        self.meta['pagination']['limit'])
             )
 
 

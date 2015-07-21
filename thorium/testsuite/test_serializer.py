@@ -33,7 +33,14 @@ class TestJsonSerializer(unittest.TestCase):
             "type": "collection",
             "error": None,
             "status": 200,
-            "meta": {},
+            "meta": {
+                'pagination': {
+                    'paginated': False,
+                    'limit': None,
+                    'offset': None,
+                    'record_count': 0,
+                }
+            },
             "data": [self.data]
         }
         self.assertDictEqual(data, expected_data)
@@ -46,7 +53,14 @@ class TestJsonSerializer(unittest.TestCase):
             "type": "collection",
             "error": None,
             "status": 200,
-            "meta": {},
+            "meta": {
+                'pagination': {
+                    'paginated': False,
+                    'limit': None,
+                    'offset': None,
+                    'record_count': 0,
+                }
+            },
             "data": []
         }
         self.assertEqual(data, expected_data)
@@ -60,7 +74,7 @@ class TestJsonSerializer(unittest.TestCase):
             "type": "detail",
             "error": None,
             "status": 200,
-            "meta": {},
+            "meta": {'pagination': None},
             "data": self.data
         }
         self.assertEqual(data, expected_data)
@@ -73,7 +87,7 @@ class TestJsonSerializer(unittest.TestCase):
             "type": "detail",
             "error": None,
             "status": 200,
-            "meta": {},
+            "meta": {'pagination': None},
             "data": None
         }
         self.assertEqual(data, expected_data)
@@ -87,7 +101,7 @@ class TestJsonSerializer(unittest.TestCase):
             "type": "error",
             "error": str(http_error),
             "status": http_error.status_code,
-            "meta": {},
+            "meta": {'pagination': None},
             "data": None
         }
         self.assertEqual(data, expected_data)
