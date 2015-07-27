@@ -28,7 +28,6 @@ class Response(object):
     def _set_status_code(self):
         if not self.request:  # Hacky
             return 500
-
         if self.request.method == 'POST':
             return 201
         elif self.request.method == 'DELETE':
@@ -80,6 +79,8 @@ class CollectionResponse(Response):
         return data
 
     def _sort(self):
+        if self.meta['pagination']['paginated']:
+            return
         if self.sort:
             self.meta['sort'] = self.sort
             sort_by = self.sort.split(',')

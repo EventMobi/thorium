@@ -36,6 +36,7 @@ class TestJsonSerializer(unittest.TestCase):
             "meta": {
                 'pagination': {
                     'paginated': False,
+                    'paginated': False,
                     'limit': None,
                     'offset': None,
                     'record_count': 0,
@@ -56,6 +57,7 @@ class TestJsonSerializer(unittest.TestCase):
             "meta": {
                 'pagination': {
                     'paginated': False,
+                    'paginated': False,
                     'limit': None,
                     'offset': None,
                     'record_count': 0,
@@ -74,7 +76,9 @@ class TestJsonSerializer(unittest.TestCase):
             "type": "detail",
             "error": None,
             "status": 200,
-            "meta": {'pagination': None},
+            "meta": {
+                'pagination': None,
+            },
             "data": self.data
         }
         self.assertEqual(data, expected_data)
@@ -87,7 +91,9 @@ class TestJsonSerializer(unittest.TestCase):
             "type": "detail",
             "error": None,
             "status": 200,
-            "meta": {'pagination': None},
+            "meta": {
+                'pagination': None,
+            },
             "data": None
         }
         self.assertEqual(data, expected_data)
@@ -101,7 +107,9 @@ class TestJsonSerializer(unittest.TestCase):
             "type": "error",
             "error": str(http_error),
             "status": http_error.status_code,
-            "meta": {'pagination': None},
+            "meta": {
+                'pagination': None,
+            },
             "data": None
         }
         self.assertEqual(data, expected_data)
