@@ -115,6 +115,8 @@ class CollectionResponse(Response):
         start = self.meta['offset']
         end = self.meta['pagination']['offset'] + self.meta['pagination']['limit']
         self.resources = self.resources[start:end]
+        self.meta['pagination']['record_count'] = len(self.resources)
+        self.meta['pagination']['next_page'] = start + len(self.resources)
 
     def _check_and_strip_first_char(self, field):
         reverse = field.startswith('-')
@@ -146,6 +148,8 @@ class CollectionResponse(Response):
                 return
             pagin['offset'] = int(pagin['offset'])
             pagin['limit'] = int(pagin['limit'])
+
+
         except (ValueError, TypeError):
             raise errors.BadRequestError(
                 'Both `offset` and `limit` must be valid numbers. Could not '
