@@ -12,7 +12,13 @@ class ResourceMetaClass(type):
     # Note: attrs comes in alphabetical order,
     # unsure how to maintain declared order of fields
     def __new__(mcs, resource_name, bases, attrs):
-        attrs['_fields'] = mcs._get_fields(bases, attrs)
+        attrs['_fields'] = {}
+        # inherit fields from parent classes
+        for base in bases:
+            if hasattr(base, '_fields'):
+                attrs['_fields'].update(base._fields)
+        # update fields based on current class attributes
+        attrs['_fields'].update(mcs._get_fields(bases, attrs))
         return super().__new__(mcs, resource_name, bases, attrs)
 
     # Note: will likely need some sort of sorted dictionary to maintain
@@ -57,9 +63,6 @@ class Resource(object, metaclass=ResourceMetaClass):
 
     def __init__(self, *args, **kwargs):
         self._partial = getattr(self, '_partial', False)
-        self.sort = None
-        self.offset = None
-        self.limit = None
         self._init(*args, **kwargs)
 
     @classmethod
@@ -70,7 +73,7 @@ class Resource(object, metaclass=ResourceMetaClass):
         resource._init(*args, **kwargs)
         return resource
 
-    # is there a better way to do this?
+    # Is there a better way to do this?
     @classmethod
     def init_from_obj(cls, obj, partial=False, mapping=None, override=None,
                       cast=False):

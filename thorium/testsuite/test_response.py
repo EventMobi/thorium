@@ -46,7 +46,7 @@ class TestDetailResponse(TestCase):
     def test_attributes(self):
         self.assertEqual(self.response.status_code, 200)
         self.assertEqual(self.response.error, None)
-        self.assertEqual(self.response.meta, {})
+        self.assertEqual(self.response.meta, {'pagination': None})
         self.assertEqual(self.response.response_type, 'detail')
         self.assertEqual(self.response.resource, None)
 
@@ -89,7 +89,17 @@ class TestCollectionResponse(TestCase):
     def test_attributes(self):
         self.assertEqual(self.response.status_code, 200)
         self.assertEqual(self.response.error, None)
-        self.assertEqual(self.response.meta, {})
+        self.assertEqual(
+            self.response.meta,
+            {
+                'pagination': {
+                    'paginated': False,
+                    'limit': None,
+                    'offset': None,
+                    'record_count': 0,
+                }
+            }
+        )
         self.assertEqual(self.response.response_type, 'collection')
         self.assertEqual(self.response.resources, [])
 
@@ -181,8 +191,8 @@ class TestCollectionResponse(TestCase):
 
     def test_get_response_data_paginate(self):
         self.response.resources = self.test_data
-        self.response.offset = 1
-        self.response.limit = 1
+        self.response.meta['pagination']['offset'] = 1
+        self.response.meta['pagination']['limit'] = 1
         data = self.response.get_response_data()
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0], {'id': 2, 'name': 'c'})
@@ -190,8 +200,8 @@ class TestCollectionResponse(TestCase):
     def test_get_response_data_paginate_cast(self):
         self.response.resources = self.test_data
         self.response.sort = 'id'
-        self.response.offset = '2'
-        self.response.limit = '2'
+        self.response.meta['pagination']['offset'] = '2'
+        self.response.meta['pagination']['limit'] = '2'
         data = self.response.get_response_data()
         self.assertEqual(len(data), 2)
         self.assertEqual(data[0], {'id': 3, 'name': 'd'})
@@ -200,8 +210,8 @@ class TestCollectionResponse(TestCase):
     def test_get_response_data_paginate_with_sort(self):
         self.response.resources = self.test_data
         self.response.sort = '-name'
-        self.response.limit = 2
-        self.response.offset = 2
+        self.response.meta['pagination']['limit'] = 2
+        self.response.meta['pagination']['offset'] = 2
         data = self.response.get_response_data()
         self.assertEqual(len(data), 2)
         self.assertEqual(data[0], {'id': 2, 'name': 'c'})
@@ -209,15 +219,15 @@ class TestCollectionResponse(TestCase):
 
     def test_get_response_data_pagination_out_of_bounds(self):
         self.response.resources = self.test_data
-        self.response.offset = 5
-        self.response.limit = 10
+        self.response.meta['pagination']['offset'] = 5
+        self.response.meta['pagination']['limit'] = 10
         data = self.response.get_response_data()
         self.assertEqual(data, [])
 
     def test_get_response_data_invalid_offset(self):
         self.response.resources = self.test_data
-        self.response.offset = -1
-        self.response.limit = 10
+        self.response.meta['pagination']['offset'] = -1
+        self.response.meta['pagination']['limit'] = 10
         self.assertRaises(BadRequestError, self.response.get_response_data)
 
         self.response.offset = ''
@@ -228,8 +238,8 @@ class TestCollectionResponse(TestCase):
 
     def test_get_response_data_invalid_limit(self):
         self.response.resources = self.test_data
-        self.response.offset = 0
-        self.response.limit = 0
+        self.response.meta['pagination']['offset'] = 0
+        self.response.meta['pagination']['limit'] = 0
         self.assertRaises(BadRequestError, self.response.get_response_data)
 
         self.response.limit = -1
@@ -253,7 +263,7 @@ class TestErrorResponse(TestCase):
     def test_attributes(self):
         self.assertEqual(self.response.status_code, 405)
         self.assertEqual(self.response.error, str(self.error))
-        self.assertEqual(self.response.meta, {})
+        self.assertEqual(self.response.meta, {'pagination': None})
         self.assertEqual(self.response.response_type, 'error')
 
     def test_get_response_data_empty(self):

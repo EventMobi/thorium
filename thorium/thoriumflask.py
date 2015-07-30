@@ -157,10 +157,10 @@ class FlaskEndpoint(object):
                 cast=True,
             )
             params.sort = flask_params.get('sort')
-            params.offset = flask_params.get('offset')
-            params.limit = flask_params.get('limit')
-            if not params.limit:
-                params.limit = self.flask_config.get('PAGINATION_LIMIT')
+            if not hasattr(params, 'offset'):
+                params.offset = flask_params.get('offset')
+            if not hasattr(params, 'limit'):
+                params.limit = flask_params.get('limit')
             return params
 
     def _validate_no_extra_query_params(self, flask_params):

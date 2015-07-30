@@ -89,7 +89,17 @@ class TestThoriumFlask(unittest.TestCase):
         body = json.loads(rv.data.decode())
         items = body['data']
         meta = body['meta']
-        self.assertEqual(meta, {})
+        self.assertEqual(
+            meta,
+            {
+                'pagination': {
+                    'limit': None,
+                    'offset': None,
+                    'paginated': False,
+                    'record_count': 0
+                }
+            }
+        )
         self.assertIsInstance(items, list)
         self.assertEqual(len(items), 1)
         self.assertEqual(items[0]['name'], 'Timmy')
@@ -110,7 +120,18 @@ class TestThoriumFlask(unittest.TestCase):
         body = json.loads(rv.data.decode())
         items = body['data']
         meta = body['meta']
-        self.assertDictEqual(meta, {'sort': '-id'})
+        self.assertDictEqual(
+            meta,
+            {
+                'sort': '-id',
+                'pagination': {
+                    'limit': None,
+                    'offset': None,
+                    'paginated': False,
+                    'record_count': 0
+                }
+            }
+        )
         self.assertIsInstance(items, list)
         self.assertEqual(len(items), 5)
         for x in range(5):
@@ -128,7 +149,18 @@ class TestThoriumFlask(unittest.TestCase):
         body = json.loads(rv.data.decode())
         items = body['data']
         meta = body['meta']
-        self.assertDictEqual(meta, {'sort': '-name,-id'})
+        self.assertDictEqual(
+            meta,
+            {
+                'sort': '-name,-id',
+                'pagination': {
+                    'limit': None,
+                    'offset': None,
+                    'paginated': False,
+                    'record_count': 0
+                }
+            }
+        )
         self.assertEqual(len(items), 5)
         for x in range(5):
             self.assertDictEqual(items[x], {
@@ -146,7 +178,18 @@ class TestThoriumFlask(unittest.TestCase):
         items = body['data']
         print(body)
         meta = body['meta']
-        self.assertDictEqual(meta, {'sort': 'name,-id'})
+        self.assertDictEqual(
+            meta,
+            {
+                'sort': 'name,-id',
+                'pagination': {
+                    'limit': None,
+                    'offset': None,
+                    'paginated': False,
+                    'record_count': 0
+                }
+            }
+        )
         self.assertEqual(len(items), 5)
         for x in range(5):
             self.assertDictEqual(items[x], {
@@ -171,7 +214,20 @@ class TestThoriumFlask(unittest.TestCase):
         body = json.loads(rv.data.decode())
         items = body['data']
         meta = body['meta']
-        self.assertDictEqual(meta, {'offset': 2, 'limit': 2})
+        self.assertDictEqual(
+            meta,
+            {
+                'limit': 2,
+                'offset': 2,
+                'pagination': {
+                    'limit': 2,
+                    'offset': 2,
+                    'paginated': False,
+                    'record_count': 2,
+                    'next_page': 4,
+                }
+            }
+        )
         self.assertEqual(len(items), 2)
         self.assertEqual(items[0]['id'], 2)
         self.assertEqual(items[1]['id'], 3)
@@ -182,7 +238,20 @@ class TestThoriumFlask(unittest.TestCase):
         body = json.loads(rv.data.decode())
         items = body['data']
         meta = body['meta']
-        self.assertDictEqual(meta, {'offset': 5, 'limit': 10})
+        self.assertDictEqual(
+            meta,
+            {
+                'limit': 10,
+                'offset': 5,
+                'pagination': {
+                    'limit': 10,
+                    'offset': 5,
+                    'paginated': False,
+                    'record_count': 0,
+                    'next_page': 5
+                }
+            }
+        )
         self.assertEqual(items, [])
 
     def test_get_with_pagination_invalid(self):
@@ -211,7 +280,21 @@ class TestThoriumFlask(unittest.TestCase):
         body = json.loads(rv.data.decode())
         items = body['data']
         meta = body['meta']
-        self.assertDictEqual(meta, {'sort': '-id', 'offset': 2, 'limit': 2})
+        self.assertDictEqual(
+            meta,
+            {
+                'sort': '-id',
+                'offset': 2,
+                'limit': 2,
+                'pagination': {
+                    'limit': 2,
+                    'offset': 2,
+                    'paginated': False,
+                    'record_count': 2,
+                    'next_page': 4,
+                },
+            }
+        )
         self.assertEqual(len(items), 2)
         self.assertEqual(items[0]['id'], 2)
         self.assertEqual(items[1]['id'], 1)
