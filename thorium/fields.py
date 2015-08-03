@@ -11,7 +11,7 @@ class ResourceField(object):
 
     def __init__(self, default=NotSet, notnull=False, readonly=False,
                  writeonly=False, options=None, cast=None, required=False,
-                 *args, **kwargs):
+                 immutable=False, *args, **kwargs):
         self.flags = {
             'notnull': notnull,
             'readonly': readonly,
@@ -20,6 +20,7 @@ class ResourceField(object):
             'options': options,
             'cast': cast,
             'required': required,
+            'immutable': immutable,
         }
 
         self.name = 'noname'
