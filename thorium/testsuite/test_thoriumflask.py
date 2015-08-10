@@ -318,7 +318,7 @@ class TestThoriumFlask(unittest.TestCase):
         rv = self.c.post('/api/event/1/people',
                          data=json.dumps(data, default=handler),
                          content_type='application/json')
-        self.assertEqual(rv.status_code, 400)
+        self.assertEqual(rv.status_code, 201)
 
     def test_envelope_field_order(self):
         rv = self.c.open('/api/event/1/people/1', method='GET')
@@ -344,7 +344,7 @@ class TestThoriumFlask(unittest.TestCase):
         rv = self.c.post('/api/event/1/people',
                          data=json.dumps({}, default=handler),
                          content_type='application/json')
-        self.assertEqual(rv.status_code, 400)
+        self.assertEqual(rv.status_code, 201)
 
     def test_post_no_body(self):
         rv = self.c.post('/api/event/1/people',
