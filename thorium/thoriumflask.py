@@ -132,12 +132,6 @@ class FlaskEndpoint(object):
         else:
             resource = self.dispatcher.Resource(data)
 
-        # Overrides readonly fields with their default values
-        # not sure if this is the best approach to readonly
-        for name, field in resource.all_fields():
-            if field.is_readonly:
-                resource.to_default(name)
-
         return resource
 
     def _build_parameters(self):
