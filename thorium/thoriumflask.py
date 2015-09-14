@@ -100,7 +100,7 @@ class FlaskEndpoint(object):
                     json_data = flaskrequest.json or {}
                     partial = True if flaskrequest.method == 'PATCH' else False
 
-                    #hack for single or list resources
+                    # hack for single or list resources
                     if isinstance(json_data, list):
                         for i in json_data:
                             resources.append(self._create_resource(i, partial))
@@ -125,8 +125,9 @@ class FlaskEndpoint(object):
         except (errors.ValidationError, WerkzeugBadRequest) as e:
             raise errors.BadRequestError(message=e.args[0] if e.args else None)
 
-    #This probably shouldn't be here, not explicitly flask related
     def _create_resource(self, data, partial):
+        # override body data with url identifiers
+        data.update(flaskrequest.view_args)
         if partial:
             resource = self.dispatcher.Resource.partial(data)
         else:

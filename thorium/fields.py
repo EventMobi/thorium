@@ -48,6 +48,10 @@ class ResourceField(object):
         return self.flags['readonly']
 
     @property
+    def is_immutable(self):
+        return self.flags['immutable']
+
+    @property
     def is_required(self):
         return self.flags['required']
 
