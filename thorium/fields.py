@@ -34,7 +34,6 @@ class ResourceField(object):
         # create validator
         self._validator = self._get_validator()
         self.flags['default'] = self._validator.validate(default, cast=False)
-        #self._value = self.flags['default']
 
     def __str__(self):
         return '{0}:{1}'.format(self.__class__.__name__, self.name)
@@ -68,7 +67,9 @@ class ResourceField(object):
             vt_cls = self.validator_type
             return vt_cls(self)
         else:
-            raise NotImplementedError('Base class ResourceField has no validator')
+            raise NotImplementedError(
+                'Base class ResourceField has no validator'
+            )
 
 
 class CharField(ResourceField):
@@ -129,7 +130,10 @@ class ListField(ResourceField):
     def set_unique_attributes(self, item_type=NotSet):
         if item_type:
             if item_type == NotSet or not isinstance(item_type, ResourceField):
-                raise errors.ValidationError('ListField must have an item_type set to a valid ResourceField')
+                raise errors.ValidationError(
+                    'ListField must have an item_type set to a valid '
+                    'ResourceField'
+                )
             self.flags['item_type'] = item_type
         else:
             self.flags['item_type'] = None
@@ -141,6 +145,7 @@ class DictField(ResourceField):
 
 class SetField(ResourceField):
     validator_type = validators.SetValidator
+
 
 class JSONField(ResourceField):
     validator_type = validators.JSONValidator
