@@ -33,8 +33,10 @@ class ResourceField(object):
 
         # create validator
         self._validator = self._get_validator()
-        self.flags['default'] = self._validator.validate(default, cast=False)
-        #self._value = self.flags['default']
+        if callable(default):
+            self.flags['default'] = default
+        else:
+            self.flags['default'] = self._validator.validate(default, cast=False)
 
     def __str__(self):
         return '{0}:{1}'.format(self.__class__.__name__, self.name)
@@ -141,6 +143,7 @@ class DictField(ResourceField):
 
 class SetField(ResourceField):
     validator_type = validators.SetValidator
+
 
 class JSONField(ResourceField):
     validator_type = validators.JSONValidator
