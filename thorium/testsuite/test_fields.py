@@ -426,6 +426,21 @@ class TestResourceField(TestCase):
         self.assertRaises(NotImplementedError, self.field._get_validator)
 
 
+class TestDefaultProperty(TestCase):
+
+    def setUp(self):
+        self.field = SimpleResourceField()
+
+    def test_default_with_function(self):
+        def default_func():
+            return 5
+
+        with_default = SimpleResourceField(default=default_func)
+        self.assertEqual(with_default.flags['notnull'], False)
+        self.assertEqual(with_default.flags['default'], default_func)
+        self.assertEqual(with_default.flags['readonly'], False)
+
+
 class TestCharField(TestCase):
 
     def setUp(self):
