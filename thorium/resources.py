@@ -58,12 +58,7 @@ class Resource(object, metaclass=ResourceMetaClass):
 
     def __new__(cls, *args, **kwargs):
         obj = super().__new__(cls)
-        obj._values = {}
-        for name, field in obj.all_fields():
-            if callable(field.default):
-                obj._values[name] = field.default()
-            else:
-                obj._values[name] = field.default
+        obj._values = {name: field.default for name, field in obj.all_fields()}
         return obj
 
     def __init__(self, *args, **kwargs):

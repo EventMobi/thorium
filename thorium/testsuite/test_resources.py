@@ -1,6 +1,4 @@
 import types
-import time
-
 from unittest import TestCase
 from thorium import resources, fields, errors, NotSet
 import datetime
@@ -111,20 +109,6 @@ class TestSimpleResource(TestCase):
         res.to_default('name')
         self.assertEqual(res._values['name'], None)
         self.assertEqual(res.name, None)
-
-    def test_default_as_function(self):
-        def default_func():
-            return time.time()
-
-        class DefaultFuncResource(resources.Resource):
-            name = fields.CharField(default=None)
-            age = fields.IntField(default=default_func)
-
-        start_time = time.time()
-        res = DefaultFuncResource(name='Bob')
-        items = res.items()
-        self.assertEqual(res._values['name'], 'Bob')
-        self.assertGreater(res._values['age'], start_time)
 
     def test_items(self):
         data = {
