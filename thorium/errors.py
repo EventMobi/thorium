@@ -11,8 +11,9 @@ class HttpErrorBase(Exception):
     status_code = None
     default_message = None
 
-    def __init__(self, message=None, headers=None):
+    def __init__(self, message=None, headers=None, code=None):
         self.headers = headers if headers else {}
+        self.code = code
         super().__init__(message or self.default_message)
 
 
