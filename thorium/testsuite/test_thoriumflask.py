@@ -327,6 +327,7 @@ class TestThoriumFlask(unittest.TestCase):
         self.assertEqual(od.popitem(last=False)[0], 'type')
         self.assertEqual(od.popitem(last=False)[0], 'status')
         self.assertEqual(od.popitem(last=False)[0], 'error')
+        self.assertEqual(od.popitem(last=False)[0], 'error_code')
         self.assertEqual(od.popitem(last=False)[0], 'data')
         self.assertEqual(od.popitem(last=False)[0], 'meta')
 

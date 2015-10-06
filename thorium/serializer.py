@@ -20,17 +20,19 @@ class SerializerBase(object):
         body = self._build_envelope(response_type=response.response_type,
                                     status=response.status_code,
                                     error=response.error,
+                                    code=getattr(response, 'code', None),
                                     data=response.get_response_data(),
                                     meta=meta)
         serialized_body = self._serialize_data(body)
         return serialized_body
 
     @staticmethod
-    def _build_envelope(response_type, status, error, data, meta):
+    def _build_envelope(response_type, status, error, code, data, meta):
         envelope = OrderedDict()
         envelope['type'] = response_type
         envelope['status'] = status
         envelope['error'] = error
+        envelope['error_code'] = code
         envelope['data'] = data
         envelope['meta'] = meta
         return envelope

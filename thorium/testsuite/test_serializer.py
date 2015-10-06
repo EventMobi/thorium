@@ -32,6 +32,7 @@ class TestJsonSerializer(unittest.TestCase):
         expected_data = {
             "type": "collection",
             "error": None,
+            "error_code": None,
             "status": 200,
             "meta": {
                 'pagination': {
@@ -53,6 +54,7 @@ class TestJsonSerializer(unittest.TestCase):
         expected_data = {
             "type": "collection",
             "error": None,
+            "error_code": None,
             "status": 200,
             "meta": {
                 'pagination': {
@@ -75,6 +77,7 @@ class TestJsonSerializer(unittest.TestCase):
         expected_data = {
             "type": "detail",
             "error": None,
+            "error_code": None,
             "status": 200,
             "meta": {
                 'pagination': None,
@@ -90,6 +93,7 @@ class TestJsonSerializer(unittest.TestCase):
         expected_data = {
             "type": "detail",
             "error": None,
+            "error_code": None,
             "status": 200,
             "meta": {
                 'pagination': None,
@@ -106,6 +110,7 @@ class TestJsonSerializer(unittest.TestCase):
         expected_data = {
             "type": "error",
             "error": str(http_error),
+            "error_code": None,
             "status": http_error.status_code,
             "meta": {
                 'pagination': None,
