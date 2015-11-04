@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='Thorium',
-    version='0.2.8',
+    version='0.2.9',
     description='A Python framework for RESTful API interfaces in Flask',
     author='Ryan Easterbrook',
     author_email='ryan@eventmobi.com',
