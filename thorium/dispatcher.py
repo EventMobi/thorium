@@ -89,7 +89,10 @@ class CollectionDispatcher(DispatcherBase):
 
     def build_response_obj(self, request):
         method = request.method.lower()
-        response = CollectionResponse(request=request)
+        if method == 'post':
+            response = DetailResponse(request)
+        else:
+            response = CollectionResponse(request=request)
         return response
 
 
