@@ -71,14 +71,11 @@ class CollectionResponse(Response):
 
     def get_response_data(self):
         data = []
-        if getattr(self, 'resources', False):
-            data = []
+        if self.resources:
             self._sort()
             self._paginate()
             for res in self.resources:
                 data.append(OrderedDict(res.sorted_items()))
-        if getattr(self, 'resource', False):
-            data = OrderedDict(self.resource.sorted_items())
         return data
 
     def _sort(self):
