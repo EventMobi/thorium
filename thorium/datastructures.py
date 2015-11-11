@@ -1,7 +1,7 @@
 class NotSet(object):
 
     def __eq__(self, other):
-        return isinstance(other, self.__class__)
+        return (str(self) == str(other)) and not other
 
     def __bool__(self):
         return False
