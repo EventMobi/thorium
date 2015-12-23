@@ -128,12 +128,7 @@ class FlaskEndpoint(object):
     def _create_resource(self, data, partial):
         # override body data with url identifiers
         data.update(flaskrequest.view_args)
-        if partial:
-            resource = self.dispatcher.Resource.partial(data)
-        else:
-            resource = self.dispatcher.Resource(data)
-
-        return resource
+        return data
 
     def _build_parameters(self):
         if not self.dispatcher.Parameters:
