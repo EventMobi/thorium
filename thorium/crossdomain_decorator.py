@@ -35,7 +35,7 @@ def crossdomain(origin=None, methods=None, headers=None,
 
             h['Access-Control-Allow-Origin'] = request.headers['origin'] if 'origin' in request.headers else '*'
             h['Access-Control-Max-Age'] = str(max_age)
-            h['Access-Control-Allow-Headers'] = 'accept, origin, content-type, X-EM-Token'
+            h['Access-Control-Allow-Headers'] = 'accept, origin, content-type, X-EM-Token, authorization'
             h['Access-Control-Expose-Headers'] = 'Location, X-EM-Token'
             h['Access-Control-Allow-Credentials'] = 'true'
             if headers is not None:
