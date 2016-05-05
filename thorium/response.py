@@ -167,6 +167,7 @@ class ErrorResponse(Response):
         self.status_code = http_error.status_code
         self.error = str(http_error)
         self.code = getattr(http_error, 'code', None)
+        self.params = getattr(http_error, 'params', None)
 
     def get_response_data(self):
         return None

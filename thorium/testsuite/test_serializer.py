@@ -33,6 +33,7 @@ class TestJsonSerializer(unittest.TestCase):
             "type": "collection",
             "error": None,
             "error_code": None,
+            "errors": None,
             "status": 200,
             "meta": {
                 'pagination': {
@@ -55,6 +56,7 @@ class TestJsonSerializer(unittest.TestCase):
             "type": "collection",
             "error": None,
             "error_code": None,
+            "errors": None,
             "status": 200,
             "meta": {
                 'pagination': {
@@ -78,6 +80,7 @@ class TestJsonSerializer(unittest.TestCase):
             "type": "detail",
             "error": None,
             "error_code": None,
+            "errors": None,
             "status": 200,
             "meta": {
                 'pagination': None,
@@ -94,6 +97,7 @@ class TestJsonSerializer(unittest.TestCase):
             "type": "detail",
             "error": None,
             "error_code": None,
+            "errors": None,
             "status": 200,
             "meta": {
                 'pagination': None,
@@ -111,6 +115,7 @@ class TestJsonSerializer(unittest.TestCase):
             "type": "error",
             "error": str(http_error),
             "error_code": None,
+            "errors": None,
             "status": http_error.status_code,
             "meta": {
                 'pagination': None,
@@ -118,3 +123,70 @@ class TestJsonSerializer(unittest.TestCase):
             "data": None
         }
         self.assertEqual(data, expected_data)
+
+    def test_serialize_error_response_with_code_and_params(self):
+        http_error = MethodNotAllowedError()
+        http_error.code = 'abc'
+        http_error.params = {'foo': 'bar'}
+        error_response = ErrorResponse(http_error, self.request)
+        serialized_data = self.serializer.serialize_response(error_response)
+        data = json.loads(serialized_data)
+        expected_data = {
+            "type": "error",
+            "error": str(http_error),
+            "error_code": 'abc',
+            "errors": [{
+                'level': 'error',
+                'code': 'abc',
+                'params': {'foo': 'bar'}
+            }],
+            "status": http_error.status_code,
+            "meta": {
+                'pagination': None,
+            },
+            "data": None
+        }
+        self.assertEqual(data, expected_data)
+
+    def test_serialize_error_response_with_code_and_no_params(self):
+        http_error = MethodNotAllowedError()
+        http_error.code = 'abc'
+        error_response = ErrorResponse(http_error, self.request)
+        serialized_data = self.serializer.serialize_response(error_response)
+        data = json.loads(serialized_data)
+        expected_data = {
+            "type": "error",
+            "error": str(http_error),
+            "error_code": 'abc',
+            "errors": [{
+                'level': 'error',
+                'code': 'abc',
+                'params': None
+            }],
+            "status": http_error.status_code,
+            "meta": {
+                'pagination': None,
+            },
+            "data": None
+        }
+        self.assertEqual(data, expected_data)
+
+    def test_serialize_error_response_with_no_code_and_params(self):
+        http_error = MethodNotAllowedError()
+        http_error.params = {'foo': 'bar'}
+        error_response = ErrorResponse(http_error, self.request)
+        serialized_data = self.serializer.serialize_response(error_response)
+        data = json.loads(serialized_data)
+        expected_data = {
+            "type": "error",
+            "error": str(http_error),
+            "error_code": None,
+            "errors": None,
+            "status": http_error.status_code,
+            "meta": {
+                'pagination': None,
+            },
+            "data": None
+        }
+        self.assertEqual(data, expected_data)
+

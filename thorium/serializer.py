@@ -21,18 +21,26 @@ class SerializerBase(object):
                                     status=response.status_code,
                                     error=response.error,
                                     code=getattr(response, 'code', None),
+                                    params=getattr(response, 'params', None),
                                     data=response.get_response_data(),
                                     meta=meta)
         serialized_body = self._serialize_data(body)
         return serialized_body
 
     @staticmethod
-    def _build_envelope(response_type, status, error, code, data, meta):
+    def _build_envelope(response_type, status, error, code, params, data, meta):
         envelope = OrderedDict()
         envelope['type'] = response_type
         envelope['status'] = status
         envelope['error'] = error
         envelope['error_code'] = code
+        envelope['errors'] = [
+            {
+                'level': 'error',   # Only pass back errors for now
+                'code': code,
+                'params': params,
+            }
+        ] if code else None
         envelope['data'] = data
         envelope['meta'] = meta
         return envelope
