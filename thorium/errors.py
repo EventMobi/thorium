@@ -14,6 +14,7 @@ class HttpErrorBase(Exception):
     def __init__(self, message=None, headers=None, code=None):
         self.headers = headers if headers else {}
         self.code = code
+        self.params = getattr(message, 'params', None)
         super().__init__(message or self.default_message)
 
 
