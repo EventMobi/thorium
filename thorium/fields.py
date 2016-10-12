@@ -11,7 +11,7 @@ class ResourceField(object):
 
     def __init__(self, default=NotSet, notnull=False, readonly=False,
                  writeonly=False, options=None, cast=None, required=False,
-                 immutable=False, *args, **kwargs):
+                 immutable=False, detail=False, *args, **kwargs):
         self.flags = {
             'notnull': notnull,
             'readonly': readonly,
@@ -21,6 +21,7 @@ class ResourceField(object):
             'cast': cast,
             'required': required,
             'immutable': immutable,
+            'detail': detail,
         }
 
         self.name = 'noname'
@@ -60,6 +61,10 @@ class ResourceField(object):
     @property
     def default(self):
         return self.flags['default']
+
+    @property
+    def detail(self):
+        return self.flags['detail']
 
     def set_unique_attributes(self, **kwargs):
         for key, value in kwargs.items():
