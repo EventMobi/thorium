@@ -75,7 +75,12 @@ class CollectionResponse(Response):
             self._sort()
             self._paginate()
             for res in self.resources:
-                data.append(OrderedDict(res.sorted_items()))
+                fields = dict(res.all_fields())
+                field_data = OrderedDict()
+                for key, item in res.sorted_items():
+                    if not fields[key].detail:
+                        field_data[key] = item
+                data.append(field_data)
         return data
 
     def _sort(self):
