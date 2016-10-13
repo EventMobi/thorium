@@ -154,7 +154,6 @@ class CollectionResponse(Response):
             pagin['offset'] = int(pagin['offset'])
             pagin['limit'] = int(pagin['limit'])
 
-
         except (ValueError, TypeError):
             raise errors.BadRequestError(
                 'Both `offset` and `limit` must be valid numbers. Could not '
