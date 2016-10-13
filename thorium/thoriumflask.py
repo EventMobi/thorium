@@ -81,9 +81,6 @@ class FlaskEndpoint(object):
                 e=e,
                 request=request,
             )
-            # if flask debug raise exception instead of returning json response
-            if self.flask_config['DEBUG']:
-                raise e
             return FlaskResponse(
                 response=error_body,
                 status=500,
