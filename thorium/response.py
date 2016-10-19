@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
+from datetime import datetime
 from collections import OrderedDict
 from operator import attrgetter
+
+from flask import request as flask_request
 
 from . import errors
 
@@ -11,6 +14,12 @@ class Response(object):
     def __init__(self, request):
         self.meta = {
             'pagination': None,
+            'request': {
+                'url': flask_request.url,
+                'method': flask_request.method,
+                'params': flask_request.query_string,
+                'time': datetime.utcnow(),
+            }
         }
         self.headers = {}
         self.request = request
