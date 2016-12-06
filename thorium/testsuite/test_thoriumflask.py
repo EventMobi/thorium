@@ -95,7 +95,6 @@ class TestThoriumFlask(unittest.TestCase):
                 'pagination': {
                     'limit': None,
                     'offset': None,
-                    'paginated': False,
                     'record_count': 0
                 }
             }
@@ -127,7 +126,6 @@ class TestThoriumFlask(unittest.TestCase):
                 'pagination': {
                     'limit': None,
                     'offset': None,
-                    'paginated': False,
                     'record_count': 0
                 }
             }
@@ -156,7 +154,6 @@ class TestThoriumFlask(unittest.TestCase):
                 'pagination': {
                     'limit': None,
                     'offset': None,
-                    'paginated': False,
                     'record_count': 0
                 }
             }
@@ -185,7 +182,6 @@ class TestThoriumFlask(unittest.TestCase):
                 'pagination': {
                     'limit': None,
                     'offset': None,
-                    'paginated': False,
                     'record_count': 0
                 }
             }
@@ -222,7 +218,6 @@ class TestThoriumFlask(unittest.TestCase):
                 'pagination': {
                     'limit': 2,
                     'offset': 2,
-                    'paginated': False,
                     'record_count': 2,
                     'next_page': 4,
                 }
@@ -246,7 +241,6 @@ class TestThoriumFlask(unittest.TestCase):
                 'pagination': {
                     'limit': 10,
                     'offset': 5,
-                    'paginated': False,
                     'record_count': 0,
                     'next_page': 5
                 }
@@ -289,7 +283,6 @@ class TestThoriumFlask(unittest.TestCase):
                 'pagination': {
                     'limit': 2,
                     'offset': 2,
-                    'paginated': False,
                     'record_count': 2,
                     'next_page': 4,
                 },
