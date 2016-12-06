@@ -24,6 +24,11 @@ class SerializerBase(object):
                                     params=getattr(response, 'params', None),
                                     data=response.get_response_data(),
                                     meta=meta)
+        # Remove paginated flag because no longer needed
+        try:
+            del body['meta']['pagination']['paginated']
+        except (TypeError, KeyError):
+            pass
         serialized_body = self._serialize_data(body)
         return serialized_body
 

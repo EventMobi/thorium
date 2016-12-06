@@ -37,8 +37,6 @@ class TestJsonSerializer(unittest.TestCase):
             "status": 200,
             "meta": {
                 'pagination': {
-                    'paginated': False,
-                    'paginated': False,
                     'limit': None,
                     'offset': None,
                     'record_count': 0,
@@ -60,8 +58,6 @@ class TestJsonSerializer(unittest.TestCase):
             "status": 200,
             "meta": {
                 'pagination': {
-                    'paginated': False,
-                    'paginated': False,
                     'limit': None,
                     'offset': None,
                     'record_count': 0,
