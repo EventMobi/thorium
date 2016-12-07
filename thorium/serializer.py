@@ -3,6 +3,10 @@
 import json
 import uuid
 
+from datetime import datetime
+
+import arrow
+
 from collections import OrderedDict
 
 from .datastructures import NotSet
@@ -63,6 +67,8 @@ class JsonSerializer(SerializerBase):
 
 def handler(obj):
     if hasattr(obj, 'isoformat'):
+        if isinstance(obj, datetime):
+            obj = arrow.get(obj)
         return obj.isoformat()
     elif isinstance(obj, uuid.UUID):
         return str(obj)

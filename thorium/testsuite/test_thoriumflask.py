@@ -136,7 +136,7 @@ class TestThoriumFlask(unittest.TestCase):
             self.assertDictEqual(items[x], {
                 'id': 4 - x,
                 'name': 'Timmy',
-                'birth_date': '1974-03-13T00:00:00',
+                'birth_date': '1974-03-13T00:00:00+00:00',
                 'admin': True
             })
 
@@ -163,7 +163,7 @@ class TestThoriumFlask(unittest.TestCase):
             self.assertDictEqual(items[x], {
                 'id': 4 - x,
                 'name': 'Timmy',
-                'birth_date': '1974-03-13T00:00:00',
+                'birth_date': '1974-03-13T00:00:00+00:00',
                 'admin': True
             })
 
@@ -191,7 +191,7 @@ class TestThoriumFlask(unittest.TestCase):
             self.assertDictEqual(items[x], {
                 'id': 4 - x,
                 'name': 'Timmy',
-                'birth_date': '1974-03-13T00:00:00',
+                'birth_date': '1974-03-13T00:00:00+00:00',
                 'admin': True
             })
 
