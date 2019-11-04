@@ -3,7 +3,7 @@ Jinja2==2.7
 MarkupSafe==0.18
 Pygments==1.6
 Sphinx==1.2b1
-Werkzeug==0.9.1
+Werkzeug==0.15.3
 distribute==0.7.3
 docutils==0.10
 itsdangerous==0.21
